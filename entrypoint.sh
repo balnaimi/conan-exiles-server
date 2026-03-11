@@ -102,6 +102,7 @@ NPCMindReadingMode=0
 MaxAggroRange=9000
 ClampBuildingDamageToResources=True
 LogoutCharactersRemainInTheWorld=${LOGOUT_REMAIN:-True}
+EverybodyCanLootCorpse=${EVERYBODY_LOOT_CORPSE:-True}
 
 [RCON]
 RconEnabled=${RCON_ENABLED:-False}
