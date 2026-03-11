@@ -20,7 +20,13 @@ RUN dpkg --add-architecture i386 && \
         lib32gcc-s1 \
         curl \
         procps \
+        locales \
+    && sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
+    && locale-gen \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # Install Wine from WineHQ
 RUN mkdir -pm755 /etc/apt/keyrings && \
