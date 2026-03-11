@@ -6,54 +6,100 @@ Built on **Debian Trixie** with the latest **Wine** from WineHQ and **SteamCMD**
 
 ## Features
 
-- **Clean & minimal** — no bloat, no unnecessary services
-- **Auto-download** — game files are downloaded automatically on first run
-- **Auto-update** — checks for updates on every restart
-- **Configurable** — all settings via `.env` file
-- **PvE / PvP / PvE-C** — choose your server type
-- **RCON support** — optional remote console
-- **Persistent data** — game data stored in Docker volumes
-- **Pre-built image** — pull and run, no build needed
+- Auto-downloads game files on first run (~4.5GB)
+- Auto-updates on every restart
+- All settings via `.env` file — no config file editing
+- PvE / PvP / PvE-C modes
+- Optional RCON remote console
+- Persistent data via Docker volumes
+- Pre-built image — no build needed
+
+---
 
 ## Quick Start
 
+**1. Create a new folder and add these two files:**
+
+`docker-compose.yml`:
+```yaml
+services:
+  conan:
+    image: ghcr.io/balnaimi/conan-exiles-server:latest
+    container_name: conan-exiles
+    restart: unless-stopped
+    environment:
+      - SERVER_NAME=${SERVER_NAME:-Conan Exiles Server}
+      - SERVER_PASSWORD=${SERVER_PASSWORD:-}
+      - SERVER_TYPE=${SERVER_TYPE:-pve}
+      - SERVER_PORT=${SERVER_PORT:-7777}
+      - QUERY_PORT=${QUERY_PORT:-27015}
+      - MAX_PLAYERS=${MAX_PLAYERS:-40}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - RCON_ENABLED=${RCON_ENABLED:-False}
+      - RCON_PASSWORD=${RCON_PASSWORD:-}
+      - RCON_PORT=${RCON_PORT:-25575}
+      - BATTLEYE_ENABLED=${BATTLEYE_ENABLED:-False}
+      - SERVER_REGION=${SERVER_REGION:-1}
+      - TZ=${TZ:-UTC}
+    ports:
+      - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"
+      - "7778:7778/udp"
+      - "${QUERY_PORT:-27015}:${QUERY_PORT:-27015}/udp"
+      - "${RCON_PORT:-25575}:${RCON_PORT:-25575}/tcp"
+    volumes:
+      - game-data:/conanexiles
+      - config-data:/conanexiles/ConanSandbox/Saved
+
+volumes:
+  game-data:
+  config-data:
+```
+
+`.env`:
+```env
+SERVER_NAME=My Conan Server
+SERVER_PASSWORD=
+SERVER_TYPE=pve
+MAX_PLAYERS=40
+ADMIN_PASSWORD=changeme
+RCON_ENABLED=False
+RCON_PASSWORD=changeme
+RCON_PORT=25575
+SERVER_PORT=7777
+QUERY_PORT=27015
+BATTLEYE_ENABLED=False
+TZ=UTC
+```
+
+**2. Edit `.env` with your settings, then run:**
+
 ```bash
-# Download the compose file and config
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
-
-# Edit your settings
-nano .env
-
-# Run
 docker compose up -d
+```
 
-# Watch logs (first run downloads ~4.5GB)
+**3. Watch the logs (first run takes 10-30 minutes):**
+
+```bash
 docker compose logs -f
 ```
 
-That's it. No cloning, no building.
+Done. Connect via **Direct Connect** in-game using your server IP and port `7777`.
 
-## Building from Source
+---
 
-If you want to modify the Dockerfile or entrypoint:
+## Or Download the Files
 
 ```bash
-# Clone the repo
-git clone https://github.com/balnaimi/conan-exiles-server.git
-cd conan-exiles-server
-
-# Configure
-cp .env.example .env
+mkdir conan-server && cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
 nano .env
-
-# Build and run
-docker compose -f docker-compose.build.yml up -d
+docker compose up -d
 ```
 
-## Configuration
+---
 
-Copy `.env.example` to `.env` and edit:
+## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -68,7 +114,7 @@ Copy `.env.example` to `.env` and edit:
 | `SERVER_PORT` | `7777` | Game port (UDP) |
 | `QUERY_PORT` | `27015` | Steam query port (UDP) |
 | `BATTLEYE_ENABLED` | `False` | Enable BattlEye anti-cheat |
-| `TZ` | `UTC` | Timezone |
+| `TZ` | `UTC` | Timezone ([list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)) |
 
 ## Ports
 
@@ -79,13 +125,9 @@ Copy `.env.example` to `.env` and edit:
 | 27015 | UDP | Steam query |
 | 25575 | TCP | RCON (if enabled) |
 
-## Connecting
+---
 
-Use **Direct Connect** in Conan Exiles with your server's IP address and port 7777.
-
-> **Note:** Conan Exiles does not support hostnames — you must use an IP address.
-
-## Commands
+## Server Management
 
 ```bash
 # Start
@@ -94,23 +136,66 @@ docker compose up -d
 # Stop
 docker compose down
 
-# Logs
-docker compose logs -f
-
 # Restart
 docker compose restart
+
+# View logs
+docker compose logs -f
+
+# View last 50 lines
+docker compose logs --tail 50
 ```
+
+---
 
 ## First Run
 
-The first startup will:
+On the first startup the container will:
 
 1. Download Conan Exiles Dedicated Server (~4.5GB) via SteamCMD
 2. Initialize Wine prefix
-3. Apply your configuration from `.env`
+3. Apply your `.env` configuration
 4. Start the server
 
-This takes **10-30 minutes** depending on your internet connection. Subsequent starts are fast.
+This takes **10-30 minutes** depending on your internet speed.
+Subsequent restarts are fast — game files are persisted in Docker volumes.
+
+---
+
+## Connecting
+
+Use **Direct Connect** in Conan Exiles:
+
+- **IP:** Your server's IP address
+- **Port:** 7777 (or whatever you set in `SERVER_PORT`)
+
+> **Note:** Conan Exiles does not support hostnames in Direct Connect — use an IP address.
+
+---
+
+## Building from Source
+
+If you want to modify the Dockerfile or entrypoint script:
+
+```bash
+git clone https://github.com/balnaimi/conan-exiles-server.git
+cd conan-exiles-server
+cp .env.example .env
+nano .env
+docker compose -f docker-compose.build.yml up -d
+```
+
+### Files
+
+| File | Description |
+|------|-------------|
+| `Dockerfile` | Image definition (Debian Trixie + Wine + SteamCMD) |
+| `entrypoint.sh` | Startup script (download, configure, run) |
+| `docker-compose.yml` | Production compose (pre-built image) |
+| `docker-compose.build.yml` | Development compose (builds locally) |
+| `.env.example` | Configuration template |
+
+---
 
 ## Tech Stack
 
