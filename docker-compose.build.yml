@@ -1,6 +1,12 @@
+# Use this file if you want to build the image locally
+# (e.g. after modifying the Dockerfile or entrypoint.sh)
+#
+# Usage:
+#   docker compose -f docker-compose.build.yml up -d
+
 services:
   conan:
-    image: ghcr.io/balnaimi/conan-exiles-server:latest
+    build: .
     container_name: conan-exiles
     restart: unless-stopped
     environment:

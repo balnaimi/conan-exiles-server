@@ -13,8 +13,30 @@ Built on **Debian Trixie** with the latest **Wine** from WineHQ and **SteamCMD**
 - **PvE / PvP / PvE-C** — choose your server type
 - **RCON support** — optional remote console
 - **Persistent data** — game data stored in Docker volumes
+- **Pre-built image** — pull and run, no build needed
 
 ## Quick Start
+
+```bash
+# Download the compose file and config
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+
+# Edit your settings
+nano .env
+
+# Run
+docker compose up -d
+
+# Watch logs (first run downloads ~4.5GB)
+docker compose logs -f
+```
+
+That's it. No cloning, no building.
+
+## Building from Source
+
+If you want to modify the Dockerfile or entrypoint:
 
 ```bash
 # Clone the repo
@@ -23,13 +45,10 @@ cd conan-exiles-server
 
 # Configure
 cp .env.example .env
-nano .env  # Edit server name, passwords, etc.
+nano .env
 
 # Build and run
-docker compose up -d
-
-# Watch logs (first run downloads ~4.5GB)
-docker compose logs -f
+docker compose -f docker-compose.build.yml up -d
 ```
 
 ## Configuration
@@ -69,37 +88,17 @@ Use **Direct Connect** in Conan Exiles with your server's IP address and port 77
 ## Commands
 
 ```bash
-# Start server
+# Start
 docker compose up -d
 
-# Stop server
+# Stop
 docker compose down
 
-# View logs
+# Logs
 docker compose logs -f
 
 # Restart
 docker compose restart
-
-# Rebuild after Dockerfile changes
-docker compose build && docker compose up -d
-```
-
-## Using the Pre-built Image
-
-Instead of building locally, you can pull the image directly:
-
-```bash
-docker pull ghcr.io/balnaimi/conan-exiles-server:latest
-```
-
-Then use the `docker-compose.yml` with `image:` instead of `build:`:
-
-```yaml
-services:
-  conan:
-    image: ghcr.io/balnaimi/conan-exiles-server:latest
-    # ... rest of config
 ```
 
 ## First Run
