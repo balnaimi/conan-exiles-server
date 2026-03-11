@@ -55,16 +55,15 @@ volumes:
   config-data:
 ```
 
-`.env`:
+`.env` (minimal example — see `.env.example` for all options):
 ```env
 SERVER_NAME=My Conan Server
 SERVER_PASSWORD=
 SERVER_TYPE=pve
 MAX_PLAYERS=40
 ADMIN_PASSWORD=changeme
-RCON_ENABLED=False
-RCON_PASSWORD=changeme
-SERVER_REGION=0
+BATTLEYE_ENABLED=False
+TZ=UTC
 RCON_PORT=25575
 SERVER_PORT=7777
 QUERY_PORT=27015
@@ -102,21 +101,27 @@ docker compose up -d
 
 ## Configuration
 
+Copy `.env.example` to `.env` — it contains **every setting** with clear descriptions.
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Most settings are commented out with their defaults. Uncomment (remove `#`) to override.
+
+### Basic Settings
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SERVER_NAME` | My Conan Server | Server name shown in browser |
-| `SERVER_PASSWORD` | *(empty)* | Password to join (empty = public) |
+| `SERVER_NAME` | My Conan Server | Server name in browser |
+| `SERVER_PASSWORD` | *(empty)* | Join password (empty = public) |
 | `SERVER_TYPE` | `pve` | `pve`, `pvp`, or `pve-c` |
-| `MAX_PLAYERS` | `40` | Maximum players |
-| `ADMIN_PASSWORD` | `changeme` | In-game admin password |
-| `RCON_ENABLED` | `False` | Enable remote console |
-| `RCON_PASSWORD` | `changeme` | RCON password |
-| `RCON_PORT` | `25575` | RCON port |
-| `SERVER_PORT` | `7777` | Game port (UDP) |
-| `QUERY_PORT` | `27015` | Steam query port (UDP) |
-| `SERVER_REGION` | `0` | Server region (see table below) |
-| `BATTLEYE_ENABLED` | `False` | Enable BattlEye anti-cheat |
-| `TZ` | `UTC` | Timezone ([list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)) |
+| `MAX_PLAYERS` | `40` | Max players |
+| `ADMIN_PASSWORD` | `changeme` | Admin password |
+| `SERVER_REGION` | `0` | Region (see below) |
+| `BATTLEYE_ENABLED` | `False` | BattlEye anti-cheat |
+| `TZ` | `UTC` | Timezone |
 
 ### Server Regions
 
@@ -128,6 +133,26 @@ docker compose up -d
 | `3` | Oceania | Australia, New Zealand |
 | `4` | SA | South America |
 | `5` | Japan | Japan |
+
+### All Available Settings
+
+The `.env.example` file includes **80+ settings** organized in sections:
+
+| Section | What you can change |
+|---------|-------------------|
+| **Server Info** | Name, password, type, region, MOTD |
+| **Admin** | Admin password, RCON |
+| **Network** | Ports, AFK kick, ping limit |
+| **Combat & Damage** | Player/NPC/structure damage multipliers |
+| **Death & Looting** | Corpse looting, equipment drop, body decay |
+| **XP & Progression** | XP multipliers for kill/harvest/craft |
+| **Harvesting & Crafting** | Resource amounts, spoil rates, crafting costs |
+| **Stamina & Movement** | Stamina drain, movement/sprint speed |
+| **Thralls & Followers** | Conversion time, population limits, rescue |
+| **Building & Decay** | Land claim, decay timers, stability |
+| **NPC & World** | NPC health, respawn, aggro range |
+| **Events & Features** | Avatars, voice chat, nudity level |
+| **Region Restrictions** | Block players by region |
 
 ## Ports
 
