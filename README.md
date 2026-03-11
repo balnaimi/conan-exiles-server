@@ -64,6 +64,7 @@ MAX_PLAYERS=40
 ADMIN_PASSWORD=changeme
 RCON_ENABLED=False
 RCON_PASSWORD=changeme
+SERVER_REGION=0
 RCON_PORT=25575
 SERVER_PORT=7777
 QUERY_PORT=27015
@@ -113,8 +114,20 @@ docker compose up -d
 | `RCON_PORT` | `25575` | RCON port |
 | `SERVER_PORT` | `7777` | Game port (UDP) |
 | `QUERY_PORT` | `27015` | Steam query port (UDP) |
+| `SERVER_REGION` | `0` | Server region (see table below) |
 | `BATTLEYE_ENABLED` | `False` | Enable BattlEye anti-cheat |
 | `TZ` | `UTC` | Timezone ([list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)) |
+
+### Server Regions
+
+| Value | Region | Best for |
+|-------|--------|----------|
+| `0` | EU | Europe, Middle East, Africa |
+| `1` | NA | North America |
+| `2` | Asia | Asia, Oceania |
+| `3` | Oceania | Australia, New Zealand |
+| `4` | SA | South America |
+| `5` | Japan | Japan |
 
 ## Ports
 
