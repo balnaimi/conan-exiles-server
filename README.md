@@ -157,21 +157,50 @@ Make sure these ports are open in your firewall and forwarded on your router.
 
 ## 🛠️ Server Management
 
+### Basic Commands
+
 ```bash
-# Start
-docker compose up -d
+docker compose up -d          # Start server
+docker compose down           # Stop server
+docker compose restart        # Restart server
+docker compose logs -f        # View logs (live)
+docker compose logs --tail 50 # Last 50 log lines
+```
 
-# Stop
+### 🔄 Update the Docker Image
+
+When a new version of the Docker image is released:
+
+```bash
+docker compose pull           # Download latest image
+docker compose down           # Stop current server
+docker compose up -d          # Start with new image
+```
+
+> 💡 Your game data and saves are stored in Docker volumes — they are **preserved** during image updates. The game server files are also auto-updated via SteamCMD on every restart.
+
+### 🗑️ Full Reset (Start Fresh)
+
+Want to wipe everything and start from scratch?
+
+```bash
+docker compose down -v        # Stop + delete ALL volumes
+docker compose up -d          # Fresh start (re-downloads ~4.5GB)
+```
+
+> ⚠️ **Warning:** `-v` permanently deletes all game data, player saves, and buildings. There is no undo. Back up first!
+
+### 💾 Backup Your Data
+
+Before major changes, back up your server:
+
+```bash
 docker compose down
-
-# Restart
-docker compose restart
-
-# View logs
-docker compose logs -f
-
-# View last 50 lines
-docker compose logs --tail 50
+docker run --rm \
+  -v conan-server_conan-data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/conan-backup-$(date +%F).tar.gz /data
+docker compose up -d
 ```
 
 ---

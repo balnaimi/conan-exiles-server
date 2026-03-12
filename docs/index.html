@@ -801,10 +801,32 @@ docker compose up -d</pre>
 <section class="info-section">
   <div class="info-container">
     <h2 class="info-title">Server Management</h2>
+
+    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">Basic Commands</h3>
     <pre class="code-block">docker compose up -d      <span class="comment"># Start server</span>
 docker compose down       <span class="comment"># Stop server</span>
 docker compose restart    <span class="comment"># Restart server</span>
-docker compose logs -f    <span class="comment"># View logs (live)</span></pre>
+docker compose logs -f    <span class="comment"># View logs (live)</span>
+docker compose logs --tail 50  <span class="comment"># Last 50 log lines</span></pre>
+
+    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">🔄 Update the Docker Image</h3>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">When a new version of the Docker image is released (new Wine, scripts, or settings), update with:</p>
+    <pre class="code-block">docker compose pull          <span class="comment"># Download latest image</span>
+docker compose down          <span class="comment"># Stop current server</span>
+docker compose up -d         <span class="comment"># Start with new image</span></pre>
+    <div class="info-note" style="margin-top:0.75rem;">Your game data and saves are stored in Docker volumes — they are preserved during image updates. The game files themselves (Conan Exiles server) are also auto-updated via SteamCMD on every restart.</div>
+
+    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">🗑️ Full Reset (Start Fresh)</h3>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Want to wipe everything and start from scratch? This removes all game files, databases, and player data:</p>
+    <pre class="code-block">docker compose down -v       <span class="comment"># Stop + delete ALL volumes</span>
+docker compose up -d         <span class="comment"># Fresh start (re-downloads ~4.5GB)</span></pre>
+    <div class="info-note" style="margin-top:0.75rem;border-color:var(--danger);color:var(--danger);">⚠️ Warning: <code>-v</code> permanently deletes all game data, player saves, and buildings. There is no undo. Back up your data first if needed.</div>
+
+    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">💾 Backup Your Data</h3>
+    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data:</p>
+    <pre class="code-block">docker compose down          <span class="comment"># Stop the server first</span>
+docker run --rm -v conan-server_conan-data:/data -v $(pwd):/backup alpine tar czf /backup/conan-backup-$(date +%F).tar.gz /data  <span class="comment"># Backup</span>
+docker compose up -d         <span class="comment"># Start again</span></pre>
   </div>
 </section>
 
