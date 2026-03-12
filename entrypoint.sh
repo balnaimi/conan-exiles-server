@@ -297,6 +297,46 @@ AvatarSummoningTimeWeekdayEnd=${AVATAR_WEEKDAY_END:-0}
 AvatarSummoningTimeWeekendStart=${AVATAR_WEEKEND_START:-0}
 AvatarSummoningTimeWeekendEnd=${AVATAR_WEEKEND_END:-0}
 
+# --- Durability ---
+DurabilityMultiplier=${DURABILITY:-1.0}
+ShieldDurabilityMultiplier=${SHIELD_DURABILITY:-1.0}
+
+# --- Chat ---
+ChatMaxMessageLength=${CHAT_MAX_LENGTH:-512}
+ChatLocalRadius=${CHAT_LOCAL_RADIUS:-9000.0}
+ChatHasGlobal=${CHAT_HAS_GLOBAL:-True}
+
+# --- Clans ---
+ClanMaxSize=${CLAN_MAX_SIZE:-0}
+
+# --- Crafting Extra ---
+ThrallCraftingTimeMultiplier=${THRALL_CRAFTING_TIME:-1.0}
+CraftingSpeedMultiplier=${CRAFTING_SPEED:-1.0}
+
+# --- Thrall Knockout ---
+ThrallWakeupTime=${THRALL_WAKEUP_TIME:-600.0}
+
+# --- Pet & Hunger System ---
+EnableHungerSystemThralls=${HUNGER_SYSTEM_THRALLS:-True}
+EnableHungerSystemPets=${HUNGER_SYSTEM_PETS:-True}
+StarvationTimeInMinutes=${STARVATION_TIME:-10080.0}
+StarvationDamagePenaltyCap=${STARVATION_DAMAGE_CAP:-0.2}
+ExclusiveDiet=${EXCLUSIVE_DIET:-False}
+
+# --- Purge ---
+PurgeEnabled=${PURGE_ENABLED:-True}
+PurgeLevel=${PURGE_LEVEL:-6}
+RestrictPurgeTime=${RESTRICT_PURGE_TIME:-True}
+PurgePreparationTime=${PURGE_PREP_TIME:-10.0}
+PurgeDuration=${PURGE_DURATION:-30.0}
+MinimumNumberOfPlayersForPurge=${PURGE_MIN_PLAYERS:-1}
+PurgeAllowBuilding=${PURGE_ALLOW_BUILDING:-True}
+PurgeMeterTriggerValue=${PURGE_TRIGGER_VALUE:-42000}
+PurgeNPCBuildingDamageMultiplier=${PURGE_NPC_BUILDING_DAMAGE:-1.0}
+
+# --- PVP Blitz ---
+PVPBlitzServer=${PVP_BLITZ:-False}
+
 # --- Events & Features ---
 EventSystemEnabled=${EVENT_SYSTEM:-True}
 serverVoiceChat=${VOICE_CHAT:-1}

@@ -473,6 +473,7 @@ const CONFIG = [
       { key: 'DISCONNECTION_GRACE_TIME', label: 'Disconnect Grace', desc: 'Grace period before removing disconnected player (default: 180 = 3 min)', type: 'number', default: 180 },
       { key: 'ALLOW_FAMILY_SHARE', label: 'Family Share', desc: 'Allow family shared Steam accounts', type: 'bool', default: true },
       { key: 'BATTLEYE_ENABLED', label: 'BattlEye Anti-Cheat', desc: 'Enable BattlEye (may cause issues on Linux)', type: 'bool', default: false },
+      { key: 'PVP_BLITZ', label: 'PvP Blitz Mode', desc: 'Faster progression for quick PvP action', type: 'bool', default: false },
     ]
   },
   {
@@ -705,6 +706,66 @@ const CONFIG = [
       { key: 'REGION_ALLOW_OCEANIA', label: 'Allow Oceania', desc: '', type: 'bool', default: true },
       { key: 'REGION_ALLOW_SOUTH_AMERICA', label: 'Allow South America', desc: '', type: 'bool', default: true },
       { key: 'REGION_BLOCK_LIST', label: 'Region Block List', desc: 'Comma-separated list of blocked regions', type: 'text', default: '' },
+    ]
+  },
+  {
+    id: 'durability', icon: '🔨', title: 'Durability',
+    fields: [
+      { key: 'DURABILITY', label: 'Tool/Weapon Durability', desc: '0 = never breaks, 2.0 = breaks twice as fast', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'SHIELD_DURABILITY', label: 'Shield Durability', desc: '0 = shields never break', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'chat', icon: '💭', title: 'Chat',
+    fields: [
+      { key: 'CHAT_MAX_LENGTH', label: 'Max Message Length', desc: 'Maximum characters per chat message', type: 'number', default: 512 },
+      { key: 'CHAT_LOCAL_RADIUS', label: 'Local Chat Radius', desc: 'How close players must be to see local chat (game units)', type: 'number', default: 9000 },
+      { key: 'CHAT_HAS_GLOBAL', label: 'Global Chat', desc: 'Enable server-wide chat channel', type: 'bool', default: true },
+    ]
+  },
+  {
+    id: 'clans', icon: '🛡️', title: 'Clans',
+    fields: [
+      { key: 'CLAN_MAX_SIZE', label: 'Max Clan Size', desc: 'Maximum members per clan (0 = unlimited)', type: 'number', default: 0 },
+    ]
+  },
+  {
+    id: 'crafting_extra', icon: '🔧', title: 'Crafting (Extra)',
+    fields: [
+      { key: 'THRALL_CRAFTING_TIME', label: 'Thrall Training Speed', desc: '0.5 = train thralls twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'CRAFTING_SPEED', label: 'Station Crafting Speed', desc: 'Speed of crafting at workbenches/stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'THRALL_WAKEUP_TIME', label: 'Thrall Knockout Time', desc: 'How long knocked out thralls stay unconscious (default: 600 = 10 min)', type: 'number', default: 600 },
+    ]
+  },
+  {
+    id: 'pethunger', icon: '🐾', title: 'Pet & Hunger System',
+    fields: [
+      { key: 'HUNGER_SYSTEM_THRALLS', label: 'Thrall Hunger', desc: 'Thralls need food to survive', type: 'bool', default: true },
+      { key: 'HUNGER_SYSTEM_PETS', label: 'Pet Hunger', desc: 'Pets need food to survive', type: 'bool', default: true },
+      { key: 'STARVATION_TIME', label: 'Starvation Time', desc: 'Time before companions starve (default: 10080 = 7 days)', type: 'number', default: 10080 },
+      { key: 'STARVATION_DAMAGE_CAP', label: 'Starvation Damage Cap', desc: 'Max health lost from starvation (0.2 = 20%)', type: 'range', default: 0.2, min: 0.0, max: 1.0, step: 0.05 },
+      { key: 'EXCLUSIVE_DIET', label: 'Exclusive Diet', desc: 'Companions can only eat their specific food', type: 'bool', default: false },
+    ]
+  },
+  {
+    id: 'purge', icon: '⚡', title: 'Purge',
+    fields: [
+      { key: 'PURGE_ENABLED', label: 'Enable Purge', desc: 'Enable purge attack events', type: 'bool', default: true },
+      { key: 'PURGE_LEVEL', label: 'Purge Difficulty', desc: 'Difficulty level (1 = easy, 6 = hardest)', type: 'select', default: '6', options: [
+        { value: '1', label: '1 — Very Easy' },
+        { value: '2', label: '2 — Easy' },
+        { value: '3', label: '3 — Medium' },
+        { value: '4', label: '4 — Hard' },
+        { value: '5', label: '5 — Very Hard' },
+        { value: '6', label: '6 — Hardest' }
+      ]},
+      { key: 'RESTRICT_PURGE_TIME', label: 'Restrict Purge Time', desc: 'Only allow purges at specific times', type: 'bool', default: true },
+      { key: 'PURGE_PREP_TIME', label: 'Warning Time', desc: 'Minutes of warning before purge starts', type: 'number', default: 10 },
+      { key: 'PURGE_DURATION', label: 'Purge Duration', desc: 'Maximum purge length (minutes)', type: 'number', default: 30 },
+      { key: 'PURGE_MIN_PLAYERS', label: 'Min Online Players', desc: 'Min players online to trigger (0 = offline purges)', type: 'number', default: 1 },
+      { key: 'PURGE_ALLOW_BUILDING', label: 'Allow Building in Purge', desc: 'Can players build during a purge', type: 'bool', default: true },
+      { key: 'PURGE_TRIGGER_VALUE', label: 'Purge Trigger Value', desc: 'Activity needed to fill purge meter (lower = more purges)', type: 'number', default: 42000 },
+      { key: 'PURGE_NPC_BUILDING_DAMAGE', label: 'Purge NPC Damage', desc: 'Purge NPC damage to buildings', type: 'range', default: 1.0, min: 0.0, max: 10.0, step: 0.1 },
     ]
   },
   {
