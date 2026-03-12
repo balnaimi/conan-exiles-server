@@ -1,6 +1,6 @@
 # ⚔️ Conan Exiles Dedicated Server (Docker)
 
-A clean, minimal Docker image for running a **Conan Exiles Dedicated Server** on Linux.
+The most comprehensive Docker image for **Conan Exiles Dedicated Server** — with **236 configurable settings** via a simple `.env` file.
 
 Built on **Debian Trixie** with the latest **Wine** from WineHQ and **SteamCMD**.
 
@@ -15,8 +15,10 @@ Built on **Debian Trixie** with the latest **Wine** from WineHQ and **SteamCMD**
 
 - 🚀 Auto-downloads game files on first run (~4.5GB)
 - 🔄 Auto-updates on every restart
-- ⚙️ **190+ settings** via `.env` file — no config file editing
-- 🎮 PvE / PvP / PvE-C modes
+- ⚙️ **236 settings** via `.env` file — no config file editing needed
+- 🌐 **Web-based Config Generator** with sliders and toggles
+- 🎮 PvE / PvP / PvE-C modes with per-day schedules
+- ⚡ Full Purge, Pet Hunger, Day/Night, Chat, Durability controls
 - 🖥️ Optional RCON remote console
 - 💾 Persistent data via Docker volumes
 - 📦 Pre-built image — no build needed
@@ -80,7 +82,7 @@ Done! Connect via **Direct Connect** in-game using your server IP and port `7777
 
 ## ⚙️ Configuration
 
-All settings are in the `.env` file. The `.env.example` includes **190+ settings** with descriptions.
+All settings are in the `.env` file. The `.env.example` includes **236 settings** with descriptions.
 
 ### Basic Settings
 
@@ -106,26 +108,35 @@ All settings are in the `.env` file. The `.env.example` includes **190+ settings
 | `4` | SA | South America |
 | `5` | Japan | Japan |
 
-### 📋 All Setting Categories
+### 📋 All Setting Categories (20 sections)
 
 | Section | What you can change |
 |---------|-------------------|
 | 🖥️ **Server Info** | Name, password, type, region, MOTD |
 | 🔑 **Admin & RCON** | Admin password, remote console |
 | 🌐 **Network** | Ports, AFK kick, ping limit, login queue |
+| ❤️ **Player Stats** | Health and stamina pool multipliers |
+| 🥤 **Survival** | Hunger & thirst rates (active, idle, offline) |
+| 🌅 **Day/Night Cycle** | Day, night, dawn, dusk speed |
 | ⚔️ **Combat & Damage** | Player/NPC/structure damage multipliers |
-| 💀 **Death & Looting** | Corpse looting, body decay, equipment drop |
+| 💀 **Death & Looting** | Equipment/quickbar/backpack drop, corpse loot |
+| 🔨 **Durability** | Tool, weapon, and shield durability |
 | 📈 **XP & Progression** | XP multipliers for kill/harvest/craft/time |
-| ⛏️ **Harvesting & Crafting** | Resource amounts, spoil rates, fuel, crafting costs |
+| ⛏️ **Harvesting & Crafting** | Resource amounts, spoil rates, fuel, costs |
+| 🔧 **Crafting (Extra)** | Thrall training, station speed, knockout time |
 | 🏃 **Stamina & Movement** | Stamina drain, walk/sprint speed, health regen |
-| 👥 **Thralls & Followers** | Conversion time, population limits, rescue, corruption |
-| 🏗️ **Building & Decay** | Land claim, decay timers, stability, pickup |
-| 🐉 **NPC & World** | NPC health, respawn, aggro range, wildlife |
+| 👥 **Thralls & Followers** | Population limits, rescue, corruption |
+| 🐾 **Pet & Hunger** | Thrall/pet hunger, starvation, diet |
+| 🏗️ **Building & Decay** | Land claim, decay timers, stability |
+| 🐉 **NPC & World** | NPC health, respawn, aggro range |
+| ⚡ **Purge** | Enable, difficulty, timing, trigger, NPC damage |
 | 🗿 **Avatars / Gods** | Summoning, lifetime, protection dome |
-| 💬 **UI & Social** | Voice chat, player list, clan markers, events |
+| 💭 **Chat** | Message length, local radius, global chat |
+| 🛡️ **Clans** | Max clan size |
+| 💬 **UI & Social** | Voice chat, player list, events |
 | 🌍 **Region Restrictions** | Block players by region |
 | ⏰ **PvP Schedule** | Per-day PvP hours and building damage windows |
-| 🔧 **Advanced** | Anti-cheat, mods, network rate, undermesh detection |
+| 🔧 **Advanced** | Anti-cheat, mods, network rate |
 
 > 💡 **Tip:** Most settings are commented out in `.env.example` with their defaults. Uncomment (remove `#`) to override.
 
@@ -208,7 +219,7 @@ docker compose -f docker-compose.build.yml up -d
 | `entrypoint.sh` | Startup script (download, configure, run) |
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
-| `.env.example` | Full configuration template (190+ settings) |
+| `.env.example` | Full configuration template (236 settings) |
 | `docs/index.html` | Web-based Config Generator |
 
 ---
