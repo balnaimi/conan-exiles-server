@@ -218,6 +218,13 @@ body {
   color: var(--accent);
   font-family: monospace;
 }
+.range-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  text-align: right;
+  font-style: italic;
+}
 
 /* Output */
 .output-section {
@@ -367,6 +374,9 @@ body {
 </div>
 
 <div class="container">
+  <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
+    💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.
+  </div>
   <div class="stats">
     <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
     <div class="stat">Changed: <strong id="changedCount">0</strong></div>
@@ -550,7 +560,7 @@ const CONFIG = [
   {
     id: 'building', icon: '🏗️', title: 'Building & Decay',
     fields: [
-      { key: 'LAND_CLAIM_RADIUS', label: 'Land Claim Radius', desc: 'How far your territory extends', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'LAND_CLAIM_RADIUS', label: 'Land Claim Radius', desc: 'How far your territory extends around your buildings', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'BUILD_ANYWHERE', label: 'Build Anywhere', desc: 'Allow building in restricted areas', type: 'bool', default: false },
       { key: 'BUILDING_PICKUP', label: 'Building Pickup', desc: 'Can pick up placed buildings', type: 'bool', default: true },
       { key: 'STABILITY_LOSS', label: 'Stability Loss', desc: 'Higher = buildings collapse easier', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
@@ -618,6 +628,29 @@ const CONFIG = [
 let values = {};
 let outputMode = 'changed';
 
+function getRangeHint(val, f) {
+  val = parseFloat(val);
+  if (val === 1.0) return 'Default (normal)';
+  if (val === 0) return 'Disabled';
+  if (val === 0.1) return '10% of normal';
+  if (val === 0.25) return '¼ of normal';
+  if (val === 0.5) return 'Half of normal';
+  if (val === 2.0) return 'Double';
+  if (val === 3.0) return 'Triple';
+  if (val === 5.0) return '5× normal';
+  if (val === 10.0) return '10× normal';
+  if (val < 1.0) return `${Math.round(val * 100)}% of normal`;
+  return `${val}× normal`;
+}
+
+function updateRangeDisplay(input, key) {
+  const val = parseFloat(input.value);
+  input.nextElementSibling.textContent = val + '×';
+  const f = getFieldConfig(key);
+  const hint = document.getElementById('hint-' + key);
+  if (hint && f) hint.textContent = getRangeHint(val, f);
+}
+
 function init() {
   CONFIG.forEach(section => {
     section.fields.forEach(f => {
@@ -678,9 +711,10 @@ function renderField(f) {
     input = `
       <div class="range-wrap">
         <input type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}"
-          oninput="setValue('${f.key}', parseFloat(this.value)); this.nextElementSibling.textContent=this.value">
-        <span class="range-val">${val}</span>
-      </div>`;
+          oninput="setValue('${f.key}', parseFloat(this.value)); updateRangeDisplay(this, '${f.key}')">
+        <span class="range-val">${val}×</span>
+      </div>
+      <div class="range-hint" id="hint-${f.key}">${getRangeHint(val, f)}</div>`;
   }
 
   const isChanged = val !== f.default && String(val) !== String(f.default);
