@@ -466,11 +466,11 @@ const CONFIG = [
     fields: [
       { key: 'SERVER_PORT', label: 'Game Port', desc: 'Main game port (UDP)', type: 'number', default: 7777 },
       { key: 'QUERY_PORT', label: 'Query Port', desc: 'Steam query port (UDP)', type: 'number', default: 27015 },
-      { key: 'KICK_AFK_TIME', label: 'AFK Kick Time', desc: 'Kick AFK players after (seconds)', type: 'number', default: 2700 },
+      { key: 'KICK_AFK_TIME', label: 'AFK Kick Time', desc: 'Kick AFK players after this time (default: 2700 = 45 min)', type: 'number', default: 2700 },
       { key: 'KICK_AFK_PERCENTAGE', label: 'AFK Kick Threshold', desc: 'Server must be this % full before AFK kick', type: 'number', default: 80, min: 0, max: 100 },
       { key: 'MAX_ALLOWED_PING', label: 'Max Ping', desc: 'Max allowed ping (0 = no limit)', type: 'number', default: 0 },
       { key: 'ENABLE_LOGIN_QUEUE', label: 'Login Queue', desc: 'Queue players when server is full', type: 'bool', default: true },
-      { key: 'DISCONNECTION_GRACE_TIME', label: 'Disconnect Grace', desc: 'Seconds before removing disconnected player', type: 'number', default: 180 },
+      { key: 'DISCONNECTION_GRACE_TIME', label: 'Disconnect Grace', desc: 'Grace period before removing disconnected player (default: 180 = 3 min)', type: 'number', default: 180 },
       { key: 'ALLOW_FAMILY_SHARE', label: 'Family Share', desc: 'Allow family shared Steam accounts', type: 'bool', default: true },
       { key: 'BATTLEYE_ENABLED', label: 'BattlEye Anti-Cheat', desc: 'Enable BattlEye (may cause issues on Linux)', type: 'bool', default: false },
     ]
@@ -480,16 +480,16 @@ const CONFIG = [
     fields: [
       { key: 'PLAYER_DAMAGE', label: 'Player Damage Dealt', desc: '2.0 = deal double damage', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'PLAYER_DAMAGE_TAKEN', label: 'Player Damage Taken', desc: '0.5 = take half damage', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'NPC_DAMAGE', label: 'NPC Damage Dealt', desc: 'How hard enemies hit', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'NPC_DAMAGE', label: 'NPC Damage Dealt', desc: 'How hard NPC enemies hit you', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'NPC_DAMAGE_TAKEN', label: 'NPC Damage Taken', desc: '2.0 = enemies die faster', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'THRALL_DAMAGE_TO_PLAYERS', label: 'Thrall → Player Damage', desc: 'Thrall damage against players', type: 'range', default: 0.5, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'THRALL_DAMAGE_TO_NPCS', label: 'Thrall → NPC Damage', desc: 'Thrall damage against NPCs', type: 'range', default: 0.5, min: 0.0, max: 5.0, step: 0.1 },
-      { key: 'MINION_DAMAGE', label: 'Follower Damage', desc: 'Follower damage multiplier', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'MINION_DAMAGE_TAKEN', label: 'Follower Damage Taken', desc: 'Follower damage received', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'FRIENDLY_FIRE_DAMAGE', label: 'Friendly Fire', desc: 'Damage to your own clan', type: 'range', default: 0.25, min: 0.0, max: 1.0, step: 0.05 },
-      { key: 'STRUCTURE_DAMAGE', label: 'Structure Damage', desc: 'Damage to structures', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'MINION_DAMAGE', label: 'Follower Damage', desc: 'How much damage your followers deal to enemies', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'MINION_DAMAGE_TAKEN', label: 'Follower Damage Taken', desc: 'How much damage your followers take from enemies', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'FRIENDLY_FIRE_DAMAGE', label: 'Friendly Fire', desc: 'Damage dealt to your own clan members (0 = no friendly fire)', type: 'range', default: 0.25, min: 0.0, max: 1.0, step: 0.05 },
+      { key: 'STRUCTURE_DAMAGE', label: 'Structure Damage', desc: 'How much damage player attacks deal to structures', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'STRUCTURE_HEALTH', label: 'Structure Health', desc: '2.0 = structures have double HP', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'BUILDING_DAMAGE', label: 'Building Damage', desc: 'Building damage multiplier', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'BUILDING_DAMAGE', label: 'Building Damage', desc: 'How much damage buildings take from attacks', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'CAN_DAMAGE_OWN_STRUCTURES', label: 'Damage Own Buildings', desc: 'Can players damage their own structures', type: 'bool', default: false },
       { key: 'ENABLE_TARGET_LOCK', label: 'Target Lock', desc: 'Enable target lock in combat', type: 'bool', default: true },
       { key: 'ENABLE_FATALITIES', label: 'Finishing Moves', desc: 'Enable fatality/finishing moves', type: 'bool', default: true },
@@ -501,21 +501,21 @@ const CONFIG = [
       { key: 'EVERYBODY_LOOT_CORPSE', label: 'Anyone Can Loot Corpses', desc: 'True = anyone can loot dead bodies', type: 'bool', default: true },
       { key: 'CONTAINERS_IGNORE_OWNERSHIP', label: 'Open Any Container', desc: 'Anyone can open any chest/container', type: 'bool', default: true },
       { key: 'LOGOUT_REMAIN', label: 'Body Stays on Logout', desc: 'Character stays in world after logout', type: 'bool', default: true },
-      { key: 'UNCONSCIOUS_TIME', label: 'Unconscious Time', desc: 'How long body stays after logout (seconds)', type: 'number', default: 1800 },
-      { key: 'OFFLINE_BODY_HOURS', label: 'Offline Body Hours', desc: 'How long offline bodies persist (hours)', type: 'number', default: 168 },
+      { key: 'UNCONSCIOUS_TIME', label: 'Unconscious Time', desc: 'How long your unconscious body stays after logout (default: 1800 = 30 min)', type: 'number', default: 1800 },
+      { key: 'OFFLINE_BODY_HOURS', label: 'Offline Body Hours', desc: 'How long offline player bodies stay in the world (default: 168 = 7 days)', type: 'number', default: 168 },
       { key: 'CORPSES_PER_PLAYER', label: 'Corpses Per Player', desc: 'Max corpses kept per player', type: 'number', default: 10 },
-      { key: 'PLAYER_CORPSE_LIFETIME', label: 'Player Corpse Time', desc: 'How long player corpses last (seconds)', type: 'number', default: 1800 },
-      { key: 'NPC_CORPSE_LIFETIME', label: 'NPC Corpse Time', desc: 'How long NPC corpses last (seconds)', type: 'number', default: 600 },
+      { key: 'PLAYER_CORPSE_LIFETIME', label: 'Player Corpse Time', desc: 'Time before player corpses disappear (default: 1800 = 30 min)', type: 'number', default: 1800 },
+      { key: 'NPC_CORPSE_LIFETIME', label: 'NPC Corpse Time', desc: 'Time before NPC corpses disappear (default: 600 = 10 min)', type: 'number', default: 600 },
     ]
   },
   {
     id: 'xp', icon: '📈', title: 'XP & Progression',
     fields: [
       { key: 'XP_RATE', label: 'XP Rate', desc: '2.0 = level up twice as fast', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
-      { key: 'XP_KILL', label: 'XP from Kills', desc: 'XP multiplier from killing', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
-      { key: 'XP_HARVEST', label: 'XP from Harvesting', desc: 'XP multiplier from resources', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
-      { key: 'XP_CRAFT', label: 'XP from Crafting', desc: 'XP multiplier from crafting', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
-      { key: 'XP_TIME', label: 'Passive XP', desc: 'XP gained over time', type: 'range', default: 1.0, min: 0.0, max: 10.0, step: 0.1 },
+      { key: 'XP_KILL', label: 'XP from Kills', desc: 'XP bonus from killing enemies', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_HARVEST', label: 'XP from Harvesting', desc: 'XP bonus from gathering resources', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_CRAFT', label: 'XP from Crafting', desc: 'XP bonus from crafting items', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_TIME', label: 'Passive XP', desc: 'Passive XP earned just by being online', type: 'range', default: 1.0, min: 0.0, max: 10.0, step: 0.1 },
     ]
   },
   {
@@ -526,7 +526,7 @@ const CONFIG = [
       { key: 'ITEM_SPOIL_RATE', label: 'Food Spoil Rate', desc: '0.5 = food lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'CRAFTING_COST', label: 'Crafting Cost', desc: '0.5 = half materials needed', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'FUEL_BURN_TIME', label: 'Fuel Burn Time', desc: '2.0 = fuel lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
-      { key: 'ITEM_CONVERSION', label: 'Item Conversion Speed', desc: 'Tanning, smelting etc.', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'ITEM_CONVERSION', label: 'Item Conversion Speed', desc: 'Speed of tanning, smelting, drying etc. in crafting stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
     ]
   },
   {
@@ -535,9 +535,9 @@ const CONFIG = [
       { key: 'STAMINA_COST', label: 'Stamina Cost', desc: '0.5 = use half stamina', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'STAMINA_SPRINT_COST', label: 'Sprint Stamina Cost', desc: 'Stamina drain while sprinting', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'PLAYER_MOVE_SPEED', label: 'Walk Speed', desc: '1.5 = 50% faster walking', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
-      { key: 'PLAYER_SPRINT_SPEED', label: 'Sprint Speed', desc: 'Sprint speed multiplier', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
+      { key: 'PLAYER_SPRINT_SPEED', label: 'Sprint Speed', desc: 'How fast you run when sprinting', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
       { key: 'HEALTH_REGEN_SPEED', label: 'Health Regen', desc: '2.0 = heal twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'STAMINA_REGEN_SPEED', label: 'Stamina Regen', desc: 'Stamina regeneration speed', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_REGEN_SPEED', label: 'Stamina Regen', desc: 'How fast stamina regenerates', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'PLAYER_ENCUMBRANCE', label: 'Carry Weight', desc: '2.0 = carry twice as much', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
     ]
   },
@@ -545,13 +545,13 @@ const CONFIG = [
     id: 'thralls', icon: '👥', title: 'Thralls & Followers',
     fields: [
       { key: 'THRALL_CONVERSION', label: 'Conversion Speed', desc: '0.5 = convert twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'THRALL_SCOUTING_TIME', label: 'Scouting Time (min)', desc: 'Thrall scouting duration', type: 'number', default: 10 },
+      { key: 'THRALL_SCOUTING_TIME', label: 'Scouting Time (min)', desc: 'How long a thrall scouts before returning (minutes)', type: 'number', default: 10 },
       { key: 'USE_MINION_POP_LIMIT', label: 'Population Limit', desc: 'Limit total followers per clan', type: 'bool', default: false },
-      { key: 'MINION_POP_BASE', label: 'Base Pop Limit', desc: 'Base follower limit for clan', type: 'number', default: 50 },
-      { key: 'MINION_POP_PER_PLAYER', label: 'Pop Per Player', desc: 'Extra followers per clan member', type: 'number', default: 5 },
+      { key: 'MINION_POP_BASE', label: 'Base Pop Limit', desc: 'Base follower limit for your clan (only if Population Limit is on)', type: 'number', default: 50 },
+      { key: 'MINION_POP_PER_PLAYER', label: 'Pop Per Player', desc: 'Extra followers allowed per clan member (added to base)', type: 'number', default: 5 },
       { key: 'ENABLE_FOLLOWER_DBNO', label: 'Follower Down-But-Not-Out', desc: 'Followers get knocked down instead of killed', type: 'bool', default: true },
       { key: 'ENABLE_FOLLOWER_RESCUE', label: 'Follower Rescue', desc: 'Can rescue stuck followers on your land', type: 'bool', default: true },
-      { key: 'FOLLOWER_RESCUE_COOLDOWN', label: 'Rescue Cooldown', desc: 'Cooldown between rescues (seconds)', type: 'number', default: 3600 },
+      { key: 'FOLLOWER_RESCUE_COOLDOWN', label: 'Rescue Cooldown', desc: 'Wait time between follower rescues (default: 3600 = 1 hour)', type: 'number', default: 3600 },
       { key: 'ANIMAL_PEN_CRAFT_TIME', label: 'Animal Taming Speed', desc: '0.5 = animals tame twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'FEED_BOX_RANGE', label: 'Feed Box Range', desc: '2.0 = covers twice the area', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'PLAYER_CORRUPTION_GAIN', label: 'Corruption Gain', desc: '0.5 = gain corruption slower', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
@@ -565,7 +565,7 @@ const CONFIG = [
       { key: 'BUILDING_PICKUP', label: 'Building Pickup', desc: 'Can pick up placed buildings', type: 'bool', default: true },
       { key: 'STABILITY_LOSS', label: 'Stability Loss', desc: 'Higher = buildings collapse easier', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'DISABLE_BUILDING_DECAY', label: 'Disable Building Decay', desc: 'Buildings never decay', type: 'bool', default: true },
-      { key: 'MAX_BUILDING_DECAY_TIME', label: 'Max Decay Time', desc: 'Max building decay time (seconds)', type: 'number', default: 1296000 },
+      { key: 'MAX_BUILDING_DECAY_TIME', label: 'Max Decay Time', desc: 'Max time before buildings decay (default: 1296000 = 15 days)', type: 'number', default: 1296000 },
       { key: 'DISABLE_THRALL_DECAY', label: 'Disable Thrall Decay', desc: 'Thralls/followers never decay', type: 'bool', default: true },
       { key: 'POI_PROTECTION', label: 'POI Protection', desc: 'Protect Points of Interest from building', type: 'bool', default: false },
     ]
@@ -575,19 +575,19 @@ const CONFIG = [
     fields: [
       { key: 'NPC_HEALTH', label: 'NPC Health', desc: '2.0 = enemies have double HP', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'NPC_RESPAWN', label: 'NPC Respawn Speed', desc: 'Lower = faster respawn', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'NPC_MAX_SPAWN_CAP', label: 'NPC Spawn Cap', desc: 'Max NPCs that can spawn', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'MAX_AGGRO_RANGE', label: 'Aggro Range', desc: 'How far NPCs detect you', type: 'number', default: 9000 },
-      { key: 'AMBIENT_LIFE', label: 'Ambient Wildlife', desc: 'Rabbits, deer, etc.', type: 'bool', default: true },
+      { key: 'NPC_MAX_SPAWN_CAP', label: 'NPC Spawn Cap', desc: 'Maximum number of NPCs that can exist at once', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'MAX_AGGRO_RANGE', label: 'Aggro Range', desc: 'How far away NPCs will notice and attack you (in game units)', type: 'number', default: 9000 },
+      { key: 'AMBIENT_LIFE', label: 'Ambient Wildlife', desc: 'Show ambient wildlife like rabbits, deer, birds', type: 'bool', default: true },
     ]
   },
   {
     id: 'avatars', icon: '🗿', title: 'Avatars / Gods',
     fields: [
       { key: 'AVATARS_DISABLED', label: 'Disable Avatars', desc: 'Prevent god summoning entirely', type: 'bool', default: false },
-      { key: 'AVATAR_LIFETIME', label: 'Avatar Lifetime', desc: 'How long avatars last (seconds)', type: 'number', default: 600 },
-      { key: 'AVATAR_SUMMON_TIME', label: 'Summon Time', desc: 'Time to summon an avatar (seconds)', type: 'number', default: 60 },
-      { key: 'AVATAR_DOME_DURATION', label: 'Dome Duration', desc: 'Protection dome duration multiplier', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'AVATAR_DOME_DAMAGE', label: 'Dome Damage', desc: 'Protection dome damage multiplier', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'AVATAR_LIFETIME', label: 'Avatar Lifetime', desc: 'How long a summoned god stays active (default: 600 = 10 min)', type: 'number', default: 600 },
+      { key: 'AVATAR_SUMMON_TIME', label: 'Summon Time', desc: 'Channeling time to summon a god (default: 60 = 1 min)', type: 'number', default: 60 },
+      { key: 'AVATAR_DOME_DURATION', label: 'Dome Duration', desc: 'How long the god protection dome lasts', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'AVATAR_DOME_DAMAGE', label: 'Dome Damage', desc: 'How much damage the god protection dome absorbs', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
     ]
   },
   {
@@ -601,9 +601,9 @@ const CONFIG = [
         { value: '0', label: 'Hidden' },
         { value: '1', label: 'Visible' }
       ]},
-      { key: 'MAX_DEATH_MARKERS', label: 'Death Map Markers', desc: 'Max death location markers', type: 'number', default: 3 },
+      { key: 'MAX_DEATH_MARKERS', label: 'Death Map Markers', desc: 'How many death markers show on your map', type: 'number', default: 3 },
       { key: 'ENABLE_CLAN_MARKERS', label: 'Clan Markers', desc: 'Show clan members on map', type: 'bool', default: true },
-      { key: 'HEALTHBAR_DISTANCE', label: 'Healthbar Distance', desc: 'How far you can see healthbars', type: 'number', default: 15000 },
+      { key: 'HEALTHBAR_DISTANCE', label: 'Healthbar Distance', desc: 'Distance at which enemy healthbars are visible (in game units)', type: 'number', default: 15000 },
       { key: 'EVENT_SYSTEM', label: 'Event System', desc: 'Enable purges and events', type: 'bool', default: true },
     ]
   },
@@ -627,6 +627,28 @@ const CONFIG = [
 // ============================================
 let values = {};
 let outputMode = 'changed';
+
+function formatTime(seconds) {
+  seconds = parseInt(seconds);
+  if (seconds < 60) return seconds + ' seconds';
+  if (seconds < 3600) return Math.round(seconds / 60) + ' minutes';
+  if (seconds < 86400) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.round((seconds % 3600) / 60);
+    return h + ' hour' + (h>1?'s':'') + (m > 0 ? ' ' + m + ' min' : '');
+  }
+  const d = Math.floor(seconds / 86400);
+  const h = Math.round((seconds % 86400) / 3600);
+  return d + ' day' + (d>1?'s':'') + (h > 0 ? ' ' + h + 'h' : '');
+}
+
+function formatHours(hours) {
+  hours = parseInt(hours);
+  if (hours < 24) return hours + ' hours';
+  const d = Math.floor(hours / 24);
+  const h = hours % 24;
+  return d + ' day' + (d>1?'s':'') + (h > 0 ? ' ' + h + 'h' : '');
+}
 
 function getRangeHint(val, f) {
   val = parseFloat(val);
@@ -693,7 +715,16 @@ function renderField(f) {
   if (f.type === 'text' || f.type === 'password') {
     input = `<input type="${f.type}" value="${val}" onchange="setValue('${f.key}', this.value)" placeholder="${f.default || '(empty)'}">`;
   } else if (f.type === 'number') {
-    input = `<input type="number" value="${val}" onchange="setValue('${f.key}', parseFloat(this.value))" ${f.min !== undefined ? 'min="'+f.min+'"' : ''} ${f.max !== undefined ? 'max="'+f.max+'"' : ''}>`;
+    const timeKeys = ['KICK_AFK_TIME','DISCONNECTION_GRACE_TIME','UNCONSCIOUS_TIME','PLAYER_CORPSE_LIFETIME','NPC_CORPSE_LIFETIME','FOLLOWER_RESCUE_COOLDOWN','MAX_BUILDING_DECAY_TIME','AVATAR_LIFETIME','AVATAR_SUMMON_TIME','THRALL_DECAY_TIME','MAX_DECAY_AUTO_DEMOLISH'];
+    const hourKeys = ['OFFLINE_BODY_HOURS'];
+    const isTime = timeKeys.includes(f.key);
+    const isHours = hourKeys.includes(f.key);
+    const timeHint = isTime ? `<div class="range-hint">${formatTime(val)}</div>` : (isHours ? `<div class="range-hint">${formatHours(val)}</div>` : '');
+    const onchange = isTime ? `setValue('${f.key}', parseFloat(this.value)); document.getElementById('th-${f.key}').innerHTML=formatTime(this.value)` :
+      (isHours ? `setValue('${f.key}', parseFloat(this.value)); document.getElementById('th-${f.key}').innerHTML=formatHours(this.value)` :
+      `setValue('${f.key}', parseFloat(this.value))`);
+    input = `<input type="number" value="${val}" onchange="${onchange}" ${f.min !== undefined ? 'min="'+f.min+'"' : ''} ${f.max !== undefined ? 'max="'+f.max+'"' : ''}>
+    ${(isTime || isHours) ? '<div class="range-hint" id="th-'+f.key+'">' + (isTime ? formatTime(val) : formatHours(val)) + '</div>' : ''}`;
   } else if (f.type === 'bool') {
     input = `
       <div class="toggle-wrap">
