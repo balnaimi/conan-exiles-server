@@ -39,7 +39,7 @@ body {
    ============================================ */
 .hero {
   position: relative;
-  min-height: 70vh;
+  min-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,47 +84,63 @@ body {
 .hero-tagline {
   font-size: 1.1rem;
   color: var(--text);
-  margin-bottom: 2rem;
   font-weight: 500;
-}
-.hero-cta {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.cta-btn {
-  padding: 0.9rem 2rem;
-  border: 2px solid var(--accent);
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--bg);
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 15px var(--accent-glow);
-}
-.cta-btn:hover {
-  background: #d4b45a;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 25px var(--accent-glow);
-}
-.cta-btn.secondary {
-  background: transparent;
-  color: var(--accent);
-}
-.cta-btn.secondary:hover {
-  background: var(--accent);
-  color: var(--bg);
 }
 
 /* ============================================
-   FEATURES SECTION
+   TAB BAR
+   ============================================ */
+.tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--card);
+  border-bottom: 2px solid var(--border);
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tab-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+.tab-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+/* ============================================
+   TAB CONTENT
+   ============================================ */
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+
+/* ============================================
+   FEATURES SECTION (for About tab)
    ============================================ */
 .features {
   padding: 5rem 2rem;
@@ -643,6 +659,7 @@ body {
   .hero-subtitle { font-size: 1.2rem; }
   .output-actions { flex-direction: column; }
   .features-grid { grid-template-columns: 1fr; }
+  .tab-bar { justify-content: flex-start; flex-wrap: nowrap; }
 }
 </style>
 </head>
@@ -658,213 +675,345 @@ body {
     <div class="hero-logo">⚔️ Conan Exiles<br>Dedicated Server</div>
     <div class="hero-subtitle">Docker Edition</div>
     <div class="hero-tagline">The most comprehensive Docker image — 236 configurable settings</div>
-    <div class="hero-cta">
-      <a href="#quick-start" class="cta-btn">Quick Start ↓</a>
-      <a href="#generator" class="cta-btn secondary">Config Generator ↓</a>
-    </div>
   </div>
 </section>
 
 <!-- ============================================
-     FEATURES SECTION
+     TAB BAR
      ============================================ -->
-<section class="features">
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">🚀</div>
-      <div class="feature-title">Auto-Download</div>
-      <div class="feature-desc">Game files download automatically on first run (~4.5GB). No manual setup needed.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔄</div>
-      <div class="feature-title">Auto-Update</div>
-      <div class="feature-desc">Server updates every restart. Always running the latest version.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">⚙️</div>
-      <div class="feature-title">236 Settings</div>
-      <div class="feature-desc">Every setting configurable via .env file. Full control over your server.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎮</div>
-      <div class="feature-title">All Game Modes</div>
-      <div class="feature-desc">PvE / PvP / PvE-C with per-day schedules. Configure your perfect playstyle.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🖥️</div>
-      <div class="feature-title">RCON Ready</div>
-      <div class="feature-desc">Built-in remote console support. Manage your server from anywhere.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📦</div>
-      <div class="feature-title">Pre-built Image</div>
-      <div class="feature-desc">Just pull and run, no build needed. Up and running in minutes.</div>
-    </div>
-  </div>
-</section>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('quick-start')">🚀 Quick Start</button>
+  <button class="tab-btn" onclick="switchTab('config-generator')">⚙️ Config Generator</button>
+  <button class="tab-btn" onclick="switchTab('server-management')">🛠️ Server Management</button>
+  <button class="tab-btn" onclick="switchTab('about')">📖 About</button>
+</div>
 
 <!-- ============================================
-     QUICK START SECTION
+     TAB 1: QUICK START
      ============================================ -->
-<section class="quick-start" id="quick-start">
-  <div class="qs-container">
-    <h2 class="qs-title">Quick Start</h2>
-    
-    <div class="qs-option">
-      <div class="qs-option-title">Option A — Default Settings (fastest)</div>
-      <div class="qs-option-desc">Get your server running in 2 commands. Perfect for testing or getting started quickly.</div>
-      <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
+<div id="tab-quick-start" class="tab-content active">
+  <section class="quick-start">
+    <div class="qs-container">
+      <h2 class="qs-title">Quick Start</h2>
+      
+      <div class="qs-option">
+        <div class="qs-option-title">Option A — Default Settings (fastest)</div>
+        <div class="qs-option-desc">Get your server running in 2 commands. Perfect for testing or getting started quickly.</div>
+        <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
 docker compose up -d</pre>
-      <div class="info-note">That's it! Server runs with default PvE settings. First run downloads ~4.5GB.</div>
-    </div>
+        <div class="info-note">That's it! Server runs with default PvE settings. First run downloads ~4.5GB and takes 10-30 minutes.</div>
+      </div>
 
-    <div class="qs-option">
-      <div class="qs-option-title">Option B — Custom Settings</div>
-      <div class="qs-option-desc">Download the .env example file and customize it to your liking.</div>
-      <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
+      <div class="qs-option">
+        <div class="qs-option-title">Option B — Custom Settings</div>
+        <div class="qs-option-desc">Download the .env example file and customize it to your liking.</div>
+        <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
-nano .env  <span class="comment"># or use the Config Generator below</span>
+nano .env  <span class="comment"># or use the Config Generator</span>
 docker compose up -d</pre>
-    </div>
+      </div>
 
-    <div class="qs-option">
-      <div class="qs-option-title">Option C — Use Config Generator</div>
-      <div class="qs-option-desc">Use the visual config generator below to create your .env file, then paste it into your server directory.</div>
+      <div class="qs-option">
+        <div class="qs-option-title">Option C — Use Config Generator</div>
+        <div class="qs-option-desc">Use the visual config generator (⚙️ Config Generator tab) to create your .env file, then paste it into your server directory.</div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+  <!-- PORTS SECTION -->
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Network Ports</h2>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Port</th>
+              <th>Protocol</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>7777</strong></td>
+              <td>UDP</td>
+              <td>Game port</td>
+            </tr>
+            <tr>
+              <td><strong>7778</strong></td>
+              <td>UDP</td>
+              <td>Game port (raw)</td>
+            </tr>
+            <tr>
+              <td><strong>27015</strong></td>
+              <td>UDP</td>
+              <td>Steam query</td>
+            </tr>
+            <tr>
+              <td><strong>25575</strong></td>
+              <td>TCP</td>
+              <td>RCON (if enabled)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-note">Make sure these ports are open in your firewall.</div>
+    </div>
+  </section>
+
+  <!-- CONNECTING SECTION -->
+  <section class="info-section" style="background: var(--bg);">
+    <div class="info-container">
+      <h2 class="info-title">Connecting to Your Server</h2>
+      <div class="info-note">
+        <strong>How to connect:</strong><br>
+        Use <strong>Direct Connect</strong> in Conan Exiles → Enter your server IP and port 7777 (IP only, no hostname)
+      </div>
+      <div class="info-warning">
+        <strong>⚠️ Important:</strong> Conan Exiles does not support hostnames — you must use an IP address.
+      </div>
+      <div class="info-note" style="margin-top: 1.5rem;">
+        <strong>⏱️ First Run:</strong> The server downloads ~4.5GB of game files and sets up the database. This takes <strong>10-30 minutes</strong> on first start. Be patient!
+      </div>
+    </div>
+  </section>
+</div>
 
 <!-- ============================================
-     PORTS SECTION
+     TAB 2: CONFIG GENERATOR
      ============================================ -->
-<section class="info-section">
-  <div class="info-container">
-    <h2 class="info-title">Network Ports</h2>
-    <div class="ports-table">
-      <table>
-        <thead>
-          <tr>
-            <th>Port</th>
-            <th>Protocol</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>7777</strong></td>
-            <td>UDP</td>
-            <td>Game port</td>
-          </tr>
-          <tr>
-            <td><strong>7778</strong></td>
-            <td>UDP</td>
-            <td>Game port (raw)</td>
-          </tr>
-          <tr>
-            <td><strong>27015</strong></td>
-            <td>UDP</td>
-            <td>Steam query</td>
-          </tr>
-          <tr>
-            <td><strong>25575</strong></td>
-            <td>TCP</td>
-            <td>RCON (if enabled)</td>
-          </tr>
-        </tbody>
-      </table>
+<div id="tab-config-generator" class="tab-content">
+  <section class="config-generator">
+    <h2 class="config-title">⚙️ Configuration Generator</h2>
+    <p class="config-subtitle">Configure all 236 server settings and generate a ready-to-use .env file</p>
+
+    <div class="container">
+      <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
+        💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.
+      </div>
+      <div class="stats">
+        <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
+        <div class="stat">Changed: <strong id="changedCount">0</strong></div>
+        <div class="stat">Sections: <strong id="sectionCount">0</strong></div>
+      </div>
+
+      <div id="sections"></div>
+
+      <div class="output-section">
+        <h2>📄 Generated .env</h2>
+        <div class="output-actions">
+          <button class="btn btn-primary" onclick="copyOutput()">📋 Copy to Clipboard</button>
+          <button class="btn" onclick="downloadEnv()">⬇️ Download .env</button>
+          <button class="btn" onclick="downloadEnvExample()">📝 Download .env.example</button>
+          <button class="btn btn-reset" onclick="resetAll()">🔄 Reset All</button>
+        </div>
+        <div class="output-toggle">
+          <button class="active" onclick="setOutputMode('changed', this)">Changed Only</button>
+          <button onclick="setOutputMode('all', this)">All Settings</button>
+        </div>
+        <div id="output"></div>
+      </div>
     </div>
-    <div class="info-note">Make sure these ports are open in your firewall.</div>
-  </div>
-</section>
+  </section>
+</div>
 
 <!-- ============================================
-     CONNECTING SECTION
+     TAB 3: SERVER MANAGEMENT
      ============================================ -->
-<section class="info-section" style="background: var(--bg);">
-  <div class="info-container">
-    <h2 class="info-title">Connecting to Your Server</h2>
-    <div class="info-note">
-      <strong>How to connect:</strong><br>
-      Use <strong>Direct Connect</strong> in Conan Exiles → Enter your server IP and port 7777
-    </div>
-    <div class="info-warning">
-      <strong>⚠️ Important:</strong> Conan Exiles does not support hostnames — you must use an IP address.
-    </div>
-  </div>
-</section>
+<div id="tab-server-management" class="tab-content">
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Server Management</h2>
 
-<!-- ============================================
-     MANAGEMENT SECTION
-     ============================================ -->
-<section class="info-section">
-  <div class="info-container">
-    <h2 class="info-title">Server Management</h2>
-
-    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">Basic Commands</h3>
-    <pre class="code-block">docker compose up -d      <span class="comment"># Start server</span>
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.2rem;">Basic Commands</h3>
+      <pre class="code-block">docker compose up -d      <span class="comment"># Start server</span>
 docker compose down       <span class="comment"># Stop server</span>
 docker compose restart    <span class="comment"># Restart server</span>
 docker compose logs -f    <span class="comment"># View logs (live)</span>
 docker compose logs --tail 50  <span class="comment"># Last 50 log lines</span></pre>
 
-    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">🔄 Update the Docker Image</h3>
-    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">When a new version of the Docker image is released (new Wine, scripts, or settings), update with:</p>
-    <pre class="code-block">docker compose pull          <span class="comment"># Download latest image</span>
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Updating</h3>
+      
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Game Auto-Update</h4>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">The game files (Conan Exiles server) are automatically updated via SteamCMD on every server restart. No manual action needed!</p>
+      
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Docker Image Update</h4>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">When a new version of the Docker image is released (new Wine, scripts, or settings), update with:</p>
+      <pre class="code-block">docker compose pull          <span class="comment"># Download latest image</span>
 docker compose down          <span class="comment"># Stop current server</span>
 docker compose up -d         <span class="comment"># Start with new image</span></pre>
-    <div class="info-note" style="margin-top:0.75rem;">Your game data and saves are stored in Docker volumes — they are preserved during image updates. The game files themselves (Conan Exiles server) are also auto-updated via SteamCMD on every restart.</div>
+      <div class="info-note" style="margin-top:0.75rem;">Your game data and saves are stored in Docker volumes — they are preserved during image updates.</div>
 
-    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">🗑️ Full Reset (Start Fresh)</h3>
-    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Want to wipe everything and start from scratch? This removes all game files, databases, and player data:</p>
-    <pre class="code-block">docker compose down -v       <span class="comment"># Stop + delete ALL volumes</span>
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Backup Your Data</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
+      <pre class="code-block">docker compose down
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
+docker compose up -d</pre>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>⚠️ Volume Name:</strong> The volume name depends on your folder name. If your folder is named <code>my-server</code>, the volume will be <code>my-server_config-data</code>.<br>
+        Use <code>docker volume ls</code> to see your actual volume names.
+      </div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">♻️ Restore From Backup</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">To restore from a previous backup (replace <code>YYYY-MM-DD</code> with your backup date):</p>
+      <pre class="code-block">docker compose down
+docker run --rm \
+  -v conan-server_config-data:/data \
+  alpine sh -c "rm -rf /data/*"
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/conan-saves-YYYY-MM-DD.tar.gz -C /
+docker compose up -d</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">
+        <strong>⚠️ Warning:</strong> This <strong>deletes all current data</strong> in the volume before restoring. Make sure you have the correct backup file!
+      </div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🗑️ Full Reset (Start Fresh)</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Want to wipe everything and start from scratch? This removes all game files, databases, and player data:</p>
+      <pre class="code-block">docker compose down -v       <span class="comment"># Stop + delete ALL volumes</span>
 docker compose up -d         <span class="comment"># Fresh start (re-downloads ~4.5GB)</span></pre>
-    <div class="info-note" style="margin-top:0.75rem;border-color:var(--danger);color:var(--danger);">⚠️ Warning: <code>-v</code> permanently deletes all game data, player saves, and buildings. There is no undo. Back up your data first if needed.</div>
-
-    <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">💾 Backup Your Data</h3>
-    <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data:</p>
-    <pre class="code-block">docker compose down          <span class="comment"># Stop the server first</span>
-docker run --rm -v conan-server_config-data:/data -v $(pwd):/backup alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data  <span class="comment"># Backup saves</span>
-docker compose up -d         <span class="comment"># Start again</span></pre>
-  </div>
-</section>
+      <div class="info-warning" style="margin-top:0.75rem;border-color:var(--danger);color:var(--danger);">
+        <strong>⚠️ DANGER:</strong> The <code>-v</code> flag permanently deletes <strong>all game data, player saves, and buildings</strong>. There is no undo. Back up your data first if needed!
+      </div>
+    </div>
+  </section>
+</div>
 
 <!-- ============================================
-     CONFIG GENERATOR
+     TAB 4: ABOUT
      ============================================ -->
-<section class="config-generator" id="generator">
-  <h2 class="config-title">⚙️ Configuration Generator</h2>
-  <p class="config-subtitle">Configure all 236 server settings and generate a ready-to-use .env file</p>
-
-<div class="container">
-  <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
-    💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.
-  </div>
-  <div class="stats">
-    <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
-    <div class="stat">Changed: <strong id="changedCount">0</strong></div>
-    <div class="stat">Sections: <strong id="sectionCount">0</strong></div>
-  </div>
-
-  <div id="sections"></div>
-
-  <div class="output-section">
-    <h2>📄 Generated .env</h2>
-    <div class="output-actions">
-      <button class="btn btn-primary" onclick="copyOutput()">📋 Copy to Clipboard</button>
-      <button class="btn" onclick="downloadEnv()">⬇️ Download .env</button>
-      <button class="btn" onclick="downloadEnvExample()">📝 Download .env.example</button>
-      <button class="btn btn-reset" onclick="resetAll()">🔄 Reset All</button>
+<div id="tab-about" class="tab-content">
+  <section class="features">
+    <h2 style="font-size:2.5rem;color:var(--accent);text-align:center;margin-bottom:3rem;text-shadow:0 0 20px var(--accent-glow);">Features</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-title">Auto-Download</div>
+        <div class="feature-desc">Game files download automatically on first run (~4.5GB). No manual setup needed.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Auto-Update</div>
+        <div class="feature-desc">Server updates every restart. Always running the latest version.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">236 Settings</div>
+        <div class="feature-desc">Every setting configurable via .env file. Full control over your server.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <div class="feature-title">All Game Modes</div>
+        <div class="feature-desc">PvE / PvP / PvE-C with per-day schedules. Configure your perfect playstyle.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <div class="feature-title">RCON Ready</div>
+        <div class="feature-desc">Built-in remote console support. Manage your server from anywhere.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Pre-built Image</div>
+        <div class="feature-desc">Just pull and run, no build needed. Up and running in minutes.</div>
+      </div>
     </div>
-    <div class="output-toggle">
-      <button class="active" onclick="setOutputMode('changed', this)">Changed Only</button>
-      <button onclick="setOutputMode('all', this)">All Settings</button>
+  </section>
+
+  <section class="info-section" style="background:var(--bg);">
+    <div class="info-container">
+      <h2 class="info-title">Tech Stack</h2>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Technology</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Base Image</strong></td>
+              <td>Ubuntu 22.04</td>
+            </tr>
+            <tr>
+              <td><strong>Wine</strong></td>
+              <td>Wine 9.0 (Staging)</td>
+            </tr>
+            <tr>
+              <td><strong>Game Updater</strong></td>
+              <td>SteamCMD</td>
+            </tr>
+            <tr>
+              <td><strong>Container Runtime</strong></td>
+              <td>Docker / Docker Compose</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div id="output"></div>
-  </div>
+  </section>
+
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Files & Structure</h2>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>docker-compose.yml</strong></td>
+              <td>Container orchestration (required)</td>
+            </tr>
+            <tr>
+              <td><strong>.env</strong></td>
+              <td>Your custom server settings (optional)</td>
+            </tr>
+            <tr>
+              <td><strong>.env.example</strong></td>
+              <td>Template with all 236 settings documented</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section" style="background:var(--bg);">
+    <div class="info-container">
+      <h2 class="info-title">Links</h2>
+      <div class="info-note">
+        <strong>GitHub Repository:</strong><br>
+        <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" style="color:var(--accent);text-decoration:none;font-size:1rem;">
+          https://github.com/balnaimi/conan-exiles-server
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Building from Source</h2>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">
+        If you prefer to build the Docker image yourself instead of using the pre-built one:
+      </p>
+      <pre class="code-block">git clone https://github.com/balnaimi/conan-exiles-server.git
+cd conan-exiles-server
+docker build -t conan-exiles-server .
+<span class="comment"># Then update docker-compose.yml to use your local image</span></pre>
+    </div>
+  </section>
 </div>
-</section>
 
 <!-- ============================================
      FOOTER
@@ -877,6 +1026,19 @@ docker compose up -d         <span class="comment"># Start again</span></pre>
 <div class="toast" id="toast"></div>
 
 <script>
+// ============================================
+// TAB SWITCHING
+// ============================================
+function switchTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  
+  // Show selected tab
+  document.getElementById('tab-' + tabName).classList.add('active');
+  event.target.classList.add('active');
+}
+
 // ============================================
 // CONFIG DEFINITION
 // ============================================
