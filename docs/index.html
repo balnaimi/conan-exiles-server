@@ -491,6 +491,14 @@ const CONFIG = [
       { key: 'STRUCTURE_HEALTH', label: 'Structure Health', desc: '2.0 = structures have double HP', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'BUILDING_DAMAGE', label: 'Building Damage', desc: 'How much damage buildings take from attacks', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'CAN_DAMAGE_OWN_STRUCTURES', label: 'Damage Own Buildings', desc: 'Can players damage their own structures', type: 'bool', default: false },
+      { key: 'DYNAMIC_BUILDING_DAMAGE', label: 'Dynamic Building Damage', desc: 'Buildings only take damage at certain times', type: 'bool', default: false },
+      { key: 'DYNAMIC_BUILDING_DAMAGE_PERIOD', label: 'Dynamic Damage Period', desc: 'Check interval for dynamic building damage (default: 1800 = 30 min)', type: 'number', default: 1800 },
+      { key: 'CLAMP_BUILDING_DAMAGE', label: 'Clamp Building Damage', desc: 'Limit building damage to resource cost', type: 'bool', default: true },
+      { key: 'PLAYER_KNOCKBACK', label: 'Player Knockback', desc: 'How far players get knocked back by hits', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'NPC_KNOCKBACK', label: 'NPC Knockback', desc: 'How far NPCs get knocked back by hits', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'CONSCIOUSNESS_DAMAGE', label: 'Knockout Damage', desc: 'Damage needed to knock someone unconscious', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PVP_MOUNT_ENDURANCE_DAMAGE', label: 'PvP Mount Damage', desc: 'Mount endurance damage in PvP', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'COMBAT_MODE_MODIFIER', label: 'Combat Mode', desc: 'Combat mode modifier (0 = default)', type: 'number', default: 0 },
       { key: 'ENABLE_TARGET_LOCK', label: 'Target Lock', desc: 'Enable target lock in combat', type: 'bool', default: true },
       { key: 'ENABLE_FATALITIES', label: 'Finishing Moves', desc: 'Enable fatality/finishing moves', type: 'bool', default: true },
     ]
@@ -527,6 +535,8 @@ const CONFIG = [
       { key: 'CRAFTING_COST', label: 'Crafting Cost', desc: '0.5 = half materials needed', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'FUEL_BURN_TIME', label: 'Fuel Burn Time', desc: '2.0 = fuel lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'ITEM_CONVERSION', label: 'Item Conversion Speed', desc: 'Speed of tanning, smelting, drying etc. in crafting stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'ITEM_REPAIR_MIN_DURABILITY', label: 'Min Repair Durability', desc: 'Minimum durability after repair (0.1 = 10%)', type: 'range', default: 0.1, min: 0.0, max: 1.0, step: 0.05 },
+      { key: 'ITEM_REPAIR_PENALTY_CHANCE', label: 'Repair Penalty Chance', desc: 'Chance of durability loss on repair (1.0 = always)', type: 'range', default: 1.0, min: 0.0, max: 1.0, step: 0.1 },
     ]
   },
   {
@@ -539,6 +549,13 @@ const CONFIG = [
       { key: 'HEALTH_REGEN_SPEED', label: 'Health Regen', desc: '2.0 = heal twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'STAMINA_REGEN_SPEED', label: 'Stamina Regen', desc: 'How fast stamina regenerates', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'PLAYER_ENCUMBRANCE', label: 'Carry Weight', desc: '2.0 = carry twice as much', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'PLAYER_ENCUMBRANCE_PENALTY', label: 'Encumbrance Penalty', desc: 'Speed reduction when overloaded', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_REGEN_TIME', label: 'Stamina Regen Time', desc: 'Seconds to regenerate full stamina (default: 3.75)', type: 'number', default: 3.75 },
+      { key: 'STAMINA_EXHAUSTION_TIME', label: 'Exhaustion Recovery', desc: 'Seconds to recover from stamina exhaustion (default: 3.75)', type: 'number', default: 3.75 },
+      { key: 'STAMINA_STATIC_REGEN', label: 'Regen While Standing', desc: 'Stamina regen rate while standing still', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_MOVING_REGEN', label: 'Regen While Moving', desc: 'Stamina regen rate while moving', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_CONSUME_PAUSE', label: 'Regen Pause After Use', desc: 'Seconds before stamina starts regenerating after use (default: 1.3)', type: 'number', default: 1.3 },
+      { key: 'STAMINA_EXHAUSTION_PAUSE', label: 'Regen Pause After Exhaustion', desc: 'Seconds before regen after full exhaustion (default: 2.75)', type: 'number', default: 2.75 },
     ]
   },
   {
@@ -552,6 +569,15 @@ const CONFIG = [
       { key: 'ENABLE_FOLLOWER_DBNO', label: 'Follower Down-But-Not-Out', desc: 'Followers get knocked down instead of killed', type: 'bool', default: true },
       { key: 'ENABLE_FOLLOWER_RESCUE', label: 'Follower Rescue', desc: 'Can rescue stuck followers on your land', type: 'bool', default: true },
       { key: 'FOLLOWER_RESCUE_COOLDOWN', label: 'Rescue Cooldown', desc: 'Wait time between follower rescues (default: 3600 = 1 hour)', type: 'number', default: 3600 },
+      { key: 'FOLLOWER_RESCUE_EXCLUSION', label: 'Rescue in Exclusion Zones', desc: 'Can rescue followers in build exclusion zones', type: 'bool', default: false },
+      { key: 'DAMAGE_COOLDOWN_RESCUE', label: 'Combat Cooldown for Rescue', desc: 'Must be out of combat this long before rescue (default: 600 = 10 min)', type: 'number', default: 600 },
+      { key: 'THRALL_EXCLUSION_RADIUS', label: 'Thrall Placement Radius', desc: 'Min distance between placed thralls (game units)', type: 'number', default: 100 },
+      { key: 'THRALL_MIN_DISTANCE', label: 'Thrall Wander Distance', desc: 'Max distance thralls wander from home (game units)', type: 'number', default: 5000 },
+      { key: 'THRALL_TELEPORT_COOLDOWN', label: 'Thrall Teleport Cooldown', desc: 'Seconds before thrall can teleport to you again', type: 'number', default: 10 },
+      { key: 'MINION_OVERPOP_CLEANUP', label: 'Overpopulation Cleanup', desc: 'Minutes before excess followers are removed', type: 'number', default: 60 },
+      { key: 'MINION_OVERPOP_ALLOWED', label: 'Overpopulation Buffer', desc: 'How many followers over the limit are tolerated', type: 'number', default: 10 },
+      { key: 'THRALL_CORRUPTION_REMOVAL', label: 'Thrall Corruption Removal', desc: 'Speed of removing corruption from thralls', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_CORRUPTION_SORCERY', label: 'Sorcery Corruption', desc: 'Corruption gain from using sorcery', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'ANIMAL_PEN_CRAFT_TIME', label: 'Animal Taming Speed', desc: '0.5 = animals tame twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'FEED_BOX_RANGE', label: 'Feed Box Range', desc: '2.0 = covers twice the area', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'PLAYER_CORRUPTION_GAIN', label: 'Corruption Gain', desc: '0.5 = gain corruption slower', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
@@ -567,6 +593,16 @@ const CONFIG = [
       { key: 'DISABLE_BUILDING_DECAY', label: 'Disable Building Decay', desc: 'Buildings never decay', type: 'bool', default: true },
       { key: 'MAX_BUILDING_DECAY_TIME', label: 'Max Decay Time', desc: 'Max time before buildings decay (default: 1296000 = 15 days)', type: 'number', default: 1296000 },
       { key: 'DISABLE_THRALL_DECAY', label: 'Disable Thrall Decay', desc: 'Thralls/followers never decay', type: 'bool', default: true },
+      { key: 'THRALL_DECAY_TIME', label: 'Thrall Decay Time', desc: 'Time before thralls decay (default: 1296000 = 15 days)', type: 'number', default: 1296000 },
+      { key: 'BUILDING_DECAY_PER_SCORE', label: 'Decay Per Score', desc: 'Decay time added per building score point (seconds)', type: 'number', default: 5400 },
+      { key: 'BUILDING_DECAY_MULTIPLIER', label: 'Decay Speed', desc: 'Building decay speed multiplier', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'DECAY_CLEANUP_MULTIPLIER', label: 'Decay Cleanup Speed', desc: 'How fast decayed buildings are cleaned up', type: 'range', default: 2.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'DECAY_BONUS_TIME_RATE', label: 'Decay Bonus Time', desc: 'Bonus time added to decay timer (seconds)', type: 'number', default: 600 },
+      { key: 'DECAY_SHOW_SCORE', label: 'Show Building Score', desc: 'Show building decay score to players', type: 'bool', default: false },
+      { key: 'BUILDING_VALIDATION', label: 'Building Validation', desc: 'Validate building placement rules', type: 'bool', default: false },
+      { key: 'BUILDING_PRELOAD_RADIUS', label: 'Preload Radius', desc: 'How far to preload building chunks (game units)', type: 'number', default: 80 },
+      { key: 'DISABLE_LANDCLAIM_NOTIFICATIONS', label: 'Disable Landclaim Alerts', desc: 'Hide notifications when entering claimed land', type: 'bool', default: true },
+      { key: 'CAMPS_IGNORE_LANDCLAIM', label: 'NPC Camps Ignore Claims', desc: 'NPC camps not affected by player land claims', type: 'bool', default: true },
       { key: 'POI_PROTECTION', label: 'POI Protection', desc: 'Protect Points of Interest from building', type: 'bool', default: false },
     ]
   },
@@ -578,6 +614,9 @@ const CONFIG = [
       { key: 'NPC_MAX_SPAWN_CAP', label: 'NPC Spawn Cap', desc: 'Maximum number of NPCs that can exist at once', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'MAX_AGGRO_RANGE', label: 'Aggro Range', desc: 'How far away NPCs will notice and attack you (in game units)', type: 'number', default: 9000 },
       { key: 'AMBIENT_LIFE', label: 'Ambient Wildlife', desc: 'Show ambient wildlife like rabbits, deer, birds', type: 'bool', default: true },
+      { key: 'NPC_MIND_READING', label: 'NPC Mind Reading', desc: 'NPCs react to player actions (0 = off)', type: 'number', default: 0 },
+      { key: 'DOGS_SPAWN_WITH_DOGS', label: 'Dogs of the Desert', desc: 'Dogs of the Desert faction spawn with dogs', type: 'bool', default: false },
+      { key: 'CROSS_DESERT_ONCE', label: 'Cross Desert Once', desc: 'Players can only cross the desert boundary once', type: 'bool', default: true },
     ]
   },
   {
@@ -588,6 +627,11 @@ const CONFIG = [
       { key: 'AVATAR_SUMMON_TIME', label: 'Summon Time', desc: 'Channeling time to summon a god (default: 60 = 1 min)', type: 'number', default: 60 },
       { key: 'AVATAR_DOME_DURATION', label: 'Dome Duration', desc: 'How long the god protection dome lasts', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'AVATAR_DOME_DAMAGE', label: 'Dome Damage', desc: 'How much damage the god protection dome absorbs', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'RESTRICT_AVATAR_TIME', label: 'Restrict Summoning Time', desc: 'Only allow god summoning at certain times', type: 'bool', default: false },
+      { key: 'AVATAR_WEEKDAY_START', label: 'Weekday Start Hour', desc: 'When summoning is allowed on weekdays (0-24)', type: 'number', default: 0 },
+      { key: 'AVATAR_WEEKDAY_END', label: 'Weekday End Hour', desc: 'When summoning ends on weekdays (0-24)', type: 'number', default: 0 },
+      { key: 'AVATAR_WEEKEND_START', label: 'Weekend Start Hour', desc: 'When summoning is allowed on weekends (0-24)', type: 'number', default: 0 },
+      { key: 'AVATAR_WEEKEND_END', label: 'Weekend End Hour', desc: 'When summoning ends on weekends (0-24)', type: 'number', default: 0 },
     ]
   },
   {
@@ -605,6 +649,17 @@ const CONFIG = [
       { key: 'ENABLE_CLAN_MARKERS', label: 'Clan Markers', desc: 'Show clan members on map', type: 'bool', default: true },
       { key: 'HEALTHBAR_DISTANCE', label: 'Healthbar Distance', desc: 'Distance at which enemy healthbars are visible (in game units)', type: 'number', default: 15000 },
       { key: 'EVENT_SYSTEM', label: 'Event System', desc: 'Enable purges and events', type: 'bool', default: true },
+      { key: 'DISABLE_CHAT_FORMATTING', label: 'Disable Chat Formatting', desc: 'Disable colors and formatting in chat', type: 'bool', default: false },
+      { key: 'EVENT_LOG_PVP_PRIVACY', label: 'PvP Event Log Privacy', desc: 'Who caused PvP damage (0=show all, 1=partial, 2=hidden)', type: 'select', default: '2', options: [
+        { value: '0', label: '0 — Show attacker name' },
+        { value: '1', label: '1 — Partial (clan only)' },
+        { value: '2', label: '2 — Hidden' }
+      ]},
+      { key: 'EVENT_LOG_PVE_PRIVACY', label: 'PvE Event Log Privacy', desc: 'Who caused PvE damage (0=show all, 1=partial, 2=hidden)', type: 'select', default: '1', options: [
+        { value: '0', label: '0 — Show attacker name' },
+        { value: '1', label: '1 — Partial (clan only)' },
+        { value: '2', label: '2 — Hidden' }
+      ]},
     ]
   },
   {
@@ -618,6 +673,56 @@ const CONFIG = [
       { key: 'REGION_ALLOW_NORTH_AMERICA', label: 'Allow North America', desc: '', type: 'bool', default: true },
       { key: 'REGION_ALLOW_OCEANIA', label: 'Allow Oceania', desc: '', type: 'bool', default: true },
       { key: 'REGION_ALLOW_SOUTH_AMERICA', label: 'Allow South America', desc: '', type: 'bool', default: true },
+      { key: 'REGION_BLOCK_LIST', label: 'Region Block List', desc: 'Comma-separated list of blocked regions', type: 'text', default: '' },
+    ]
+  },
+  {
+    id: 'pvpschedule', icon: '⏰', title: 'PvP Schedule (PvE-C / PvP)',
+    fields: [
+      { key: 'RESTRICT_PVP_TIME', label: 'Restrict PvP Hours', desc: 'Only allow PvP at specific times (for PvE-C)', type: 'bool', default: false },
+      { key: 'PVP_TIME_MON_START', label: 'Monday Start', desc: 'PvP starts (0-24 hour)', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_MON_END', label: 'Monday End', desc: 'PvP ends (0-24 hour)', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_TUE_START', label: 'Tuesday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_TUE_END', label: 'Tuesday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_WED_START', label: 'Wednesday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_WED_END', label: 'Wednesday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_THU_START', label: 'Thursday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_THU_END', label: 'Thursday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_FRI_START', label: 'Friday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_FRI_END', label: 'Friday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SAT_START', label: 'Saturday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SAT_END', label: 'Saturday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SUN_START', label: 'Sunday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SUN_END', label: 'Sunday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'RESTRICT_PVP_BUILDING_DAMAGE_TIME', label: 'Restrict Building Damage Hours', desc: 'Only allow building damage at specific times', type: 'bool', default: false },
+      { key: 'PVP_BUILD_MON_START', label: 'Building Mon Start', desc: 'Building damage starts (0-24)', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_MON_END', label: 'Building Mon End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_TUE_START', label: 'Building Tue Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_TUE_END', label: 'Building Tue End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_WED_START', label: 'Building Wed Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_WED_END', label: 'Building Wed End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_THU_START', label: 'Building Thu Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_THU_END', label: 'Building Thu End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_FRI_START', label: 'Building Fri Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_FRI_END', label: 'Building Fri End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SAT_START', label: 'Building Sat Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SAT_END', label: 'Building Sat End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SUN_START', label: 'Building Sun Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SUN_END', label: 'Building Sun End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'DISABLE_BUILDING_DURING_PVP', label: 'No Building During PvP', desc: 'Prevent building during PvP hours', type: 'bool', default: false },
+    ]
+  },
+  {
+    id: 'advanced', icon: '🔧', title: 'Advanced / Anti-Exploit',
+    fields: [
+      { key: 'VAC_ENABLED', label: 'VAC Anti-Cheat', desc: 'Enable Valve Anti-Cheat', type: 'bool', default: false },
+      { key: 'VALIDATE_PLAYER_STATS', label: 'Validate Player Stats', desc: 'Server validates player stats for cheating', type: 'bool', default: false },
+      { key: 'MAX_CLIENT_RATE', label: 'Max Client Network Rate', desc: 'Maximum network rate per client', type: 'number', default: 15000 },
+      { key: 'RCON_MAX_KARMA', label: 'RCON Max Karma', desc: 'Max RCON karma before throttling', type: 'number', default: 60 },
+      { key: 'SERVER_MOD_LIST', label: 'Server Mod List', desc: 'Comma-separated Steam Workshop mod IDs', type: 'text', default: '' },
+      { key: 'ALLOWED_TIME_UNDERMESH', label: 'Undermesh Time Limit', desc: 'Seconds allowed under the mesh before action (-1 = disabled)', type: 'number', default: -1 },
+      { key: 'ALLOWED_DISTANCE_UNDERMESH', label: 'Undermesh Distance²', desc: 'Squared distance threshold for undermesh detection', type: 'number', default: 490000 },
+      { key: 'MAX_DECAY_AUTO_DEMOLISH', label: 'Auto-Demolish Time', desc: 'Time before abandoned buildings auto-demolish (default: 604800 = 7 days)', type: 'number', default: 604800 },
     ]
   },
 ];
