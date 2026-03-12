@@ -210,6 +210,7 @@ body {
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 0.9rem;
   color: var(--text);
+  white-space: pre;
   overflow-x: auto;
   line-height: 1.7;
   margin-top: 1rem;
@@ -712,20 +713,20 @@ body {
     <div class="qs-option">
       <div class="qs-option-title">Option A — Default Settings (fastest)</div>
       <div class="qs-option-desc">Get your server running in 2 commands. Perfect for testing or getting started quickly.</div>
-      <div class="code-block">mkdir conan-server && cd conan-server
+      <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-docker compose up -d</div>
+docker compose up -d</pre>
       <div class="info-note">That's it! Server runs with default PvE settings. First run downloads ~4.5GB.</div>
     </div>
 
     <div class="qs-option">
       <div class="qs-option-title">Option B — Custom Settings</div>
       <div class="qs-option-desc">Download the .env example file and customize it to your liking.</div>
-      <div class="code-block">mkdir conan-server && cd conan-server
+      <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
 nano .env  <span class="comment"># or use the Config Generator below</span>
-docker compose up -d</div>
+docker compose up -d</pre>
     </div>
 
     <div class="qs-option">
@@ -800,10 +801,10 @@ docker compose up -d</div>
 <section class="info-section">
   <div class="info-container">
     <h2 class="info-title">Server Management</h2>
-    <div class="code-block">docker compose up -d      <span class="comment"># Start server</span>
+    <pre class="code-block">docker compose up -d      <span class="comment"># Start server</span>
 docker compose down       <span class="comment"># Stop server</span>
 docker compose restart    <span class="comment"># Restart server</span>
-docker compose logs -f    <span class="comment"># View logs (live)</span></div>
+docker compose logs -f    <span class="comment"># View logs (live)</span></pre>
   </div>
 </section>
 
