@@ -190,9 +190,9 @@ docker compose up -d          # Fresh start (re-downloads ~4.5GB)
 
 > ⚠️ **Warning:** `-v` permanently deletes all game data, player saves, and buildings. There is no undo. Back up first!
 
-### 💾 Backup Your Data
+### 💾 Backup
 
-Before major changes, back up your server:
+Before major changes, back up your server saves:
 
 ```bash
 docker compose down
@@ -202,6 +202,26 @@ docker run --rm \
   alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
 docker compose up -d
 ```
+
+### ♻️ Restore from Backup
+
+To restore from a previous backup (replace the date with your backup file):
+
+```bash
+docker compose down
+docker run --rm \
+  -v conan-server_config-data:/data \
+  alpine sh -c "rm -rf /data/*"
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/conan-saves-YYYY-MM-DD.tar.gz -C /
+docker compose up -d
+```
+
+> ⚠️ **Warning:** Restore deletes your current data first and replaces it with the backup.
+
+> 💡 **Tip:** Volume names depend on your folder name. Use `docker volume ls` to find yours.
 
 ---
 
