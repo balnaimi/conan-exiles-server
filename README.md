@@ -197,9 +197,9 @@ Before major changes, back up your server:
 ```bash
 docker compose down
 docker run --rm \
-  -v conan-server_conan-data:/data \
+  -v conan-server_config-data:/data \
   -v $(pwd):/backup \
-  alpine tar czf /backup/conan-backup-$(date +%F).tar.gz /data
+  alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
 docker compose up -d
 ```
 

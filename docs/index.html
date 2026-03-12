@@ -825,7 +825,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1rem;">💾 Backup Your Data</h3>
     <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data:</p>
     <pre class="code-block">docker compose down          <span class="comment"># Stop the server first</span>
-docker run --rm -v conan-server_conan-data:/data -v $(pwd):/backup alpine tar czf /backup/conan-backup-$(date +%F).tar.gz /data  <span class="comment"># Backup</span>
+docker run --rm -v conan-server_config-data:/data -v $(pwd):/backup alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data  <span class="comment"># Backup saves</span>
 docker compose up -d         <span class="comment"># Start again</span></pre>
   </div>
 </section>
