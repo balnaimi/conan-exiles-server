@@ -828,7 +828,21 @@ docker compose up -d</pre>
         </ul>
       </div>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
-        <strong style="color:var(--text);">Network:</strong> Stable internet with at least <strong>10 Mbps upload</strong> recommended. Lower upload speeds may cause lag for players.
+        <strong style="color:var(--text);">Network:</strong>
+        <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
+          <li>Stable internet with at least <strong>10 Mbps upload</strong> recommended</li>
+          <li>Lower upload speeds may cause rubber-banding and lag</li>
+          <li>Each connected player uses roughly <strong>30-60 KB/s</strong> of bandwidth</li>
+        </ul>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
+        <strong style="color:var(--text);">Good to know:</strong>
+        <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
+          <li>This image runs the Windows server through <strong>Wine</strong> on Linux — adds some CPU/RAM overhead vs native Windows</li>
+          <li>Game logic is <strong>single-threaded</strong> — fast single-core speed matters more than many cores</li>
+          <li>RAM usage grows as players build and explore — monitor with <code>docker stats</code></li>
+          <li><strong>No GPU required</strong> — the dedicated server is headless</li>
+        </ul>
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         💡 <strong>Tip:</strong> For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine. You don't need a monster machine!

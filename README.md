@@ -242,9 +242,18 @@ Based on [Funcom's official recommendations](https://www.conanexiles.com/):
 - Updates + temp space: ~5-10 GB headroom
 - **Total recommended: 35 GB minimum**
 
-**Network:** Stable internet with at least **10 Mbps upload** recommended.
+**Network:**
+- Stable internet with at least **10 Mbps upload** recommended
+- Lower upload speeds may cause rubber-banding and lag for players
+- Each connected player uses roughly **30-60 KB/s** of bandwidth
 
-> 💡 For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine.
+**Important notes:**
+- This image runs the **Windows** dedicated server through **Wine** on Linux — Wine adds some CPU/RAM overhead compared to running natively on Windows
+- The server is **single-threaded** for game logic — a fast single-core speed matters more than many cores
+- RAM usage grows over time as players build and explore — monitor with `docker stats`
+- No GPU required — the dedicated server is headless (no graphics)
+
+> 💡 For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine. No GPU needed!
 
 ---
 
