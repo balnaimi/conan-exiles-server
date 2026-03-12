@@ -284,6 +284,33 @@ docker compose -f docker-compose.build.yml up -d
 
 ---
 
-## 📄 License
+## ⚖️ Legal
 
-MIT
+### Disclaimer
+
+This project is a **community-made Docker wrapper** for hosting a Conan Exiles dedicated server. It is **not affiliated with, endorsed by, or connected to** Funcom or Valve Corporation.
+
+- **Conan Exiles** is a trademark of [Funcom](https://www.funcom.com/). Official game website: [conanexiles.com](https://www.conanexiles.com/)
+- **Steam** and **SteamCMD** are trademarks of [Valve Corporation](https://www.valvesoftware.com/)
+- All game assets, content, and server binaries are property of their respective owners
+- This project only provides Docker infrastructure and configuration tooling — it does **not** distribute any game files
+
+### License
+
+This project is licensed under the **GNU General Public License v3.0** (GPL-3.0).
+
+You are free to:
+- ✅ Use, modify, and distribute this project
+- ✅ Host servers using this image
+- ✅ Contribute improvements back to the community
+
+You must:
+- 📝 Keep the source code open if you distribute modified versions
+- 📝 License any derivative work under GPL-3.0
+- 📝 Give credit to the original project
+
+You may **not**:
+- ❌ Use this project or derivatives for closed-source commercial products
+- ❌ Remove or alter the license terms
+
+See [LICENSE](LICENSE) for the full text.
