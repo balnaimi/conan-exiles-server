@@ -781,6 +781,57 @@ docker compose up -d</pre>
       <div class="info-note" style="margin-top: 1.5rem;">
         <strong>⏱️ First Run:</strong> The server downloads ~4.5GB of game files and sets up the database. This takes <strong>10-30 minutes</strong> on first start. Be patient!
       </div>
+
+      <!-- System Requirements -->
+      <h2 class="info-title" style="margin-top:2.5rem;">💻 System Requirements</h2>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;">Hardware requirements based on <a href="https://www.conanexiles.com/" target="_blank" style="color:var(--accent);">Funcom's official recommendations</a>. These are for the game server — Docker adds minimal overhead.</p>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Server Size</th>
+              <th>CPU</th>
+              <th>RAM</th>
+              <th>Disk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Small</strong> (up to 10 players)</td>
+              <td>2 cores @ 3.0 GHz</td>
+              <td>8 GB</td>
+              <td>35 GB</td>
+            </tr>
+            <tr>
+              <td><strong>Medium</strong> (up to 35 players)</td>
+              <td>4 cores @ 3.1 GHz</td>
+              <td>8 GB</td>
+              <td>35 GB</td>
+            </tr>
+            <tr>
+              <td><strong>Large</strong> (up to 70 players)</td>
+              <td>4 cores @ 3.4 GHz</td>
+              <td>16 GB</td>
+              <td>35 GB</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
+        <strong style="color:var(--text);">Storage breakdown:</strong>
+        <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
+          <li>Docker image: ~1.5 GB</li>
+          <li>Game server files (SteamCMD): ~30 GB</li>
+          <li>World saves & database: grows over time</li>
+          <li><strong>Total recommended: 50 GB minimum</strong></li>
+        </ul>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
+        <strong style="color:var(--text);">Network:</strong> Stable internet with at least <strong>10 Mbps upload</strong> recommended. Lower upload speeds may cause lag for players.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        💡 <strong>Tip:</strong> For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine. You don't need a monster machine!
+      </div>
     </div>
   </section>
 </div>

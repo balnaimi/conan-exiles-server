@@ -225,6 +225,28 @@ docker compose up -d
 
 ---
 
+## 💻 System Requirements
+
+Based on [Funcom's official recommendations](https://www.conanexiles.com/):
+
+| Server Size | CPU | RAM | Disk |
+|-------------|-----|-----|------|
+| **Small** (up to 10 players) | 2 cores @ 3.0 GHz | 8 GB | 35 GB |
+| **Medium** (up to 35 players) | 4 cores @ 3.1 GHz | 8 GB | 35 GB |
+| **Large** (up to 70 players) | 4 cores @ 3.4 GHz | 16 GB | 35 GB |
+
+**Storage breakdown:**
+- Docker image: ~1.5 GB
+- Game server files (SteamCMD): ~30 GB
+- World saves & database: grows over time
+- **Total recommended: 50 GB minimum**
+
+**Network:** Stable internet with at least **10 Mbps upload** recommended.
+
+> 💡 For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine.
+
+---
+
 ## ⏱️ First Run
 
 On the first startup the container will:
