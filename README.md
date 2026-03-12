@@ -15,7 +15,7 @@ Built on **Debian Trixie** with the latest **Wine** from WineHQ and **SteamCMD**
 
 - 🚀 Auto-downloads game files on first run (~4.5GB)
 - 🔄 Auto-updates on every restart
-- ⚙️ **140+ settings** via `.env` file — no config file editing
+- ⚙️ **190+ settings** via `.env` file — no config file editing
 - 🎮 PvE / PvP / PvE-C modes
 - 🖥️ Optional RCON remote console
 - 💾 Persistent data via Docker volumes
@@ -80,7 +80,7 @@ Done! Connect via **Direct Connect** in-game using your server IP and port `7777
 
 ## ⚙️ Configuration
 
-All settings are in the `.env` file. The `.env.example` includes **140+ settings** with descriptions.
+All settings are in the `.env` file. The `.env.example` includes **190+ settings** with descriptions.
 
 ### Basic Settings
 
@@ -124,6 +124,8 @@ All settings are in the `.env` file. The `.env.example` includes **140+ settings
 | 🗿 **Avatars / Gods** | Summoning, lifetime, protection dome |
 | 💬 **UI & Social** | Voice chat, player list, clan markers, events |
 | 🌍 **Region Restrictions** | Block players by region |
+| ⏰ **PvP Schedule** | Per-day PvP hours and building damage windows |
+| 🔧 **Advanced** | Anti-cheat, mods, network rate, undermesh detection |
 
 > 💡 **Tip:** Most settings are commented out in `.env.example` with their defaults. Uncomment (remove `#`) to override.
 
@@ -206,7 +208,7 @@ docker compose -f docker-compose.build.yml up -d
 | `entrypoint.sh` | Startup script (download, configure, run) |
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
-| `.env.example` | Full configuration template (140+ settings) |
+| `.env.example` | Full configuration template (190+ settings) |
 | `docs/index.html` | Web-based Config Generator |
 
 ---
