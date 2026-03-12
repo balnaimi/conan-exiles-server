@@ -129,7 +129,8 @@ EnableTargetLock=${ENABLE_TARGET_LOCK:-True}
 EnableFatalities=${ENABLE_FATALITIES:-True}
 
 # --- Death & Looting ---
-ContainersIgnoreOwnership=${EVERYBODY_LOOT_CORPSE:-True}
+EverybodyCanLootCorpse=${EVERYBODY_LOOT_CORPSE:-True}
+ContainersIgnoreOwnership=${CONTAINERS_IGNORE_OWNERSHIP:-True}
 LogoutCharactersRemainInTheWorld=${LOGOUT_REMAIN:-True}
 UnconsciousTimeSeconds=${UNCONSCIOUS_TIME:-1800.0}
 CorpsesPerPlayer=${CORPSES_PER_PLAYER:-10}
