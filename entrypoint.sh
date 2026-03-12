@@ -159,6 +159,30 @@ ItemRepairMinimumDurability=${ITEM_REPAIR_MIN_DURABILITY:-0.1}
 ItemRepairDurabilityLossPenaltyChance=${ITEM_REPAIR_PENALTY_CHANCE:-1.0}
 ItemRepairDurabilityLossByRepairkitTier=${ITEM_REPAIR_LOSS_BY_TIER:-(0.200000,0.200000,0.150000,0.100000,0.050000,0.025000)}
 
+# --- Survival (Hunger & Thirst) ---
+PlayerActiveThirstMultiplier=${ACTIVE_THIRST:-1.0}
+PlayerIdleThirstMultiplier=${IDLE_THIRST:-1.0}
+PlayerOfflineThirstMultiplier=${OFFLINE_THIRST:-1.0}
+PlayerActiveHungerMultiplier=${ACTIVE_HUNGER:-1.0}
+PlayerIdleHungerMultiplier=${IDLE_HUNGER:-1.0}
+PlayerOfflineHungerMultiplier=${OFFLINE_HUNGER:-1.0}
+
+# --- Death (Drop on Death) ---
+DropEquipmentOnDeath=${DROP_EQUIPMENT_ON_DEATH:-True}
+DropShortcutbarOnDeath=${DROP_SHORTCUTBAR_ON_DEATH:-True}
+DropBackpackOnDeath=${DROP_BACKPACK_ON_DEATH:-True}
+
+# --- Day/Night Cycle ---
+DayCycleSpeedScale=${DAY_CYCLE_SPEED:-1.0}
+DayTimeSpeedScale=${DAYTIME_SPEED:-0.25}
+NightTimeSpeedScale=${NIGHTTIME_SPEED:-0.25}
+DawnDuskSpeedScale=${DAWN_DUSK_SPEED:-0.25}
+UseClientCatchUpTime=${USE_CATCHUP_TIME:-True}
+
+# --- Player Stats ---
+PlayerHealthMultiplier=${PLAYER_HEALTH:-1.0}
+PlayerStaminaMultiplier=${PLAYER_STAMINA:-1.0}
+
 # --- Stamina & Movement ---
 PlayerStaminaCostMultiplier=${STAMINA_COST:-1.0}
 PlayerStaminaCostSprintMultiplier=${STAMINA_SPRINT_COST:-1.0}

@@ -476,6 +476,34 @@ const CONFIG = [
     ]
   },
   {
+    id: 'survival', icon: '🥤', title: 'Survival (Hunger & Thirst)',
+    fields: [
+      { key: 'ACTIVE_THIRST', label: 'Active Thirst Rate', desc: 'How fast you get thirsty while active (0 = never)', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'IDLE_THIRST', label: 'Idle Thirst Rate', desc: 'How fast you get thirsty while idle', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'OFFLINE_THIRST', label: 'Offline Thirst Rate', desc: 'How fast you get thirsty while offline', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'ACTIVE_HUNGER', label: 'Active Hunger Rate', desc: 'How fast you get hungry while active (0 = never)', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'IDLE_HUNGER', label: 'Idle Hunger Rate', desc: 'How fast you get hungry while idle', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'OFFLINE_HUNGER', label: 'Offline Hunger Rate', desc: 'How fast you get hungry while offline', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'daynight', icon: '🌅', title: 'Day/Night Cycle',
+    fields: [
+      { key: 'DAY_CYCLE_SPEED', label: 'Cycle Speed', desc: 'Overall day/night cycle speed (higher = faster days)', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'DAYTIME_SPEED', label: 'Daytime Speed', desc: 'How fast daytime passes (lower = longer days)', type: 'range', default: 0.25, min: 0.01, max: 10.0, step: 0.01 },
+      { key: 'NIGHTTIME_SPEED', label: 'Nighttime Speed', desc: 'How fast nighttime passes (lower = longer nights)', type: 'range', default: 0.25, min: 0.01, max: 10.0, step: 0.01 },
+      { key: 'DAWN_DUSK_SPEED', label: 'Dawn/Dusk Speed', desc: 'How fast dawn and dusk transitions are', type: 'range', default: 0.25, min: 0.01, max: 10.0, step: 0.01 },
+      { key: 'USE_CATCHUP_TIME', label: 'Client Catch-Up', desc: 'Players catch up to server time when joining', type: 'bool', default: true },
+    ]
+  },
+  {
+    id: 'playerstats', icon: '❤️', title: 'Player Stats',
+    fields: [
+      { key: 'PLAYER_HEALTH', label: 'Player Health', desc: '2.0 = double max HP', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'PLAYER_STAMINA', label: 'Player Stamina Pool', desc: '2.0 = double max stamina', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+    ]
+  },
+  {
     id: 'combat', icon: '⚔️', title: 'Combat & Damage',
     fields: [
       { key: 'PLAYER_DAMAGE', label: 'Player Damage Dealt', desc: '2.0 = deal double damage', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
@@ -506,6 +534,9 @@ const CONFIG = [
   {
     id: 'death', icon: '💀', title: 'Death & Looting',
     fields: [
+      { key: 'DROP_EQUIPMENT_ON_DEATH', label: 'Drop Equipment on Death', desc: 'Drop equipped items when you die', type: 'bool', default: true },
+      { key: 'DROP_SHORTCUTBAR_ON_DEATH', label: 'Drop Quickbar on Death', desc: 'Drop quickbar/shortcut items when you die', type: 'bool', default: true },
+      { key: 'DROP_BACKPACK_ON_DEATH', label: 'Drop Backpack on Death', desc: 'Drop backpack contents when you die', type: 'bool', default: true },
       { key: 'EVERYBODY_LOOT_CORPSE', label: 'Anyone Can Loot Corpses', desc: 'True = anyone can loot dead bodies', type: 'bool', default: true },
       { key: 'CONTAINERS_IGNORE_OWNERSHIP', label: 'Open Any Container', desc: 'Anyone can open any chest/container', type: 'bool', default: true },
       { key: 'LOGOUT_REMAIN', label: 'Body Stays on Logout', desc: 'Character stays in world after logout', type: 'bool', default: true },
