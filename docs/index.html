@@ -952,6 +952,76 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
         <strong>⚠️ DANGER:</strong> The <code>-v</code> flag permanently deletes <strong>all game data, player saves, and buildings</strong>. There is no undo. Back up your data first if needed!
       </div>
     </div>
+        <!-- Known Limitations -->
+      <h2 class="info-title" style="margin-top:2.5rem;">⚠️ Known Limitations (Funcom Bugs)</h2>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;">
+        Some settings are <strong>known to be broken or unreliable</strong> in Conan Exiles dedicated servers.
+        These are <strong>Funcom game bugs</strong>, not issues with this Docker image. They affect all server hosting methods (bare metal, VPS, Docker, G-Portal, etc.).
+      </p>
+
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PlayerEncumbranceMultiplier</code></td>
+              <td style="color:#e74c3c;">❌ Broken</td>
+              <td>Has no effect regardless of value. Known bug since 2019, never fixed by Funcom.</td>
+            </tr>
+            <tr>
+              <td><code>CraftingCostMultiplier</code></td>
+              <td style="color:#e74c3c;">❌ Broken</td>
+              <td>Does not reduce crafting costs. Reported on Funcom Forums since 2018.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaCostMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Unreliable</td>
+              <td>May not take effect from .ini file. Try setting via in-game Admin Panel instead.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaCostSprintMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Unreliable</td>
+              <td>Same issue as above — use Admin Panel for reliable results.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerSprintSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Unreliable</td>
+              <td>May require player relog after server restart to take effect.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerMovementSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Unreliable</td>
+              <td>Same as sprint speed — inconsistent behavior reported by community.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerHealthRegenSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Unreliable</td>
+              <td>May be overridden by game database. Use Admin Panel if .env has no effect.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaRegenSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Unreliable</td>
+              <td>Same as health regen — Admin Panel is more reliable.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-note" style="margin-top:1rem;">
+        <strong>💡 Workaround:</strong> For unreliable settings, log into your server as Admin (ESC → Settings → Server Settings → Make Me Admin),
+        then change the values from the <strong>in-game Admin Panel</strong>. Settings changed in-game are saved to the game database and take priority over the .ini file.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>⚠️ Important:</strong> This Docker image rewrites <code>ServerSettings.ini</code> on every restart from your <code>.env</code> file.
+        If you change settings via Admin Panel, they are stored in the game database and will persist — but the .ini file will still show your .env values.
+        For broken/unreliable settings, <strong>remove them from your .env</strong> to avoid confusion.
+      </div>
   </section>
 </div>
 
@@ -1265,7 +1335,7 @@ const CONFIG = [
       { key: 'HARVEST_AMOUNT', label: 'Harvest Amount', desc: '2.0 = double resources', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'RESOURCE_RESPAWN', label: 'Resource Respawn', desc: 'Lower = faster respawn', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'ITEM_SPOIL_RATE', label: 'Food Spoil Rate', desc: '0.5 = food lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'CRAFTING_COST', label: 'Crafting Cost', desc: '0.5 = half materials needed', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'CRAFTING_COST', label: '❌ Crafting Cost', desc: '⚠️ BROKEN — Funcom bug, has no effect. Use Admin Panel instead.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
       { key: 'FUEL_BURN_TIME', label: 'Fuel Burn Time', desc: '2.0 = fuel lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'ITEM_CONVERSION', label: 'Item Conversion Speed', desc: 'Speed of tanning, smelting, drying etc. in crafting stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'ITEM_REPAIR_MIN_DURABILITY', label: 'Min Repair Durability', desc: 'Minimum durability after repair (0.1 = 10%)', type: 'range', default: 0.1, min: 0.0, max: 1.0, step: 0.05 },
@@ -1275,13 +1345,13 @@ const CONFIG = [
   {
     id: 'stamina', icon: '🏃', title: 'Stamina & Movement',
     fields: [
-      { key: 'STAMINA_COST', label: 'Stamina Cost', desc: '0.5 = use half stamina', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'STAMINA_SPRINT_COST', label: 'Sprint Stamina Cost', desc: 'Stamina drain while sprinting', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'PLAYER_MOVE_SPEED', label: 'Walk Speed', desc: '1.5 = 50% faster walking', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
-      { key: 'PLAYER_SPRINT_SPEED', label: 'Sprint Speed', desc: 'How fast you run when sprinting', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
-      { key: 'HEALTH_REGEN_SPEED', label: 'Health Regen', desc: '2.0 = heal twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'STAMINA_REGEN_SPEED', label: 'Stamina Regen', desc: 'How fast stamina regenerates', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
-      { key: 'PLAYER_ENCUMBRANCE', label: 'Carry Weight', desc: '2.0 = carry twice as much', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'STAMINA_COST', label: '⚠️ Stamina Cost', desc: '⚠️ UNRELIABLE — May not work from .env. Use Admin Panel instead.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_SPRINT_COST', label: '⚠️ Sprint Stamina Cost', desc: '⚠️ UNRELIABLE — May not work from .env. Use Admin Panel instead.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_MOVE_SPEED', label: '⚠️ Walk Speed', desc: '⚠️ UNRELIABLE — Inconsistent behavior. Use Admin Panel instead.', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
+      { key: 'PLAYER_SPRINT_SPEED', label: '⚠️ Sprint Speed', desc: '⚠️ UNRELIABLE — May require relog. Use Admin Panel instead.', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
+      { key: 'HEALTH_REGEN_SPEED', label: '⚠️ Health Regen', desc: '⚠️ UNRELIABLE — May be overridden by game DB. Use Admin Panel.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_REGEN_SPEED', label: '⚠️ Stamina Regen', desc: '⚠️ UNRELIABLE — May be overridden by game DB. Use Admin Panel.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_ENCUMBRANCE', label: '❌ Carry Weight', desc: '⚠️ BROKEN — Funcom bug since 2019, has no effect. No workaround.', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'PLAYER_ENCUMBRANCE_PENALTY', label: 'Encumbrance Penalty', desc: 'Speed reduction when overloaded', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
       { key: 'STAMINA_REGEN_TIME', label: 'Stamina Regen Time', desc: 'Seconds to regenerate full stamina (default: 3.75)', type: 'number', default: 3.75 },
       { key: 'STAMINA_EXHAUSTION_TIME', label: 'Exhaustion Recovery', desc: 'Seconds to recover from stamina exhaustion (default: 3.75)', type: 'number', default: 3.75 },

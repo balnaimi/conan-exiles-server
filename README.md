@@ -316,6 +316,41 @@ docker compose -f docker-compose.build.yml up -d
 
 ---
 
+## ⚠️ Known Limitations (Funcom Bugs)
+
+Some settings are **broken or unreliable** in Conan Exiles dedicated servers. These are **game bugs from Funcom**, not issues with this Docker image. They affect **all** hosting methods.
+
+### ❌ Broken (no effect regardless of value)
+
+| Setting | Issue |
+|---------|-------|
+| `PlayerEncumbranceMultiplier` | Has no effect. Known bug since 2019, never fixed. |
+| `CraftingCostMultiplier` | Does not reduce crafting costs. Reported since 2018. |
+
+### ⚠️ Unreliable (may not work from .env / ini file)
+
+| Setting | Issue |
+|---------|-------|
+| `PlayerStaminaCostMultiplier` | May not take effect from .ini — use Admin Panel |
+| `PlayerStaminaCostSprintMultiplier` | Same as above |
+| `PlayerSprintSpeedScale` | May require player relog after restart |
+| `PlayerMovementSpeedScale` | Inconsistent behavior reported |
+| `PlayerHealthRegenSpeedScale` | May be overridden by game database |
+| `PlayerStaminaRegenSpeedScale` | Same as health regen |
+
+### 💡 Workaround
+
+For unreliable settings, change them via the **in-game Admin Panel**:
+1. Join your server
+2. Press **ESC → Settings → Server Settings**
+3. Click **Make Me Admin** (enter your admin password)
+4. Change settings from within the game
+5. **Remove those settings from your `.env`** to avoid conflicts
+
+> **Note:** This image rewrites `ServerSettings.ini` on every restart from your `.env`. Settings changed via Admin Panel are stored in the **game database** and take priority. Remove broken/unreliable settings from your `.env` to avoid confusion.
+
+---
+
 ## ⚖️ Legal
 
 ### Disclaimer
