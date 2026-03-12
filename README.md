@@ -237,9 +237,10 @@ Based on [Funcom's official recommendations](https://www.conanexiles.com/):
 
 **Storage breakdown:**
 - Docker image: ~1.5 GB
-- Game server files (SteamCMD): ~30 GB
+- Game server files (download ~5 GB, unpacked ~10 GB)
 - World saves & database: grows over time
-- **Total recommended: 50 GB minimum**
+- Updates + temp space: ~5-10 GB headroom
+- **Total recommended: 35 GB minimum**
 
 **Network:** Stable internet with at least **10 Mbps upload** recommended.
 
