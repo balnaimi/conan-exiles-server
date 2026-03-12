@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conan Exiles Server Config Generator</title>
+<title>Conan Exiles Dedicated Server - Docker Edition</title>
 <style>
 :root {
   --bg: #0a0a0f;
@@ -24,6 +24,8 @@
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
+html { scroll-behavior: smooth; }
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -32,12 +34,285 @@ body {
   min-height: 100vh;
 }
 
-/* Header */
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.hero {
+  position: relative;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d0d15 0%, #1a1520 100%);
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/440900/header.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3;
+  filter: blur(2px);
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,10,15,0.7) 0%, rgba(10,10,15,0.95) 100%);
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  padding: 2rem;
+}
+.hero-logo {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 40px var(--accent-glow), 0 4px 10px rgba(0,0,0,0.8);
+  margin-bottom: 0.5rem;
+  letter-spacing: 2px;
+}
+.hero-subtitle {
+  font-size: 1.5rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  font-weight: 300;
+}
+.hero-tagline {
+  font-size: 1.1rem;
+  color: var(--text);
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+.hero-cta {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.cta-btn {
+  padding: 0.9rem 2rem;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+.cta-btn:hover {
+  background: #d4b45a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px var(--accent-glow);
+}
+.cta-btn.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+.cta-btn.secondary:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ============================================
+   FEATURES SECTION
+   ============================================ */
+.features {
+  padding: 5rem 2rem;
+  background: var(--section-bg);
+}
+.features-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+.feature-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.75rem;
+  transition: all 0.3s;
+}
+.feature-card:hover {
+  background: var(--card-hover);
+  border-color: var(--accent-dim);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.feature-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+.feature-desc {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ============================================
+   QUICK START SECTION
+   ============================================ */
+.quick-start {
+  padding: 5rem 2rem;
+  background: var(--bg);
+}
+.qs-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.qs-title {
+  font-size: 2.5rem;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 3rem;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+.qs-option {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.qs-option-title {
+  font-size: 1.3rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+.qs-option-desc {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+.code-block {
+  background: #0a0a0f;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+  overflow-x: auto;
+  line-height: 1.7;
+  margin-top: 1rem;
+}
+.code-block .comment {
+  color: var(--text-dim);
+}
+
+/* ============================================
+   PORTS / CONNECTING / COMMANDS
+   ============================================ */
+.info-section {
+  padding: 4rem 2rem;
+  background: var(--section-bg);
+}
+.info-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.info-title {
+  font-size: 2rem;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.ports-table {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.ports-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ports-table th {
+  background: var(--bg);
+  color: var(--accent);
+  padding: 0.9rem;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.ports-table td {
+  padding: 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--text);
+}
+.ports-table tr:last-child td {
+  border-bottom: none;
+}
+.info-note {
+  background: var(--card);
+  border-left: 4px solid var(--accent);
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-top: 1rem;
+}
+.info-warning {
+  background: var(--card);
+  border-left: 4px solid var(--danger);
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-top: 1rem;
+}
+.info-warning strong {
+  color: var(--danger);
+}
+
+/* ============================================
+   CONFIG GENERATOR (wrapper)
+   ============================================ */
+.config-generator {
+  padding: 5rem 2rem;
+  background: var(--bg);
+}
+.config-title {
+  font-size: 2.5rem;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+.config-subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 1rem;
+  margin-bottom: 3rem;
+}
+
+/* Header (original, but modified for consistency) */
 .header {
   background: linear-gradient(135deg, #0d0d15 0%, #1a1520 100%);
   border-bottom: 1px solid var(--border);
   padding: 2rem;
   text-align: center;
+  display: none; /* Hidden since we have hero now */
 }
 .header h1 {
   font-size: 2rem;
@@ -351,27 +626,193 @@ body {
 /* Footer */
 .footer {
   text-align: center;
-  padding: 2rem;
+  padding: 3rem 2rem;
   color: var(--text-dim);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
+  background: var(--section-bg);
+  border-top: 1px solid var(--border);
 }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .field { grid-template-columns: 1fr; }
-  .header h1 { font-size: 1.5rem; }
+  .hero-logo { font-size: 2.5rem; }
+  .hero-subtitle { font-size: 1.2rem; }
   .output-actions { flex-direction: column; }
+  .features-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>⚔️ Conan Exiles Server Config</h1>
-  <p>Configure all 236 server settings and generate a ready-to-use .env file</p>
-</div>
+<!-- ============================================
+     HERO SECTION
+     ============================================ -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-logo">⚔️ Conan Exiles<br>Dedicated Server</div>
+    <div class="hero-subtitle">Docker Edition</div>
+    <div class="hero-tagline">The most comprehensive Docker image — 236 configurable settings</div>
+    <div class="hero-cta">
+      <a href="#quick-start" class="cta-btn">Quick Start ↓</a>
+      <a href="#generator" class="cta-btn secondary">Config Generator ↓</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     FEATURES SECTION
+     ============================================ -->
+<section class="features">
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🚀</div>
+      <div class="feature-title">Auto-Download</div>
+      <div class="feature-desc">Game files download automatically on first run (~4.5GB). No manual setup needed.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔄</div>
+      <div class="feature-title">Auto-Update</div>
+      <div class="feature-desc">Server updates every restart. Always running the latest version.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚙️</div>
+      <div class="feature-title">236 Settings</div>
+      <div class="feature-desc">Every setting configurable via .env file. Full control over your server.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎮</div>
+      <div class="feature-title">All Game Modes</div>
+      <div class="feature-desc">PvE / PvP / PvE-C with per-day schedules. Configure your perfect playstyle.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🖥️</div>
+      <div class="feature-title">RCON Ready</div>
+      <div class="feature-desc">Built-in remote console support. Manage your server from anywhere.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📦</div>
+      <div class="feature-title">Pre-built Image</div>
+      <div class="feature-desc">Just pull and run, no build needed. Up and running in minutes.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     QUICK START SECTION
+     ============================================ -->
+<section class="quick-start" id="quick-start">
+  <div class="qs-container">
+    <h2 class="qs-title">Quick Start</h2>
+    
+    <div class="qs-option">
+      <div class="qs-option-title">Option A — Default Settings (fastest)</div>
+      <div class="qs-option-desc">Get your server running in 2 commands. Perfect for testing or getting started quickly.</div>
+      <div class="code-block">mkdir conan-server && cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+docker compose up -d</div>
+      <div class="info-note">That's it! Server runs with default PvE settings. First run downloads ~4.5GB.</div>
+    </div>
+
+    <div class="qs-option">
+      <div class="qs-option-title">Option B — Custom Settings</div>
+      <div class="qs-option-desc">Download the .env example file and customize it to your liking.</div>
+      <div class="code-block">mkdir conan-server && cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+nano .env  <span class="comment"># or use the Config Generator below</span>
+docker compose up -d</div>
+    </div>
+
+    <div class="qs-option">
+      <div class="qs-option-title">Option C — Use Config Generator</div>
+      <div class="qs-option-desc">Use the visual config generator below to create your .env file, then paste it into your server directory.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     PORTS SECTION
+     ============================================ -->
+<section class="info-section">
+  <div class="info-container">
+    <h2 class="info-title">Network Ports</h2>
+    <div class="ports-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Port</th>
+            <th>Protocol</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>7777</strong></td>
+            <td>UDP</td>
+            <td>Game port</td>
+          </tr>
+          <tr>
+            <td><strong>7778</strong></td>
+            <td>UDP</td>
+            <td>Game port (raw)</td>
+          </tr>
+          <tr>
+            <td><strong>27015</strong></td>
+            <td>UDP</td>
+            <td>Steam query</td>
+          </tr>
+          <tr>
+            <td><strong>25575</strong></td>
+            <td>TCP</td>
+            <td>RCON (if enabled)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="info-note">Make sure these ports are open in your firewall.</div>
+  </div>
+</section>
+
+<!-- ============================================
+     CONNECTING SECTION
+     ============================================ -->
+<section class="info-section" style="background: var(--bg);">
+  <div class="info-container">
+    <h2 class="info-title">Connecting to Your Server</h2>
+    <div class="info-note">
+      <strong>How to connect:</strong><br>
+      Use <strong>Direct Connect</strong> in Conan Exiles → Enter your server IP and port 7777
+    </div>
+    <div class="info-warning">
+      <strong>⚠️ Important:</strong> Conan Exiles does not support hostnames — you must use an IP address.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     MANAGEMENT SECTION
+     ============================================ -->
+<section class="info-section">
+  <div class="info-container">
+    <h2 class="info-title">Server Management</h2>
+    <div class="code-block">docker compose up -d      <span class="comment"># Start server</span>
+docker compose down       <span class="comment"># Stop server</span>
+docker compose restart    <span class="comment"># Restart server</span>
+docker compose logs -f    <span class="comment"># View logs (live)</span></div>
+  </div>
+</section>
+
+<!-- ============================================
+     CONFIG GENERATOR
+     ============================================ -->
+<section class="config-generator" id="generator">
+  <h2 class="config-title">⚙️ Configuration Generator</h2>
+  <p class="config-subtitle">Configure all 236 server settings and generate a ready-to-use .env file</p>
 
 <div class="container">
   <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
@@ -400,10 +841,15 @@ body {
     <div id="output"></div>
   </div>
 </div>
+</section>
 
-<div class="footer">
-  <p>Made for <a href="https://github.com/balnaimi/conan-exiles-server">balnaimi/conan-exiles-server</a> Docker image</p>
-</div>
+<!-- ============================================
+     FOOTER
+     ============================================ -->
+<footer class="footer">
+  <p>Made with ⚔️ for the Conan community</p>
+  <p><a href="https://github.com/balnaimi/conan-exiles-server" target="_blank">GitHub: balnaimi/conan-exiles-server</a></p>
+</footer>
 
 <div class="toast" id="toast"></div>
 
