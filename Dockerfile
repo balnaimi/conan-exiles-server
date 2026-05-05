@@ -1,4 +1,4 @@
-FROM debian:trixie-slim
+FROM debian:bookworm-slim
 
 LABEL maintainer="BuRashid"
 LABEL description="Conan Exiles Dedicated Server"
@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEPREFIX=/wine
 ENV WINEARCH=win64
 ENV DISPLAY=:99
+ENV WINEDLLOVERRIDES="mscoree,mshtml="
 
 # Install dependencies
 RUN dpkg --add-architecture i386 && \
@@ -21,6 +22,8 @@ RUN dpkg --add-architecture i386 && \
         curl \
         procps \
         locales \
+        winbind \
+        cabextract \
     && sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
     && locale-gen \
     && rm -rf /var/lib/apt/lists/*
@@ -31,10 +34,17 @@ ENV LC_ALL=en_US.UTF-8
 # Install Wine from WineHQ
 RUN mkdir -pm755 /etc/apt/keyrings && \
     wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
-    wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/trixie/winehq-trixie.sources && \
+    wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources && \
     apt-get update && \
-    apt-get install -y --install-recommends winehq-stable && \
+    apt-get install -y --install-recommends winehq-staging && \
     rm -rf /var/lib/apt/lists/*
+
+# Install vc_redist vcrun2022 needed for UE5 
+RUN mkdir -p $WINEPREFIX && \
+    wget -q https://aka.ms/vs/17/release/vc_redist.x64.exe && \
+    xvfb-run -a sh -c "wineboot --init && wineserver -w" && \
+    xvfb-run -a sh -c "wine vc_redist.x64.exe /install /quiet /norestart && wineserver -w" && \
+    rm vc_redist.x64.exe
 
 # Install SteamCMD
 RUN mkdir -p /steamcmd && \
