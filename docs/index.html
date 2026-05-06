@@ -1062,6 +1062,11 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
         <div class="feature-title">Pre-built Image</div>
         <div class="feature-desc">Just pull and run, no build needed. Up and running in minutes.</div>
       </div>
+      <div class="feature-card">
+        <div class="feature-icon">🍷</div>
+        <div class="feature-title">UE5/Wine Ready</div>
+        <div class="feature-desc">Bookworm + WineHQ Staging + VC++ 2022 runtime for better Unreal Engine 5 compatibility.</div>
+      </div>
     </div>
   </section>
 
@@ -1079,11 +1084,15 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
           <tbody>
             <tr>
               <td><strong>Base Image</strong></td>
-              <td>Debian Trixie (slim)</td>
+              <td>Debian Bookworm (slim)</td>
             </tr>
             <tr>
               <td><strong>Wine</strong></td>
-              <td>Latest stable (WineHQ)</td>
+              <td>WineHQ Staging</td>
+            </tr>
+            <tr>
+              <td><strong>Windows Runtime</strong></td>
+              <td>Microsoft Visual C++ 2022 Redistributable</td>
             </tr>
             <tr>
               <td><strong>Game Updater</strong></td>
@@ -1095,6 +1104,18 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Latest Release</h2>
+      <div class="info-note">
+        <strong>v2.3.0 — UE5/Wine Compatibility Update:</strong> Debian Bookworm base image, WineHQ Staging, winbind/cabextract dependencies, Microsoft Visual C++ 2022 Redistributable, and headless-safe Wine initialization via xvfb-run.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        🙌 Thanks to <a href="https://github.com/Sniijz" style="color:var(--accent);">@Sniijz</a> for the first community pull request and the UE5 compatibility improvements.
       </div>
     </div>
   </section>

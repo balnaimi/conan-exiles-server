@@ -2,7 +2,7 @@
 
 The most comprehensive Docker image for **Conan Exiles Dedicated Server** — with **236 configurable settings** via a simple `.env` file.
 
-Built on **Debian Trixie** with the latest **Wine** from WineHQ and **SteamCMD**.
+Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, and **SteamCMD** for better Unreal Engine 5 compatibility.
 
 <p align="center">
   <a href="https://balnaimi.github.io/conan-exiles-server/"><img src="https://img.shields.io/badge/⚙️_Config_Generator-Open-c8a84e?style=for-the-badge" alt="Config Generator"></a>
@@ -296,7 +296,7 @@ docker compose -f docker-compose.build.yml up -d
 
 | File | Description |
 |------|-------------|
-| `Dockerfile` | Image definition (Debian Trixie + Wine + SteamCMD) |
+| `Dockerfile` | Image definition (Debian Bookworm + WineHQ Staging + VC++ 2022 runtime + SteamCMD) |
 | `entrypoint.sh` | Startup script (download, configure, run) |
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
@@ -309,8 +309,9 @@ docker compose -f docker-compose.build.yml up -d
 
 | Component | Version |
 |-----------|---------|
-| Base | Debian Trixie (slim) |
-| Wine | Latest stable (WineHQ) |
+| Base | Debian Bookworm (slim) |
+| Wine | WineHQ Staging |
+| Windows Runtime | Microsoft Visual C++ 2022 Redistributable |
 | SteamCMD | Latest |
 | Xvfb | Virtual framebuffer |
 
@@ -348,6 +349,25 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 5. **Remove those settings from your `.env`** to avoid conflicts
 
 > **Note:** This image rewrites `ServerSettings.ini` on every restart from your `.env`. Settings changed via Admin Panel are stored in the **game database** and take priority. Remove broken/unreliable settings from your `.env` to avoid confusion.
+
+---
+
+## 🙌 Contributors
+
+Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community pull request, upgrading the Docker/Wine environment for better Unreal Engine 5 compatibility.
+
+---
+
+## 📝 Release Notes
+
+### v2.3.0 — UE5/Wine Compatibility Update
+
+- Switched the base image from Debian Trixie to Debian Bookworm for Wine compatibility/stability.
+- Changed Wine package from `winehq-stable` to `winehq-staging`.
+- Added `winbind` and `cabextract` dependencies.
+- Added Microsoft Visual C++ 2022 Redistributable installation during image build.
+- Wrapped Wine prefix initialization and VC++ runtime installation with `xvfb-run` to avoid headless display crashes.
+- Community contribution: thanks to [@Sniijz](https://github.com/Sniijz) for PR #1.
 
 ---
 
