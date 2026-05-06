@@ -4,6 +4,12 @@ The most comprehensive Docker image for **Conan Exiles Dedicated Server** — wi
 
 Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, and **SteamCMD** for better Unreal Engine 5 compatibility.
 
+## 🙌 Contributors
+
+Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community pull request, upgrading the Docker/Wine environment for better Unreal Engine 5 compatibility.
+
+---
+
 <p align="center">
   <a href="https://balnaimi.github.io/conan-exiles-server/"><img src="https://img.shields.io/badge/⚙️_Config_Generator-Open-c8a84e?style=for-the-badge" alt="Config Generator"></a>
   <a href="https://github.com/balnaimi/conan-exiles-server/pkgs/container/conan-exiles-server"><img src="https://img.shields.io/badge/📦_Docker_Image-ghcr.io-blue?style=for-the-badge" alt="Docker Image"></a>
@@ -349,12 +355,6 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 5. **Remove those settings from your `.env`** to avoid conflicts
 
 > **Note:** This image rewrites `ServerSettings.ini` on every restart from your `.env`. Settings changed via Admin Panel are stored in the **game database** and take priority. Remove broken/unreliable settings from your `.env` to avoid confusion.
-
----
-
-## 🙌 Contributors
-
-Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community pull request, upgrading the Docker/Wine environment for better Unreal Engine 5 compatibility.
 
 ---
 
