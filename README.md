@@ -1,6 +1,8 @@
-# ⚔️ Conan Exiles Dedicated Server (Docker)
+# ⚔️ Conan Exiles Enhanced Dedicated Server (Docker)
 
-The most comprehensive Docker image for **Conan Exiles Dedicated Server** — with **236 configurable settings** via a simple `.env` file.
+The most comprehensive Docker image for **Conan Exiles Enhanced Dedicated Server** — with **236 configurable settings** via a simple `.env` file.
+
+> ✅ Compatible with the renamed **Conan Exiles Enhanced** dedicated server. Steam app IDs, image names, repository URLs, and internal `ConanSandbox` paths may still use the legacy Conan Exiles naming because those are upstream/internal identifiers.
 
 Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, and **SteamCMD** for better Unreal Engine 5 compatibility.
 
@@ -267,7 +269,7 @@ Based on [Funcom's official recommendations](https://www.conanexiles.com/):
 
 On the first startup the container will:
 
-1. 📥 Download Conan Exiles Dedicated Server (~4.5GB) via SteamCMD
+1. 📥 Download Conan Exiles Enhanced Dedicated Server (~4.5GB) via SteamCMD
 2. 🍷 Initialize Wine prefix
 3. ⚙️ Apply your `.env` configuration
 4. 🚀 Start the server
@@ -279,12 +281,12 @@ Subsequent restarts are fast — game files are persisted in Docker volumes.
 
 ## 🎮 Connecting
 
-Use **Direct Connect** in Conan Exiles:
+Use **Direct Connect** in Conan Exiles Enhanced:
 
 - **IP:** Your server's IP address
 - **Port:** 7777 (or whatever you set in `SERVER_PORT`)
 
-> ⚠️ **Note:** Conan Exiles does not support hostnames in Direct Connect — use an IP address.
+> ⚠️ **Note:** Conan Exiles Enhanced does not support hostnames in Direct Connect — use an IP address.
 
 ---
 
@@ -325,7 +327,7 @@ docker compose -f docker-compose.build.yml up -d
 
 ## ⚠️ Known Limitations (Funcom Bugs)
 
-Some settings are **broken or unreliable** in Conan Exiles dedicated servers. These are **game bugs from Funcom**, not issues with this Docker image. They affect **all** hosting methods.
+Some settings are **broken or unreliable** in Conan Exiles Enhanced dedicated servers. These are **game bugs from Funcom**, not issues with this Docker image. They affect **all** hosting methods.
 
 ### ❌ Broken (no effect regardless of value)
 
@@ -375,9 +377,9 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ### Disclaimer
 
-This project is a **community-made Docker wrapper** for hosting a Conan Exiles dedicated server. It is **not affiliated with, endorsed by, or connected to** Funcom or Valve Corporation.
+This project is a **community-made Docker wrapper** for hosting a Conan Exiles Enhanced dedicated server. It is **not affiliated with, endorsed by, or connected to** Funcom or Valve Corporation.
 
-- **Conan Exiles** is a trademark of [Funcom](https://www.funcom.com/). Official game website: [conanexiles.com](https://www.conanexiles.com/)
+- **Conan Exiles / Conan Exiles Enhanced** is a trademark of [Funcom](https://www.funcom.com/). Official game website: [conanexiles.com](https://www.conanexiles.com/)
 - **Steam** and **SteamCMD** are trademarks of [Valve Corporation](https://www.valvesoftware.com/)
 - All game assets, content, and server binaries are property of their respective owners
 - This project only provides Docker infrastructure and configuration tooling — it does **not** distribute any game files

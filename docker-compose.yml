@@ -1,7 +1,7 @@
 services:
   conan:
     image: ghcr.io/balnaimi/conan-exiles-server:latest
-    container_name: conan-exiles
+    container_name: conan-exiles-enhanced
     restart: unless-stopped
     env_file: .env
     ports:

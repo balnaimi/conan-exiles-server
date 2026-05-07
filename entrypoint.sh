@@ -2,7 +2,7 @@
 set -e
 
 # ============================================
-# Conan Exiles Dedicated Server - Entrypoint
+# Conan Exiles Enhanced Dedicated Server - Entrypoint
 # ============================================
 
 GAME_DIR="/conanexiles"
@@ -24,7 +24,7 @@ error() { echo -e "${RED}[CONAN]${NC} $1"; }
 # 1. Download / Update game
 # ============================================
 if [ ! -f "$SERVER_EXE" ]; then
-    log "Game not found. Downloading Conan Exiles Dedicated Server (~4.5GB)..."
+    log "Game not found. Downloading Conan Exiles Enhanced Dedicated Server (~4.5GB)..."
     log "This may take 10-30 minutes on first run."
 else
     log "Game found. Checking for updates..."
@@ -84,7 +84,7 @@ cat > "$CONFIG_DIR/Engine.ini" << EOF
 Port=${SERVER_PORT:-7777}
 
 [OnlineSubsystemSteam]
-ServerName=${SERVER_NAME:-Conan Exiles Server}
+ServerName=${SERVER_NAME:-Conan Exiles Enhanced Server}
 ServerPassword=${SERVER_PASSWORD:-}
 
 [/Script/OnlineSubsystemUtils.IpNetDriver]
@@ -392,7 +392,7 @@ MaxPlayers=${MAX_PLAYERS:-40}
 EOF
 
 log "Configuration applied:"
-log "  Server Name: ${SERVER_NAME:-Conan Exiles Server}"
+log "  Server Name: ${SERVER_NAME:-Conan Exiles Enhanced Server}"
 log "  Server Type: ${SERVER_TYPE:-pve}"
 log "  Max Players: ${MAX_PLAYERS:-40}"
 log "  Region: ${SERVER_REGION:-0}"
@@ -402,7 +402,7 @@ log "  RCON: ${RCON_ENABLED:-False}"
 # ============================================
 # 4. Start server
 # ============================================
-log "Starting Conan Exiles Dedicated Server..."
+log "Starting Conan Exiles Enhanced Dedicated Server..."
 log "============================================"
 
 cd "$GAME_DIR"

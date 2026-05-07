@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim
 
 LABEL maintainer="BuRashid"
-LABEL description="Conan Exiles Dedicated Server"
+LABEL description="Conan Exiles Enhanced Dedicated Server"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEPREFIX=/wine
