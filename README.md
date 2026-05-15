@@ -150,6 +150,27 @@ All settings are in the `.env` file. The `.env.example` includes **236 settings*
 
 ---
 
+## 🧩 Mods
+
+Add Steam Workshop mod IDs to `SERVER_MOD_LIST` as a comma-separated list:
+
+```env
+SERVER_MOD_LIST=3719513784,3720904511,3361295718
+```
+
+When `SERVER_MOD_LIST` is set, the container will:
+
+- Download each mod from the Conan Exiles Steam Workshop.
+- Copy the downloaded `.pak` file into `ConanSandbox/Mods`.
+- Generate `ConanSandbox/Mods/modlist.txt` in the same order as your list.
+- Stop startup with a clear error if a mod ID is invalid, download output is missing, or no `.pak` file is found.
+
+Mod order matters in Conan Exiles. Keep the IDs in the same order required by your mod collection.
+
+Leave `SERVER_MOD_LIST` empty to run an unmodded server.
+
+---
+
 ## 🔌 Ports
 
 | Port | Protocol | Description |
@@ -361,6 +382,15 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### v2.4.0 — Steam Workshop Mod Support
+
+- Added automatic Steam Workshop mod downloads when `SERVER_MOD_LIST` is set.
+- Copies each downloaded `.pak` file into `ConanSandbox/Mods` and generates `ConanSandbox/Mods/modlist.txt` in the configured order.
+- Validates mod IDs and stops startup with a clear error if a download output or `.pak` file is missing.
+- Added a GitHub Actions validation workflow for shell syntax and required project files.
+- Updated `.env.example`, README, and the website Config Generator documentation for mod setup.
+- Thanks to [@pvillaverde](https://github.com/pvillaverde) for reporting that configured mods were not being downloaded in issue #2.
 
 ### v2.3.1 — Documentation Quick Start Fix
 

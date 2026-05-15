@@ -1,0 +1,26 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate shell scripts
+        run: bash -n entrypoint.sh
+
+      - name: Check required project files
+        run: |
+          test -f Dockerfile
+          test -f docker-compose.yml
+          test -f .env.example
+          test -f docs/index.html
