@@ -1,10 +1,29 @@
 # ⚔️ Conan Exiles Enhanced Dedicated Server (Docker)
 
-The most comprehensive Docker image for **Conan Exiles Enhanced Dedicated Server** — with **236 configurable settings** via a simple `.env` file.
+A community Docker Compose setup for hosting a **Conan Exiles Enhanced dedicated server** with automatic game downloads, SteamCMD updates, environment-based configuration, Steam Workshop mod support, and a web-based `.env` generator.
 
 > ✅ Compatible with the renamed **Conan Exiles Enhanced** dedicated server. Steam app IDs, image names, repository URLs, and internal `ConanSandbox` paths may still use the legacy Conan Exiles naming because those are upstream/internal identifiers.
 
-Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, and **SteamCMD** for better Unreal Engine 5 compatibility.
+Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, **SteamCMD**, and headless Vulkan/EGL/OpenGL runtime libraries for better Unreal Engine 5 compatibility on VPS and home servers.
+
+## About
+
+This project is designed for server owners who want a practical Docker workflow instead of manually installing and configuring the Windows dedicated server. You download `docker-compose.yml`, create a `.env` file, and let the container handle the heavy lifting.
+
+What the container handles:
+
+- Downloads and updates the Conan Exiles Enhanced dedicated server with SteamCMD.
+- Generates server configuration from your `.env` file on startup.
+- Optionally downloads Steam Workshop mods from `SERVER_MOD_LIST` and writes `ConanSandbox/Mods/modlist.txt`.
+- Runs the Windows server through Wine with VC++ 2022 and headless runtime libraries.
+- Stores game files, saves, and configuration in Docker volumes so updates do not wipe your world.
+
+What you provide:
+
+- Docker and Docker Compose.
+- Open firewall/router ports for the server.
+- A `.env` file, either edited manually or generated from the website.
+- Optional Steam Workshop mod IDs if you want a modded server.
 
 ## 🙌 Contributors
 
@@ -21,15 +40,17 @@ Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community p
 
 ## ✨ Features
 
-- 🚀 Auto-downloads game files on first run (~4.5GB)
-- 🔄 Auto-updates on every restart
-- ⚙️ **236 settings** via `.env` file — no config file editing needed
-- 🌐 **Web-based Config Generator** with sliders and toggles
-- 🎮 PvE / PvP / PvE-C modes with per-day schedules
-- ⚡ Full Purge, Pet Hunger, Day/Night, Chat, Durability controls
-- 🖥️ Optional RCON remote console
-- 💾 Persistent data via Docker volumes
-- 📦 Pre-built image — no build needed
+- 🚀 Auto-downloads dedicated server files on first run.
+- 🔄 Auto-updates game files on every container start.
+- ⚙️ **236 settings** through a simple `.env` file.
+- 🌐 **Web-based Config Generator** with sliders, toggles, and download/copy actions.
+- 🧩 Optional Steam Workshop mod downloads via `SERVER_MOD_LIST`.
+- 🎮 PvE / PvP / PvE-C modes with per-day PvP and building damage schedules.
+- 🖥️ Optional RCON remote console.
+- 🍷 WineHQ Staging + VC++ 2022 runtime for the Windows dedicated server.
+- 🧱 Vulkan/EGL/OpenGL/Mesa runtime libraries for VPS/headless hosts.
+- 💾 Persistent Docker volumes for game files, saves, and config.
+- 📦 Pre-built GHCR image — no local build required.
 
 ---
 
@@ -371,8 +392,9 @@ docker compose -f docker-compose.build.yml up -d
 | Base | Debian Bookworm (slim) |
 | Wine | WineHQ Staging |
 | Windows Runtime | Microsoft Visual C++ 2022 Redistributable |
+| Headless Runtime | Xvfb, Vulkan, EGL, OpenGL, Mesa |
 | SteamCMD | Latest |
-| Xvfb | Virtual framebuffer |
+| Container | Docker / Docker Compose |
 
 ---
 
