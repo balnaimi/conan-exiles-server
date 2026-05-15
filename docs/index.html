@@ -704,27 +704,23 @@ body {
       <h2 class="qs-title">Quick Start</h2>
       
       <div class="qs-option">
-        <div class="qs-option-title">Option A — Default Settings (fastest)</div>
-        <div class="qs-option-desc">Get your server running in 2 commands. Perfect for testing or getting started quickly.</div>
-        <pre class="code-block">mkdir conan-server && cd conan-server
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-docker compose up -d</pre>
-        <div class="info-note">That's it! Server runs with default PvE settings. First run downloads ~4.5GB and takes 10-30 minutes.</div>
-      </div>
-
-      <div class="qs-option">
-        <div class="qs-option-title">Option B — Custom Settings</div>
-        <div class="qs-option-desc">Download the .env example file and customize it to your liking.</div>
+        <div class="qs-option-title">Recommended Quick Start</div>
+        <div class="qs-option-desc">Download the compose file and the required .env template, then start the server.</div>
         <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
 nano .env  <span class="comment"># or use the Config Generator</span>
 docker compose up -d</pre>
+        <div class="info-note">First run downloads ~4.5GB and takes 10-30 minutes. The .env file is required because docker-compose.yml loads it with env_file.</div>
       </div>
 
       <div class="qs-option">
-        <div class="qs-option-title">Option C — Use Config Generator</div>
-        <div class="qs-option-desc">Use the visual config generator (⚙️ Config Generator tab) to create your .env file, then paste it into your server directory.</div>
+        <div class="qs-option-title">Use Config Generator</div>
+        <div class="qs-option-desc">Use the visual config generator (⚙️ Config Generator tab), save the generated output as .env in the same folder as docker-compose.yml, then start the server.</div>
+        <pre class="code-block">mkdir conan-server && cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+<span class="comment"># Save the generated config as .env in this folder</span>
+docker compose up -d</pre>
       </div>
     </div>
   </section>
