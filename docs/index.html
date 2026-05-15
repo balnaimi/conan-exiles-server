@@ -1063,50 +1063,67 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
      TAB 5: ABOUT
      ============================================ -->
 <div id="tab-about" class="tab-content">
-  <section class="features">
-    <h2 style="font-size:2.5rem;color:var(--accent);text-align:center;margin-bottom:3rem;text-shadow:0 0 20px var(--accent-glow);">Features</h2>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🚀</div>
-        <div class="feature-title">Auto-Download</div>
-        <div class="feature-desc">Game files download automatically on first run (~4.5GB). No manual setup needed.</div>
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">About This Project</h2>
+      <div class="info-note">
+        This is a community Docker wrapper for hosting a <strong>Conan Exiles Enhanced dedicated server</strong>. It is built for people who want a practical Docker Compose setup with automatic game downloads, environment-based configuration, Steam Workshop mod support, and a web-based .env generator.
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔄</div>
-        <div class="feature-title">Auto-Update</div>
-        <div class="feature-desc">Server updates every restart. Always running the latest version.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚙️</div>
-        <div class="feature-title">236 Settings</div>
-        <div class="feature-desc">Every setting configurable via .env file. Full control over your server.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎮</div>
-        <div class="feature-title">All Game Modes</div>
-        <div class="feature-desc">PvE / PvP / PvE-C with per-day schedules. Configure your perfect playstyle.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🖥️</div>
-        <div class="feature-title">RCON Ready</div>
-        <div class="feature-desc">Built-in remote console support. Manage your server from anywhere.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📦</div>
-        <div class="feature-title">Pre-built Image</div>
-        <div class="feature-desc">Just pull and run, no build needed. Up and running in minutes.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🍷</div>
-        <div class="feature-title">UE5/Wine Ready</div>
-        <div class="feature-desc">Bookworm + WineHQ Staging + VC++ 2022 runtime for better Unreal Engine 5 compatibility.</div>
+      <div class="info-warning" style="margin-top:1rem;">
+        This project is not affiliated with, endorsed by, or connected to Funcom or Valve Corporation. Conan Exiles and Conan Exiles Enhanced are trademarks of Funcom. Steam is a trademark of Valve Corporation.
       </div>
     </div>
   </section>
 
-  <section class="info-section" style="background:var(--bg);">
+  <section class="features" style="background:var(--bg);">
+    <h2 style="font-size:2.2rem;color:var(--accent);text-align:center;margin-bottom:2rem;text-shadow:0 0 20px var(--accent-glow);">What It Includes</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-title">Auto-Download</div>
+        <div class="feature-desc">Downloads the dedicated server files through SteamCMD on first startup.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Auto-Update</div>
+        <div class="feature-desc">Checks and updates the game server files whenever the container starts.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">Config Generator</div>
+        <div class="feature-desc">Generates a ready-to-use .env file from the website without manually editing every option.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧩</div>
+        <div class="feature-title">Mod Support</div>
+        <div class="feature-desc">Downloads Steam Workshop mods from SERVER_MOD_LIST and writes modlist.txt automatically.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <div class="feature-title">RCON Ready</div>
+        <div class="feature-desc">Optional remote console support for admins who want external server management.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <div class="feature-title">Game Modes</div>
+        <div class="feature-desc">Supports PvE, PvP, and PvE-C settings, including PvP and building damage schedules.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🍷</div>
+        <div class="feature-title">Wine Runtime</div>
+        <div class="feature-desc">Runs the Windows dedicated server through Wine with VC++ 2022 and headless runtime libraries.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Pre-built Image</div>
+        <div class="feature-desc">Published to GitHub Container Registry for Docker Compose users.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section">
     <div class="info-container">
-      <h2 class="info-title">Tech Stack</h2>
+      <h2 class="info-title">Runtime Stack</h2>
       <div class="ports-table">
         <table>
           <thead>
@@ -1129,6 +1146,10 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
               <td>Microsoft Visual C++ 2022 Redistributable</td>
             </tr>
             <tr>
+              <td><strong>Headless Runtime</strong></td>
+              <td>Xvfb, Vulkan, EGL, OpenGL, and Mesa runtime libraries</td>
+            </tr>
+            <tr>
               <td><strong>Game Updater</strong></td>
               <td>SteamCMD</td>
             </tr>
@@ -1142,9 +1163,9 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     </div>
   </section>
 
-  <section class="info-section">
+  <section class="info-section" style="background:var(--bg);">
     <div class="info-container">
-      <h2 class="info-title">Latest Release</h2>
+      <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
         <strong>v2.4.1 — VPS Headless Runtime Fix:</strong> Added Vulkan, EGL, OpenGL, and Mesa runtime libraries for Wine/UE5 startup on VPS and headless hosts.
       </div>
@@ -1158,23 +1179,17 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
         🙌 Thanks to <a href="https://github.com/pvillaverde" style="color:var(--accent);">@pvillaverde</a> for reporting that configured mods were not being downloaded in issue #2.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.3.1 — Documentation Quick Start Fix:</strong> Updated the website quick start so it downloads the required .env file before running docker compose, matching the README and preventing first-run env_file errors.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        🙌 Thanks to <a href="https://github.com/pvillaverde" style="color:var(--accent);">@pvillaverde</a> for reporting the broken website quick start in issue #2.
+        <strong>v2.3.1 — Documentation Quick Start Fix:</strong> Updated the website quick start so it downloads the required .env file before running docker compose.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.3.0 — UE5/Wine Compatibility Update:</strong> Debian Bookworm base image, WineHQ Staging, winbind/cabextract dependencies, Microsoft Visual C++ 2022 Redistributable, and headless-safe Wine initialization via xvfb-run.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        🙌 Thanks to <a href="https://github.com/Sniijz" style="color:var(--accent);">@Sniijz</a> for the first community pull request and the UE5 compatibility improvements.
       </div>
     </div>
   </section>
 
   <section class="info-section">
     <div class="info-container">
-      <h2 class="info-title">Files & Structure</h2>
+      <h2 class="info-title">Project Files</h2>
       <div class="ports-table">
         <table>
           <thead>
@@ -1186,15 +1201,23 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
           <tbody>
             <tr>
               <td><strong>docker-compose.yml</strong></td>
-              <td>Container orchestration (required)</td>
+              <td>Production Docker Compose file for the pre-built image</td>
             </tr>
             <tr>
               <td><strong>.env</strong></td>
-              <td>Your custom server settings (optional)</td>
+              <td>Your local server settings</td>
             </tr>
             <tr>
               <td><strong>.env.example</strong></td>
               <td>Template with all 236 settings documented</td>
+            </tr>
+            <tr>
+              <td><strong>entrypoint.sh</strong></td>
+              <td>Container startup script for game downloads, config generation, mods, and server launch</td>
+            </tr>
+            <tr>
+              <td><strong>docs/index.html</strong></td>
+              <td>Website and Config Generator</td>
             </tr>
           </tbody>
         </table>
@@ -1204,22 +1227,14 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
 
   <section class="info-section" style="background:var(--bg);">
     <div class="info-container">
-      <h2 class="info-title">Links</h2>
+      <h2 class="info-title">Links & Source</h2>
       <div class="info-note">
         <strong>GitHub Repository:</strong><br>
         <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" style="color:var(--accent);text-decoration:none;font-size:1rem;">
           https://github.com/balnaimi/conan-exiles-server
         </a>
       </div>
-    </div>
-  </section>
-
-  <section class="info-section">
-    <div class="info-container">
-      <h2 class="info-title">Building from Source</h2>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">
-        If you prefer to build the Docker image yourself instead of using the pre-built one:
-      </p>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin:1.5rem 0 0.75rem;">If you prefer to build the Docker image yourself instead of using the pre-built image:</p>
       <pre class="code-block">git clone https://github.com/balnaimi/conan-exiles-server.git
 cd conan-exiles-server
 docker build -t conan-exiles-server .
