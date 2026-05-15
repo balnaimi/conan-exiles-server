@@ -77,30 +77,34 @@ Just configure, generate, and paste into your `.env` file!
 
 ## 🚀 Quick Start
 
-**1. Create a folder and download the files:**
+### Fast Start
+
+Use this if you want a simple server with only the basic settings.
+
+```bash
+mkdir conan-server && cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose up -d
+```
+
+### Full Configuration
+
+Use this if you want the full documented template with every available setting.
 
 ```bash
 mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
 cp .env.example .env
-```
-
-**2. Edit your settings:**
-
-```bash
 nano .env
-```
-
-Or use the [Config Generator](https://balnaimi.github.io/conan-exiles-server/) and paste the output.
-
-**3. Start the server:**
-
-```bash
 docker compose up -d
 ```
 
-**4. Watch the logs (first run takes 10-30 minutes):**
+Or use the [Config Generator](https://balnaimi.github.io/conan-exiles-server/) to create a custom `.env` file from the website.
+
+Watch the logs. The first run takes 10-30 minutes:
 
 ```bash
 docker compose logs -f
@@ -381,6 +385,7 @@ docker compose -f docker-compose.build.yml up -d
 | `entrypoint.sh` | Startup script (download, configure, run) |
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
+| `.env.minimal` | Small quick-start template with only basic settings |
 | `.env.example` | Full configuration template (236 settings) |
 | `docs/index.html` | Web-based Config Generator |
 

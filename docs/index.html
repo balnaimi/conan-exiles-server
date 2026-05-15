@@ -705,15 +705,25 @@ body {
       <h2 class="qs-title">Quick Start</h2>
       
       <div class="qs-option">
-        <div class="qs-option-title">Recommended Quick Start</div>
-        <div class="qs-option-desc">Download the compose file and the required .env template, then start the server.</div>
+        <div class="qs-option-title">Fast Start</div>
+        <div class="qs-option-desc">Use a small .env file with only the basic settings. Good for testing or getting a simple server online quickly.</div>
+        <pre class="code-block">mkdir conan-server && cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose up -d</pre>
+        <div class="info-note">First run downloads ~4.5GB and takes 10-30 minutes. The minimal .env uses mostly default server settings.</div>
+      </div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">Full Configuration</div>
+        <div class="qs-option-desc">Use the full .env.example template if you want every documented setting available for editing.</div>
         <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
 cp .env.example .env
-nano .env  <span class="comment"># or use the Config Generator</span>
+nano .env
 docker compose up -d</pre>
-        <div class="info-note">First run downloads ~4.5GB and takes 10-30 minutes. The .env file is required because docker-compose.yml loads it with env_file.</div>
       </div>
 
       <div class="qs-option">
@@ -1207,6 +1217,10 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
             <tr>
               <td><strong>.env</strong></td>
               <td>Your local server settings</td>
+            </tr>
+            <tr>
+              <td><strong>.env.minimal</strong></td>
+              <td>Small quick-start template with only basic settings</td>
             </tr>
             <tr>
               <td><strong>.env.example</strong></td>
