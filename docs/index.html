@@ -940,6 +940,16 @@ docker compose down          <span class="comment"># Stop current server</span>
 docker compose up -d         <span class="comment"># Start with new image</span></pre>
       <div class="info-note" style="margin-top:0.75rem;">Your game data and saves are stored in Docker volumes — they are preserved during image updates.</div>
 
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">Startup Troubleshooting</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">On some VPS or headless hosts, Wine/Conan may log Vulkan or EGL runtime messages during startup.</p>
+      <pre class="code-block">Failed to load libvulkan.so.1
+Failed to load libEGL.so.1</pre>
+      <div class="info-note" style="margin-top:0.75rem;">Use the latest image first. It includes Vulkan, EGL, OpenGL, and Mesa runtime libraries needed by Wine and Conan Exiles Enhanced on headless hosts.</div>
+      <pre class="code-block">docker compose pull
+docker compose down
+docker compose up -d</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">If the log appears to stop while mounting pak files, wait 10-15 minutes on first startup, then check <code>docker compose ps</code> and <code>docker compose logs --tail 150</code>. Low-memory VPS hosts may also kill the process outside the game log.</div>
+
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Backup Your Data</h3>
       <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
       <pre class="code-block">docker compose down
@@ -1136,6 +1146,12 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <div class="info-container">
       <h2 class="info-title">Latest Release</h2>
       <div class="info-note">
+        <strong>v2.4.1 — VPS Headless Runtime Fix:</strong> Added Vulkan, EGL, OpenGL, and Mesa runtime libraries for Wine/UE5 startup on VPS and headless hosts.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        🙌 Thanks to <a href="https://github.com/SummertimeSadnesss" style="color:var(--accent);">@SummertimeSadnesss</a> for reporting the Debian 12 VPS startup issue in issue #3.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.4.0 — Steam Workshop Mod Support:</strong> SERVER_MOD_LIST now downloads Steam Workshop mods, installs their .pak files into ConanSandbox/Mods, and generates modlist.txt automatically in the configured order.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">

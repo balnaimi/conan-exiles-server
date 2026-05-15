@@ -212,6 +212,32 @@ docker compose up -d          # Start with new image
 
 > 💡 Your game data and saves are stored in Docker volumes — they are **preserved** during image updates. The game server files are also auto-updated via SteamCMD on every restart.
 
+### 🩺 Startup Troubleshooting
+
+On some VPS or headless hosts, Wine/Conan may log Vulkan or EGL runtime messages during startup, such as:
+
+```text
+Failed to load libvulkan.so.1
+Failed to load libEGL.so.1
+```
+
+Use the latest image first, because it includes the Vulkan/EGL/Mesa runtime libraries needed by Wine and Conan Exiles Enhanced on headless hosts:
+
+```bash
+docker compose pull
+docker compose down
+docker compose up -d
+```
+
+If the log appears to stop while mounting pak files, wait 10-15 minutes on first startup, then check whether the container is still running:
+
+```bash
+docker compose ps
+docker compose logs --tail 150
+```
+
+If the container exits or the VPS has low memory, also check the host for out-of-memory kills.
+
 ### 🗑️ Full Reset (Start Fresh)
 
 Want to wipe everything and start from scratch?
@@ -386,6 +412,12 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### v2.4.1 — VPS Headless Runtime Fix
+
+- Added Vulkan, EGL, OpenGL, and Mesa runtime libraries for both amd64 and i386 to improve Wine/UE5 startup on VPS and headless hosts.
+- Added startup troubleshooting notes for Vulkan/EGL messages and pak mounting delays.
+- Thanks to [@SummertimeSadnesss](https://github.com/SummertimeSadnesss) for reporting the Debian 12 VPS startup issue in issue #3.
 
 ### v2.4.0 — Steam Workshop Mod Support
 
