@@ -367,6 +367,7 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 - Updated the website Quick Start to download `.env.example` as `.env` before running `docker compose up -d`.
 - Removed the broken two-command website option that failed because `docker-compose.yml` requires `env_file: .env`.
 - Aligned the website setup instructions with the working README quick start.
+- Thanks to [@pvillaverde](https://github.com/pvillaverde) for reporting the broken website quick start in issue #2.
 
 ### v2.3.0 — UE5/Wine Compatibility Update
 
