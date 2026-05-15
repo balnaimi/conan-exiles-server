@@ -152,20 +152,24 @@ All settings are in the `.env` file. The `.env.example` includes **236 settings*
 
 ## 🧩 Mods
 
-Add Steam Workshop mod IDs to `SERVER_MOD_LIST` as a comma-separated list:
+To run a modded server, you only need to add Steam Workshop mod IDs to `SERVER_MOD_LIST` in your `.env` file.
+
+What you do:
+
+1. Find the Steam Workshop IDs for the mods you want.
+2. Put them in `SERVER_MOD_LIST` as a comma-separated list.
+3. Keep the IDs in the same order required by your mod collection.
 
 ```env
 SERVER_MOD_LIST=3719513784,3720904511,3361295718
 ```
 
-When `SERVER_MOD_LIST` is set, the container will:
+What the container does automatically on startup:
 
 - Download each mod from the Conan Exiles Steam Workshop.
 - Copy the downloaded `.pak` file into `ConanSandbox/Mods`.
 - Generate `ConanSandbox/Mods/modlist.txt` in the same order as your list.
 - Stop startup with a clear error if a mod ID is invalid, download output is missing, or no `.pak` file is found.
-
-Mod order matters in Conan Exiles. Keep the IDs in the same order required by your mod collection.
 
 Leave `SERVER_MOD_LIST` empty to run an unmodded server.
 

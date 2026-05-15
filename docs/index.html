@@ -766,8 +766,28 @@ docker compose up -d</pre>
     </div>
   </section>
 
-  <!-- CONNECTING SECTION -->
+  <!-- MODS SECTION -->
   <section class="info-section" style="background: var(--bg);">
+    <div class="info-container">
+      <h2 class="info-title">Mods</h2>
+      <div class="info-note">
+        <strong>What you do:</strong><br>
+        Add the Steam Workshop mod IDs you want to <strong>SERVER_MOD_LIST</strong> in your <strong>.env</strong> file or in the Config Generator. Use commas between IDs and keep them in the required load order.
+      </div>
+      <pre class="code-block">SERVER_MOD_LIST=3719513784,3720904511,3361295718</pre>
+      <div class="info-note" style="margin-top:1rem;">
+        <strong>What the container does automatically:</strong><br>
+        On startup, it downloads each mod, copies the downloaded <strong>.pak</strong> files into <strong>ConanSandbox/Mods</strong>, and generates <strong>ConanSandbox/Mods/modlist.txt</strong> in the same order.
+      </div>
+      <div class="info-warning" style="margin-top:1rem;">
+        <strong>Important:</strong> If a mod ID is invalid, the download output is missing, or no .pak file is found, startup stops with a clear error so the server does not silently run without the requested mods.
+      </div>
+      <div class="info-note" style="margin-top:1rem;">Leave <strong>SERVER_MOD_LIST</strong> empty to run an unmodded server.</div>
+    </div>
+  </section>
+
+  <!-- CONNECTING SECTION -->
+  <section class="info-section">
     <div class="info-container">
       <h2 class="info-title">Connecting to Your Server</h2>
       <div class="info-note">
@@ -1614,7 +1634,7 @@ const CONFIG = [
       { key: 'VALIDATE_PLAYER_STATS', label: 'Validate Player Stats', desc: 'Server validates player stats for cheating', type: 'bool', default: false },
       { key: 'MAX_CLIENT_RATE', label: 'Max Client Network Rate', desc: 'Maximum network rate per client', type: 'number', default: 15000 },
       { key: 'RCON_MAX_KARMA', label: 'RCON Max Karma', desc: 'Max RCON karma before throttling', type: 'number', default: 60 },
-      { key: 'SERVER_MOD_LIST', label: 'Server Mod List', desc: 'Comma-separated Steam Workshop mod IDs. The container downloads them and writes ConanSandbox/Mods/modlist.txt in this order.', type: 'text', default: '' },
+      { key: 'SERVER_MOD_LIST', label: 'Server Mod List', desc: 'Optional. You provide comma-separated Steam Workshop mod IDs; the container downloads them and writes ConanSandbox/Mods/modlist.txt automatically in this order.', type: 'text', default: '' },
       { key: 'ALLOWED_TIME_UNDERMESH', label: 'Undermesh Time Limit', desc: 'Seconds allowed under the mesh before action (-1 = disabled)', type: 'number', default: -1 },
       { key: 'ALLOWED_DISTANCE_UNDERMESH', label: 'Undermesh Distance²', desc: 'Squared distance threshold for undermesh detection', type: 'number', default: 490000 },
       { key: 'MAX_DECAY_AUTO_DEMOLISH', label: 'Auto-Demolish Time', desc: 'Time before abandoned buildings auto-demolish (default: 604800 = 7 days)', type: 'number', default: 604800 },
