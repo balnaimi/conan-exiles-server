@@ -709,7 +709,8 @@ body {
         <div class="qs-option-desc">Download the compose file and the required .env template, then start the server.</div>
         <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+cp .env.example .env
 nano .env  <span class="comment"># or use the Config Generator</span>
 docker compose up -d</pre>
         <div class="info-note">First run downloads ~4.5GB and takes 10-30 minutes. The .env file is required because docker-compose.yml loads it with env_file.</div>
@@ -1179,7 +1180,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
         🙌 Thanks to <a href="https://github.com/pvillaverde" style="color:var(--accent);">@pvillaverde</a> for reporting that configured mods were not being downloaded in issue #2.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.3.1 — Documentation Quick Start Fix:</strong> Updated the website quick start so it downloads the required .env file before running docker compose.
+        <strong>v2.3.1 — Documentation Quick Start Fix:</strong> Updated the website quick start so it downloads .env.example, copies it to .env, then runs docker compose.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.3.0 — UE5/Wine Compatibility Update:</strong> Debian Bookworm base image, WineHQ Staging, winbind/cabextract dependencies, Microsoft Visual C++ 2022 Redistributable, and headless-safe Wine initialization via xvfb-run.

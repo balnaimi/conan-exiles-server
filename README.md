@@ -82,7 +82,8 @@ Just configure, generate, and paste into your `.env` file!
 ```bash
 mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+cp .env.example .env
 ```
 
 **2. Edit your settings:**
@@ -452,7 +453,7 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ### v2.3.1 — Documentation Quick Start Fix
 
-- Updated the website Quick Start to download `.env.example` as `.env` before running `docker compose up -d`.
+- Updated the website Quick Start to download `.env.example`, copy it to `.env`, then run `docker compose up -d`.
 - Removed the broken two-command website option that failed because `docker-compose.yml` requires `env_file: .env`.
 - Aligned the website setup instructions with the working README quick start.
 - Thanks to [@pvillaverde](https://github.com/pvillaverde) for reporting the broken website quick start in issue #2.
