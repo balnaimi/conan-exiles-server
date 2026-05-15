@@ -362,6 +362,12 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ## 📝 Release Notes
 
+### v2.3.1 — Documentation Quick Start Fix
+
+- Updated the website Quick Start to download `.env.example` as `.env` before running `docker compose up -d`.
+- Removed the broken two-command website option that failed because `docker-compose.yml` requires `env_file: .env`.
+- Aligned the website setup instructions with the working README quick start.
+
 ### v2.3.0 — UE5/Wine Compatibility Update
 
 - Switched the base image from Debian Trixie to Debian Bookworm for Wine compatibility/stability.
