@@ -674,7 +674,7 @@ body {
   <div class="hero-content">
     <div class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</div>
     <div class="hero-subtitle">Docker Edition</div>
-    <div class="hero-tagline">The most comprehensive Docker image — 236 configurable settings</div>
+    <div class="hero-tagline">The most comprehensive Docker image — 237 configurable settings</div>
     <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
       Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
       or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" style="color:var(--accent);">Steam</a>
@@ -790,6 +790,9 @@ docker compose up -d</pre>
         <strong>⚠️ Important:</strong> Conan Exiles Enhanced does not support hostnames — you must use an IP address.
       </div>
       <div class="info-note" style="margin-top: 1.5rem;">
+        <strong>CG-NAT / Tunnels:</strong> If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with multiple network interfaces, set <code>MULTIHOME</code> to the public or forwarded IP address that players should use. Leave it empty for normal hosting.
+      </div>
+      <div class="info-note" style="margin-top: 1.5rem;">
         <strong>⏱️ First Run:</strong> The server downloads ~4.5GB of game files and sets up the database. This takes <strong>10-30 minutes</strong> on first start. Be patient!
       </div>
 
@@ -892,7 +895,7 @@ docker compose up -d</pre>
 <div id="tab-config-generator" class="tab-content">
   <section class="config-generator">
     <h2 class="config-title">⚙️ Configuration Generator</h2>
-    <p class="config-subtitle">Configure all 236 server settings and generate a ready-to-use .env file</p>
+    <p class="config-subtitle">Configure all 237 server settings and generate a ready-to-use .env file</p>
 
     <div class="container">
       <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
@@ -1178,6 +1181,12 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
+        <strong>v2.5.0 — MULTIHOME Network Option:</strong> Added optional MULTIHOME support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        🙌 Thanks to <a href="https://github.com/xxirss" style="color:var(--accent);">@xxirss</a> for suggesting this improvement in issue #4.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.4.1 — VPS Headless Runtime Fix:</strong> Added Vulkan, EGL, OpenGL, and Mesa runtime libraries for Wine/UE5 startup on VPS and headless hosts.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
@@ -1224,7 +1233,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
             </tr>
             <tr>
               <td><strong>.env.example</strong></td>
-              <td>Template with all 236 settings documented</td>
+              <td>Template with all 237 settings documented</td>
             </tr>
             <tr>
               <td><strong>entrypoint.sh</strong></td>
@@ -1340,6 +1349,7 @@ const CONFIG = [
     fields: [
       { key: 'SERVER_PORT', label: 'Game Port', desc: 'Main game port (UDP)', type: 'number', default: 7777 },
       { key: 'QUERY_PORT', label: 'Query Port', desc: 'Steam query port (UDP)', type: 'number', default: 27015 },
+      { key: 'MULTIHOME', label: 'MULTIHOME IP', desc: 'Optional public/forwarded IP for CG-NAT, tunnels, or multi-interface hosts', type: 'text', default: '' },
       { key: 'KICK_AFK_TIME', label: 'AFK Kick Time', desc: 'Kick AFK players after this time (default: 2700 = 45 min)', type: 'number', default: 2700 },
       { key: 'KICK_AFK_PERCENTAGE', label: 'AFK Kick Threshold', desc: 'Server must be this % full before AFK kick', type: 'number', default: 80, min: 0, max: 100 },
       { key: 'MAX_ALLOWED_PING', label: 'Max Ping', desc: 'Max allowed ping (0 = no limit)', type: 'number', default: 0 },

@@ -478,7 +478,16 @@ log "Starting Conan Exiles Enhanced Dedicated Server..."
 log "============================================"
 
 cd "$GAME_DIR"
-xvfb-run --auto-servernum wine ConanSandboxServer.exe -log \
-    -Port=${SERVER_PORT:-7777} \
-    -QueryPort=${QUERY_PORT:-27015} \
-    -MaxPlayers=${MAX_PLAYERS:-40}
+server_args=(
+    -log
+    "-Port=${SERVER_PORT:-7777}"
+    "-QueryPort=${QUERY_PORT:-27015}"
+    "-MaxPlayers=${MAX_PLAYERS:-40}"
+)
+
+if [ -n "${MULTIHOME:-}" ]; then
+    server_args+=("-MULTIHOME=${MULTIHOME}")
+    log "MULTIHOME enabled: ${MULTIHOME}"
+fi
+
+xvfb-run --auto-servernum wine ConanSandboxServer.exe "${server_args[@]}"

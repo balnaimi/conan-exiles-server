@@ -42,7 +42,7 @@ Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community p
 
 - 🚀 Auto-downloads dedicated server files on first run.
 - 🔄 Auto-updates game files on every container start.
-- ⚙️ **236 settings** through a simple `.env` file.
+- ⚙️ **237 settings** through a simple `.env` file.
 - 🌐 **Web-based Config Generator** with sliders, toggles, and download/copy actions.
 - 🧩 Optional Steam Workshop mod downloads via `SERVER_MOD_LIST`.
 - 🎮 PvE / PvP / PvE-C modes with per-day PvP and building damage schedules.
@@ -116,7 +116,7 @@ Done! Connect via **Direct Connect** in-game using your server IP and port `7777
 
 ## ⚙️ Configuration
 
-All settings are in the `.env` file. The `.env.example` includes **236 settings** with descriptions.
+All settings are in the `.env` file. The `.env.example` includes **237 settings** with descriptions.
 
 ### Basic Settings
 
@@ -130,6 +130,16 @@ All settings are in the `.env` file. The `.env.example` includes **236 settings*
 | `SERVER_REGION` | `0` | Region (see below) |
 | `BATTLEYE_ENABLED` | `False` | BattlEye anti-cheat |
 | `TZ` | `UTC` | Timezone |
+
+### CG-NAT, Tunnels, and Multi-Interface Hosts
+
+If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with multiple network interfaces, Conan/Steam may advertise or bind to the wrong address. Set `MULTIHOME` to the public or forwarded IP address that players should use:
+
+```env
+MULTIHOME=your.public.or.forwarded.ip
+```
+
+Leave `MULTIHOME` empty unless you need this behavior. When set, the container adds `-MULTIHOME=<value>` to the Conan server startup command.
 
 ### 🌍 Server Regions
 
@@ -386,7 +396,7 @@ docker compose -f docker-compose.build.yml up -d
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
 | `.env.minimal` | Small quick-start template with only basic settings |
-| `.env.example` | Full configuration template (236 settings) |
+| `.env.example` | Full configuration template (237 settings) |
 | `docs/index.html` | Web-based Config Generator |
 
 ---
@@ -440,6 +450,12 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### v2.5.0 — MULTIHOME Network Option
+
+- Added optional `MULTIHOME` support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups.
+- Documented when to use `MULTIHOME` in README, `.env.example`, and the website Config Generator.
+- Thanks to [@xxirss](https://github.com/xxirss) for suggesting this improvement in issue #4.
 
 ### v2.4.1 — VPS Headless Runtime Fix
 
