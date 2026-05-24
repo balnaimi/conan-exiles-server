@@ -420,27 +420,29 @@ docker compose -f docker-compose.build.yml up -d
 
 ---
 
-## ⚠️ Known Limitations (Funcom Bugs)
+## ⚠️ Legacy Settings Needing Enhanced Verification
 
-Some settings are **broken or unreliable** in Conan Exiles Enhanced dedicated servers. These are **game bugs from Funcom**, not issues with this Docker image. They affect **all** hosting methods.
+Some server settings have a long history of being **broken, renamed, or unreliable** across Conan Exiles versions. With Conan Exiles Enhanced, several server settings were reworked or documented under newer names, so the items below should be treated as **legacy compatibility warnings** until they are retested on Enhanced.
 
-### ❌ Broken (no effect regardless of value)
+These are not Docker-specific issues. If you can confirm one of these settings now works reliably in Enhanced, please open an issue or pull request with the game version, setting value, and how you tested it.
 
-| Setting | Issue |
-|---------|-------|
-| `PlayerEncumbranceMultiplier` | Has no effect. Known bug since 2019, never fixed. |
-| `CraftingCostMultiplier` | Does not reduce crafting costs. Reported since 2018. |
-
-### ⚠️ Unreliable (may not work from .env / ini file)
+### Legacy / Needs Verification
 
 | Setting | Issue |
 |---------|-------|
-| `PlayerStaminaCostMultiplier` | May not take effect from .ini — use Admin Panel |
-| `PlayerStaminaCostSprintMultiplier` | Same as above |
-| `PlayerSprintSpeedScale` | May require player relog after restart |
-| `PlayerMovementSpeedScale` | Inconsistent behavior reported |
-| `PlayerHealthRegenSpeedScale` | May be overridden by game database |
-| `PlayerStaminaRegenSpeedScale` | Same as health regen |
+| `PlayerEncumbranceMultiplier` | Legacy reports say it had no effect. Needs retesting on Enhanced. |
+| `CraftingCostMultiplier` | Historically unreliable, but documented in Enhanced references. Needs retesting before removing this warning. |
+
+### Unreliable / May Need Admin Panel
+
+| Setting | Issue |
+|---------|-------|
+| `PlayerStaminaCostMultiplier` | Legacy key. Enhanced references may prefer `StaminaCostMultiplier`; needs verification. |
+| `PlayerStaminaCostSprintMultiplier` | Legacy key. Needs verification on Enhanced. |
+| `PlayerSprintSpeedScale` | May require player relog after restart; needs Enhanced confirmation. |
+| `PlayerMovementSpeedScale` | Inconsistent behavior reported historically; needs Enhanced confirmation. |
+| `PlayerHealthRegenSpeedScale` | May be overridden by game database or Admin Panel values. |
+| `PlayerStaminaRegenSpeedScale` | Same as health regen; needs Enhanced confirmation. |
 
 ### 💡 Workaround
 
@@ -451,7 +453,7 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 4. Change settings from within the game
 5. **Remove those settings from your `.env`** to avoid conflicts
 
-> **Note:** This image rewrites `ServerSettings.ini` on every restart from your `.env`. Settings changed via Admin Panel are stored in the **game database** and take priority. Remove broken/unreliable settings from your `.env` to avoid confusion.
+> **Note:** This image rewrites `ServerSettings.ini` on every restart from your `.env`. Settings changed via Admin Panel are stored in the **game database** and may take priority. If a legacy setting appears to do nothing, remove it from your `.env` to avoid confusion.
 
 ---
 
@@ -462,6 +464,7 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 - Added automatic `MULTIHOMEHTTP` support when `MULTIHOME` is set, improving server browser registration for multi-IP hosts.
 - Added optional `MULTIHOMEHTTP` override for advanced network setups.
 - Updated README, `.env.example`, and the website Config Generator with the new option.
+- Reworded legacy server setting warnings to avoid claiming unresolved Enhanced behavior as confirmed bugs.
 
 ### v2.5.0 — MULTIHOME Network Option
 
