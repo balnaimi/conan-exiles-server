@@ -139,7 +139,13 @@ If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with mu
 MULTIHOME=your.public.or.forwarded.ip
 ```
 
-Leave `MULTIHOME` empty unless you need this behavior. When set, the container adds `-MULTIHOME=<value>` to the Conan server startup command.
+Leave `MULTIHOME` empty unless you need this behavior. When set, the container adds both `-MULTIHOME=<value>` and `-MULTIHOMEHTTP=<value>` to the Conan server startup command so game traffic and server-browser HTTP registration use the same IP.
+
+If your setup needs a different HTTP source IP, override it explicitly:
+
+```env
+MULTIHOMEHTTP=your.http.source.ip
+```
 
 ### 🌍 Server Regions
 
@@ -454,6 +460,7 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ### v2.5.0 — MULTIHOME Network Option
 
 - Added optional `MULTIHOME` support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups.
+- Added automatic `MULTIHOMEHTTP` support when `MULTIHOME` is set, improving server browser registration for multi-IP hosts.
 - Documented when to use `MULTIHOME` in README, `.env.example`, and the website Config Generator.
 - Thanks to [@xxirss](https://github.com/xxirss) for suggesting this improvement in issue #4.
 

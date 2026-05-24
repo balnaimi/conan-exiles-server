@@ -790,7 +790,7 @@ docker compose up -d</pre>
         <strong>⚠️ Important:</strong> Conan Exiles Enhanced does not support hostnames — you must use an IP address.
       </div>
       <div class="info-note" style="margin-top: 1.5rem;">
-        <strong>CG-NAT / Tunnels:</strong> If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with multiple network interfaces, set <code>MULTIHOME</code> to the public or forwarded IP address that players should use. Leave it empty for normal hosting.
+        <strong>CG-NAT / Tunnels:</strong> If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with multiple network interfaces, set <code>MULTIHOME</code> to the public or forwarded IP address that players should use. The container will also use that value for <code>MULTIHOMEHTTP</code> so server-browser registration comes from the same IP. Leave both empty for normal hosting.
       </div>
       <div class="info-note" style="margin-top: 1.5rem;">
         <strong>⏱️ First Run:</strong> The server downloads ~4.5GB of game files and sets up the database. This takes <strong>10-30 minutes</strong> on first start. Be patient!
@@ -1181,7 +1181,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
-        <strong>v2.5.0 — MULTIHOME Network Option:</strong> Added optional MULTIHOME support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups.
+        <strong>v2.5.0 — MULTIHOME Network Option:</strong> Added optional MULTIHOME support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups, including automatic MULTIHOMEHTTP for server-browser registration.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         🙌 Thanks to <a href="https://github.com/xxirss" style="color:var(--accent);">@xxirss</a> for suggesting this improvement in issue #4.
@@ -1350,6 +1350,7 @@ const CONFIG = [
       { key: 'SERVER_PORT', label: 'Game Port', desc: 'Main game port (UDP)', type: 'number', default: 7777 },
       { key: 'QUERY_PORT', label: 'Query Port', desc: 'Steam query port (UDP)', type: 'number', default: 27015 },
       { key: 'MULTIHOME', label: 'MULTIHOME IP', desc: 'Optional public/forwarded IP for CG-NAT, tunnels, or multi-interface hosts', type: 'text', default: '' },
+      { key: 'MULTIHOMEHTTP', label: 'MULTIHOMEHTTP IP', desc: 'Optional HTTP source IP for server browser registration; defaults to MULTIHOME when empty', type: 'text', default: '' },
       { key: 'KICK_AFK_TIME', label: 'AFK Kick Time', desc: 'Kick AFK players after this time (default: 2700 = 45 min)', type: 'number', default: 2700 },
       { key: 'KICK_AFK_PERCENTAGE', label: 'AFK Kick Threshold', desc: 'Server must be this % full before AFK kick', type: 'number', default: 80, min: 0, max: 100 },
       { key: 'MAX_ALLOWED_PING', label: 'Max Ping', desc: 'Max allowed ping (0 = no limit)', type: 'number', default: 0 },

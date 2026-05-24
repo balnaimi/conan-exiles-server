@@ -486,8 +486,11 @@ server_args=(
 )
 
 if [ -n "${MULTIHOME:-}" ]; then
+    multihome_http="${MULTIHOMEHTTP:-$MULTIHOME}"
     server_args+=("-MULTIHOME=${MULTIHOME}")
+    server_args+=("-MULTIHOMEHTTP=${multihome_http}")
     log "MULTIHOME enabled: ${MULTIHOME}"
+    log "MULTIHOMEHTTP enabled: ${multihome_http}"
 fi
 
 xvfb-run --auto-servernum wine ConanSandboxServer.exe "${server_args[@]}"
