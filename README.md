@@ -457,10 +457,15 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ## 📝 Release Notes
 
+### v2.5.1 — MULTIHOMEHTTP Server Browser Fix
+
+- Added automatic `MULTIHOMEHTTP` support when `MULTIHOME` is set, improving server browser registration for multi-IP hosts.
+- Added optional `MULTIHOMEHTTP` override for advanced network setups.
+- Updated README, `.env.example`, and the website Config Generator with the new option.
+
 ### v2.5.0 — MULTIHOME Network Option
 
 - Added optional `MULTIHOME` support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups.
-- Added automatic `MULTIHOMEHTTP` support when `MULTIHOME` is set, improving server browser registration for multi-IP hosts.
 - Documented when to use `MULTIHOME` in README, `.env.example`, and the website Config Generator.
 - Thanks to [@xxirss](https://github.com/xxirss) for suggesting this improvement in issue #4.
 
