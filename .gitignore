@@ -1,1 +1,12 @@
 .env
+
+# Runtime research may include real world saves/backups or server secrets; keep raw
+# runtime snapshots local unless intentionally sanitized and committed.
+research/**/*.db
+research/**/*.db-*
+research/**/*.sqlite
+research/**/*.sqlite3
+research/runtime-configs/2026-*-saved/
+research/runtime-configs/2026-*-windowsserver/
+research/runtime-configs/2026-*-analysis.md
+research/runtime-configs/analyze-runtime-configs.py

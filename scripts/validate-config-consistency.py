@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ENV_EXAMPLE = ROOT / ".env.example"
 INDEX_HTML = ROOT / "docs" / "index.html"
 README = ROOT / "README.md"
-EXPECTED_SETTINGS = 236
+EXPECTED_SETTINGS = 239
 
 
 def env_keys() -> list[str]:
@@ -56,8 +56,9 @@ def main() -> int:
 
     for path in (README, INDEX_HTML):
         text = path.read_text(encoding="utf-8")
-        if "237 settings" in text or "237 configurable settings" in text:
-            errors.append(f"{path.relative_to(ROOT)} still documents 237 settings")
+        for stale_count in ("236", "237"):
+            if f"{stale_count} settings" in text or f"{stale_count} configurable settings" in text:
+                errors.append(f"{path.relative_to(ROOT)} still documents {stale_count} settings")
 
     if errors:
         print("Configuration consistency check failed:")

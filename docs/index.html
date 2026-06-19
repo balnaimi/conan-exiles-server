@@ -674,7 +674,7 @@ body {
   <div class="hero-content">
     <div class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</div>
     <div class="hero-subtitle">Docker Edition</div>
-    <div class="hero-tagline">The most comprehensive Docker image — 236 configurable settings</div>
+    <div class="hero-tagline">The most comprehensive Docker image — 239 configurable settings</div>
     <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
       Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
       or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" style="color:var(--accent);">Steam</a>
@@ -895,11 +895,12 @@ docker compose up -d</pre>
 <div id="tab-config-generator" class="tab-content">
   <section class="config-generator">
     <h2 class="config-title">⚙️ Configuration Generator</h2>
-    <p class="config-subtitle">Configure all 236 server settings and generate a ready-to-use .env file</p>
+    <p class="config-subtitle">Configure all 239 server settings and generate a ready-to-use .env file</p>
 
     <div class="container">
       <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
-        💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.
+        💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.<br>
+        ⚠️ <strong style="color:var(--accent)">Startup-time config:</strong> Docker <code>.env</code> values generate Conan <code>.ini</code> files when the container starts. Restart/recreate after edits; they are not live in-game settings.
       </div>
       <div class="stats">
         <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
@@ -963,6 +964,7 @@ Failed to load libEGL.so.1</pre>
 docker compose down
 docker compose up -d</pre>
       <div class="info-warning" style="margin-top:0.75rem;">If the log appears to stop while mounting pak files, wait 10-15 minutes on first startup, then check <code>docker compose ps</code> and <code>docker compose logs --tail 150</code>. Low-memory VPS hosts may also kill the process outside the game log.</div>
+      <div class="info-warning" style="margin-top:0.75rem;">If clients cannot connect after a UE4 → UE5 migration, inspect <code>Engine.ini</code> and remove stale <code>bUseBuildIdOverride</code> / <code>BuildIdOverride</code> lines.</div>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Backup Your Data</h3>
       <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
@@ -974,7 +976,8 @@ docker run --rm \
 docker compose up -d</pre>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>⚠️ Volume Name:</strong> The volume name depends on your folder name. If your folder is named <code>my-server</code>, the volume will be <code>my-server_config-data</code>.<br>
-        Use <code>docker volume ls</code> to see your actual volume names.
+        Use <code>docker volume ls</code> to see your actual volume names.<br>
+        Conan Exiles Enhanced uses <code>ConanSandbox/Saved/game_0.db</code> as the default world database; older UE4 scripts that target <code>game.db</code> should be updated or verified.
       </div>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">♻️ Restore From Backup</h3>
@@ -1182,6 +1185,9 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
+        <strong>Unreleased — Enhanced INI/RCON Alignment:</strong> Generates Game.ini [RconPlugin] for RCON, writes server name/password under OnlineSubsystem, uses runtime-confirmed clanMaxSize casing, adds three missing generator settings, and documents Enhanced game_0.db plus UE4→UE5 troubleshooting notes.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.5.1 — MULTIHOMEHTTP Server Browser Fix:</strong> Added automatic MULTIHOMEHTTP support when MULTIHOME is set, improving server-browser registration for multi-IP hosts. Also reworded legacy setting warnings for Enhanced verification.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
@@ -1237,7 +1243,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
             </tr>
             <tr>
               <td><strong>.env.example</strong></td>
-              <td>Template with all 236 settings documented</td>
+              <td>Template with all 239 settings documented</td>
             </tr>
             <tr>
               <td><strong>entrypoint.sh</strong></td>
@@ -1458,6 +1464,7 @@ const CONFIG = [
       { key: 'ITEM_CONVERSION', label: 'Item Conversion Speed', desc: 'Speed of tanning, smelting, drying etc. in crafting stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
       { key: 'ITEM_REPAIR_MIN_DURABILITY', label: 'Min Repair Durability', desc: 'Minimum durability after repair (0.1 = 10%)', type: 'range', default: 0.1, min: 0.0, max: 1.0, step: 0.05 },
       { key: 'ITEM_REPAIR_PENALTY_CHANCE', label: 'Repair Penalty Chance', desc: 'Chance of durability loss on repair (1.0 = always)', type: 'range', default: 1.0, min: 0.0, max: 1.0, step: 0.1 },
+      { key: 'ITEM_REPAIR_LOSS_BY_TIER', label: 'Repair Loss by Kit Tier', desc: 'Advanced tuple for durability loss by repair kit tier', type: 'text', default: '(0.200000,0.200000,0.150000,0.100000,0.050000,0.025000)' },
     ]
   },
   {
@@ -1703,6 +1710,8 @@ const CONFIG = [
       { key: 'SERVER_MOD_LIST', label: 'Server Mod List', desc: 'Optional. You provide comma-separated Steam Workshop mod IDs; the container downloads them and writes ConanSandbox/Mods/modlist.txt automatically in this order.', type: 'text', default: '' },
       { key: 'ALLOWED_TIME_UNDERMESH', label: 'Undermesh Time Limit', desc: 'Seconds allowed under the mesh before action (-1 = disabled)', type: 'number', default: -1 },
       { key: 'ALLOWED_DISTANCE_UNDERMESH', label: 'Undermesh Distance²', desc: 'Squared distance threshold for undermesh detection', type: 'number', default: 490000 },
+      { key: 'CAP_CHARACTER_LAYOUT', label: 'Cap Character Layout', desc: 'Cap character creation/body scalar parameters', type: 'bool', default: false },
+      { key: 'PATH_FOLLOWING_ANGULAR', label: 'Path Following Angular Velocity', desc: 'Advanced AI/networking setting for path-following angular velocity replication', type: 'bool', default: false },
       { key: 'MAX_DECAY_AUTO_DEMOLISH', label: 'Auto-Demolish Time', desc: 'Time before abandoned buildings auto-demolish (default: 604800 = 7 days)', type: 'number', default: 604800 },
     ]
   },

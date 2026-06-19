@@ -42,7 +42,7 @@ Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community p
 
 - 🚀 Auto-downloads dedicated server files on first run.
 - 🔄 Auto-updates game files on every container start.
-- ⚙️ **236 settings** through a simple `.env` file.
+- ⚙️ **239 settings** through a simple `.env` file.
 - 🌐 **Web-based Config Generator** with sliders, toggles, and download/copy actions.
 - 🧩 Optional Steam Workshop mod downloads via `SERVER_MOD_LIST`.
 - 🎮 PvE / PvP / PvE-C modes with per-day PvP and building damage schedules.
@@ -116,7 +116,15 @@ Done! Connect via **Direct Connect** in-game using your server IP and port `7777
 
 ## ⚙️ Configuration
 
-All settings are in the `.env` file. The `.env.example` includes **236 settings** with descriptions.
+All settings are in the `.env` file. The `.env.example` includes **239 settings** with descriptions.
+
+> ⚠️ **Startup-time configuration:** The Docker `.env` values are used by `entrypoint.sh` to generate Conan `.ini` files when the container starts. Changing `.env` while the server is already running does not update live in-game settings; restart/recreate the container after edits. If you change values in the in-game Admin Panel, remove the matching `.env` keys if you do not want them rewritten on the next startup.
+
+The container generates the main runtime files under `ConanSandbox/Saved/Config/WindowsServer/`:
+
+- `Engine.ini` for server browser/name/password and network rate settings.
+- `ServerSettings.ini` for gameplay/server rules.
+- `Game.ini` for `[/Script/Engine.GameSession]` and `[RconPlugin]` RCON settings. Conan Exiles Enhanced reads RCON from `Game.ini`; keeping RCON only in `ServerSettings.ini` can leave RCON disabled even when the file shows `RconEnabled=True`.
 
 ### Basic Settings
 
@@ -324,6 +332,15 @@ docker compose up -d
 
 > 💡 **Tip:** Volume names depend on your folder name. Use `docker volume ls` to find yours.
 
+> 💡 **Enhanced save DB:** Conan Exiles Enhanced uses `ConanSandbox/Saved/game_0.db` as the default world database. Older UE4-era scripts that target `game.db` should be updated or verified before relying on them.
+
+### Enhanced Migration Notes
+
+- The default SteamCMD app `443030` installs Conan Exiles Enhanced / UE5. The old UE4 build lives on a legacy beta branch such as `conan-exiles-legacy` / `Conan-Exiles-Legacy`.
+- If upgraded servers reject clients after moving from UE4 to UE5, inspect `Engine.ini` and remove stale build override lines such as `bUseBuildIdOverride=True` and `BuildIdOverride=...`.
+- If using `MULTIHOME`, this image also passes `MULTIHOMEHTTP` so server-browser HTTP registration uses the expected source IP.
+- Do not rename mod `.pak` files; Enhanced server documentation warns renamed pak files can fail to load.
+
 ---
 
 ## 💻 System Requirements
@@ -402,7 +419,7 @@ docker compose -f docker-compose.build.yml up -d
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
 | `.env.minimal` | Small quick-start template with only basic settings |
-| `.env.example` | Full configuration template (236 settings) |
+| `.env.example` | Full configuration template (239 settings) |
 | `docs/index.html` | Web-based Config Generator |
 
 ---
@@ -458,6 +475,14 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### Unreleased — Enhanced INI/RCON Alignment
+
+- Generates `Game.ini` with `[RconPlugin]` so RCON enables correctly on Conan Exiles Enhanced.
+- Writes server name/password under `[OnlineSubsystem]` while keeping `[OnlineSubsystemSteam]` password compatibility.
+- Uses runtime-confirmed `clanMaxSize` casing for clan size.
+- Adds missing `.env.example` and Config Generator entries for `ITEM_REPAIR_LOSS_BY_TIER`, `CAP_CHARACTER_LAYOUT`, and `PATH_FOLLOWING_ANGULAR`.
+- Documents startup-time `.env` behavior, Enhanced `game_0.db`, UE4 legacy branch, stale build override cleanup, `MULTIHOMEHTTP`, and mod `.pak` rename warnings.
 
 ### v2.5.1 — MULTIHOMEHTTP Server Browser Fix
 

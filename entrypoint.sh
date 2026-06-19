@@ -85,8 +85,11 @@ cat > "$CONFIG_DIR/Engine.ini" << EOF
 [URL]
 Port=${SERVER_PORT:-7777}
 
-[OnlineSubsystemSteam]
+[OnlineSubsystem]
 ServerName=${SERVER_NAME:-Conan Exiles Enhanced Server}
+ServerPassword=${SERVER_PASSWORD:-}
+
+[OnlineSubsystemSteam]
 ServerPassword=${SERVER_PASSWORD:-}
 
 [/Script/OnlineSubsystemUtils.IpNetDriver]
@@ -309,7 +312,7 @@ ChatLocalRadius=${CHAT_LOCAL_RADIUS:-9000.0}
 ChatHasGlobal=${CHAT_HAS_GLOBAL:-True}
 
 # --- Clans ---
-ClanMaxSize=${CLAN_MAX_SIZE:-0}
+clanMaxSize=${CLAN_MAX_SIZE:-0}
 
 # --- Crafting Extra ---
 ThrallCraftingTimeMultiplier=${THRALL_CRAFTING_TIME:-1.0}
@@ -383,14 +386,20 @@ RegionBlockList=${REGION_BLOCK_LIST:-}
 ServerModList=${SERVER_MOD_LIST:-}
 BlueprintConfigVersion=25
 
-[RCON]
+EOF
+
+# --- Game.ini ---
+# Conan Exiles Enhanced reads the RCON plugin settings from Game.ini.
+# Keeping these in ServerSettings.ini can leave RCON disabled even when the file shows RconEnabled=True.
+cat > "$CONFIG_DIR/Game.ini" << EOF
+[/Script/Engine.GameSession]
+MaxPlayers=${MAX_PLAYERS:-40}
+
+[RconPlugin]
 RconEnabled=${RCON_ENABLED:-False}
 RconPassword=${RCON_PASSWORD:-}
 RconPort=${RCON_PORT:-25575}
 RconMaxKarma=${RCON_MAX_KARMA:-60}
-
-[/Script/Engine.GameSession]
-MaxPlayers=${MAX_PLAYERS:-40}
 EOF
 
 log "Configuration applied:"
