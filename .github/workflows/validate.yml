@@ -18,9 +18,13 @@ jobs:
       - name: Validate shell scripts
         run: bash -n entrypoint.sh
 
+      - name: Validate configuration consistency
+        run: python3 scripts/validate-config-consistency.py
+
       - name: Check required project files
         run: |
           test -f Dockerfile
           test -f docker-compose.yml
           test -f .env.example
           test -f docs/index.html
+          test -f scripts/validate-config-consistency.py

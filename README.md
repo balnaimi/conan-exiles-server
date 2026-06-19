@@ -42,7 +42,7 @@ Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community p
 
 - 🚀 Auto-downloads dedicated server files on first run.
 - 🔄 Auto-updates game files on every container start.
-- ⚙️ **237 settings** through a simple `.env` file.
+- ⚙️ **236 settings** through a simple `.env` file.
 - 🌐 **Web-based Config Generator** with sliders, toggles, and download/copy actions.
 - 🧩 Optional Steam Workshop mod downloads via `SERVER_MOD_LIST`.
 - 🎮 PvE / PvP / PvE-C modes with per-day PvP and building damage schedules.
@@ -116,7 +116,7 @@ Done! Connect via **Direct Connect** in-game using your server IP and port `7777
 
 ## ⚙️ Configuration
 
-All settings are in the `.env` file. The `.env.example` includes **237 settings** with descriptions.
+All settings are in the `.env` file. The `.env.example` includes **236 settings** with descriptions.
 
 ### Basic Settings
 
@@ -402,7 +402,7 @@ docker compose -f docker-compose.build.yml up -d
 | `docker-compose.yml` | Production compose (pre-built image) |
 | `docker-compose.build.yml` | Development compose (builds locally) |
 | `.env.minimal` | Small quick-start template with only basic settings |
-| `.env.example` | Full configuration template (237 settings) |
+| `.env.example` | Full configuration template (236 settings) |
 | `docs/index.html` | Web-based Config Generator |
 
 ---
