@@ -437,29 +437,35 @@ docker compose -f docker-compose.build.yml up -d
 
 ---
 
-## ⚠️ Legacy Settings Needing Enhanced Verification
+## ⚠️ Enhanced Setting Status / Legacy Compatibility Notes
 
-Some server settings have a long history of being **broken, renamed, or unreliable** across Conan Exiles versions. With Conan Exiles Enhanced, several server settings were reworked or documented under newer names, so the items below should be treated as **legacy compatibility warnings** until they are retested on Enhanced.
+The official Conan Exiles Enhanced server settings reference is now the first source to check: <https://exiles-enhanced.inflexion.io/servers/settings/>. That page is explicitly non-exhaustive, so absence from the official list is not proof that a setting is broken; it means the key still needs runtime verification on Enhanced before this project describes it as reliable.
 
-These are not Docker-specific issues. If you can confirm one of these settings now works reliably in Enhanced, please open an issue or pull request with the game version, setting value, and how you tested it.
+These are not Docker-specific issues. The Docker image writes `ServerSettings.ini` from `.env` on startup, but the game may also store or override some values through the in-game Admin Panel and world database. If you can confirm one of the uncertain settings works reliably in Enhanced, please open an issue or pull request with the game version, setting value, and how you tested it.
 
-### Legacy / Needs Verification
+### Officially Documented in Enhanced
+
+| Setting | Status |
+|---------|--------|
+| `CraftingCostMultiplier` | Official Enhanced docs list this key, default `1.0f`, Requires Restart: No. Runtime gameplay testing is still welcome, but this is no longer treated as a legacy-only warning. |
+| `PlayerStaminaRegenSpeedScale` | Official Enhanced docs list this key, Requires Restart: No. Keep Admin Panel/database caveats in mind if a running world appears to ignore changes. |
+
+### Prefer Enhanced Key / Legacy Alias Uncertain
+
+| Setting | Status |
+|---------|--------|
+| `StaminaCostMultiplier` | Preferred/current key in the official Enhanced docs for stamina cost per action. |
+| `PlayerStaminaCostMultiplier` | Legacy/hosting-doc key. Do not prefer it over `StaminaCostMultiplier` unless runtime testing confirms a specific need. |
+| `PlayerStaminaCostSprintMultiplier` | Legacy/hosting-doc key. Not found in the official Enhanced settings reference; needs Enhanced runtime verification. |
+
+### Not Found in Official Enhanced Docs / Runtime Test Needed
 
 | Setting | Issue |
 |---------|-------|
-| `PlayerEncumbranceMultiplier` | Legacy reports say it had no effect. Needs retesting on Enhanced. |
-| `CraftingCostMultiplier` | Historically unreliable, but documented in Enhanced references. Needs retesting before removing this warning. |
-
-### Unreliable / May Need Admin Panel
-
-| Setting | Issue |
-|---------|-------|
-| `PlayerStaminaCostMultiplier` | Legacy key. Enhanced references may prefer `StaminaCostMultiplier`; needs verification. |
-| `PlayerStaminaCostSprintMultiplier` | Legacy key. Needs verification on Enhanced. |
-| `PlayerSprintSpeedScale` | May require player relog after restart; needs Enhanced confirmation. |
-| `PlayerMovementSpeedScale` | Inconsistent behavior reported historically; needs Enhanced confirmation. |
-| `PlayerHealthRegenSpeedScale` | May be overridden by game database or Admin Panel values. |
-| `PlayerStaminaRegenSpeedScale` | Same as health regen; needs Enhanced confirmation. |
+| `PlayerEncumbranceMultiplier` | Legacy reports say it had no effect. Not found in the official Enhanced settings reference; needs runtime testing on Enhanced. |
+| `PlayerSprintSpeedScale` | Present in older references and hosting docs, but not found in the official Enhanced settings reference; needs runtime confirmation. |
+| `PlayerMovementSpeedScale` | Historically inconsistent and not found in the official Enhanced settings reference. Enhanced docs list `PlayerMovementAccelerationMultiplier (BP)` instead. |
+| `PlayerHealthRegenSpeedScale` | Present in older/hosting references, but not found in the official Enhanced settings reference; may require Admin Panel or database-aware testing. |
 
 ### 💡 Workaround
 
@@ -475,6 +481,13 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### v2.5.4 — Enhanced Settings Status Clarification
+
+- Reclassified legacy server-setting warnings using the official Conan Exiles Enhanced INI reference.
+- Marked `CraftingCostMultiplier` and `PlayerStaminaRegenSpeedScale` as officially documented in Enhanced.
+- Documented `StaminaCostMultiplier` as the preferred Enhanced stamina-cost key while keeping legacy stamina aliases as uncertain.
+- Clarified which older movement, encumbrance, and health regen keys are absent from the official Enhanced reference and still need runtime testing.
 
 ### v2.5.3 — Enhanced INI/RCON Alignment
 

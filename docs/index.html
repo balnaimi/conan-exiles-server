@@ -1003,14 +1003,69 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
         <strong>⚠️ DANGER:</strong> The <code>-v</code> flag permanently deletes <strong>all game data, player saves, and buildings</strong>. There is no undo. Back up your data first if needed!
       </div>
     </div>
-        <!-- Legacy Settings -->
-      <h2 class="info-title" style="margin-top:2.5rem;">⚠️ Legacy Settings Needing Enhanced Verification</h2>
+        <!-- Enhanced Settings Status -->
+      <h2 class="info-title" style="margin-top:2.5rem;">⚠️ Enhanced Setting Status / Legacy Compatibility Notes</h2>
       <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;">
-        Some settings have a long history of being <strong>broken, renamed, or unreliable</strong> across Conan Exiles versions.
-        With Conan Exiles Enhanced, several server settings were reworked or documented under newer names, so the items below should be treated as <strong>legacy compatibility warnings</strong> until they are retested on Enhanced.
-        If you can confirm a setting now works reliably, please open an issue or pull request with the game version, value, and test method.
+        The official <a href="https://exiles-enhanced.inflexion.io/servers/settings/" target="_blank" rel="noopener" style="color:var(--accent);">Conan Exiles Enhanced server settings reference</a>
+        is the first source to check, but it is non-exhaustive. Absence from that list does not prove a setting is broken; it means the key still needs runtime verification on Enhanced before this project describes it as reliable.
       </p>
 
+      <h3 style="color:var(--accent);margin:1.25rem 0 0.75rem;">Officially documented in Enhanced</h3>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CraftingCostMultiplier</code></td>
+              <td style="color:var(--success);">✅ Official Enhanced key</td>
+              <td>Official Enhanced docs list this key, default <code>1.0f</code>, Requires Restart: No. Runtime gameplay testing is still welcome.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaRegenSpeedScale</code></td>
+              <td style="color:var(--success);">✅ Official Enhanced key</td>
+              <td>Official Enhanced docs list this key, Requires Restart: No. Keep Admin Panel/database caveats in mind if a running world appears to ignore changes.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.25rem 0 0.75rem;">Prefer Enhanced key / legacy alias uncertain</h3>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>StaminaCostMultiplier</code></td>
+              <td style="color:var(--success);">✅ Preferred Enhanced key</td>
+              <td>Preferred/current key in the official Enhanced docs for stamina cost per action.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaCostMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Legacy alias uncertain</td>
+              <td>Older hosting docs mention it, but Enhanced docs prefer <code>StaminaCostMultiplier</code>. Do not prefer this unless runtime testing confirms a specific need.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaCostSprintMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Legacy key</td>
+              <td>Not found in the official Enhanced settings reference; needs Enhanced runtime verification.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.25rem 0 0.75rem;">Not found in official Enhanced docs / runtime test needed</h3>
       <div class="ports-table">
         <table>
           <thead>
@@ -1023,43 +1078,23 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
           <tbody>
             <tr>
               <td><code>PlayerEncumbranceMultiplier</code></td>
-              <td style="color:#e67e22;">⚠️ Needs verification</td>
-              <td>Legacy reports say it had no effect. Needs retesting on Enhanced.</td>
-            </tr>
-            <tr>
-              <td><code>CraftingCostMultiplier</code></td>
-              <td style="color:#e67e22;">⚠️ Needs verification</td>
-              <td>Historically unreliable, but documented in Enhanced references. Needs retesting before removing this warning.</td>
-            </tr>
-            <tr>
-              <td><code>PlayerStaminaCostMultiplier</code></td>
-              <td style="color:#e67e22;">⚠️ Legacy key</td>
-              <td>Enhanced references may prefer <code>StaminaCostMultiplier</code>. Needs verification.</td>
-            </tr>
-            <tr>
-              <td><code>PlayerStaminaCostSprintMultiplier</code></td>
-              <td style="color:#e67e22;">⚠️ Legacy key</td>
-              <td>Needs verification on Enhanced.</td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Legacy reports say it had no effect. Not found in the official Enhanced settings reference; needs runtime testing on Enhanced.</td>
             </tr>
             <tr>
               <td><code>PlayerSprintSpeedScale</code></td>
-              <td style="color:#e67e22;">⚠️ Unreliable</td>
-              <td>May require player relog after server restart; needs Enhanced confirmation.</td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Present in older references and hosting docs, but not found in the official Enhanced settings reference.</td>
             </tr>
             <tr>
               <td><code>PlayerMovementSpeedScale</code></td>
-              <td style="color:#e67e22;">⚠️ Unreliable</td>
-              <td>Inconsistent behavior reported historically; needs Enhanced confirmation.</td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Historically inconsistent and not found in the official Enhanced settings reference. Enhanced docs list <code>PlayerMovementAccelerationMultiplier (BP)</code> instead.</td>
             </tr>
             <tr>
               <td><code>PlayerHealthRegenSpeedScale</code></td>
-              <td style="color:#e67e22;">⚠️ Unreliable</td>
-              <td>May be overridden by game database or Admin Panel values.</td>
-            </tr>
-            <tr>
-              <td><code>PlayerStaminaRegenSpeedScale</code></td>
-              <td style="color:#e67e22;">⚠️ Unreliable</td>
-              <td>Same as health regen; needs Enhanced confirmation.</td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Present in older/hosting references, but not found in the official Enhanced settings reference; may require Admin Panel or database-aware testing.</td>
             </tr>
           </tbody>
         </table>
@@ -1185,6 +1220,9 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
+        <strong>v2.5.4 — Enhanced Settings Status Clarification:</strong> Reclassifies legacy setting warnings using the official Enhanced INI reference, documents StaminaCostMultiplier as the preferred stamina-cost key, and separates officially documented keys from runtime-test candidates.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.5.3 — Enhanced INI/RCON Alignment:</strong> Generates Game.ini [RconPlugin] for RCON, writes server name/password under OnlineSubsystem, uses runtime-confirmed clanMaxSize casing, adds three missing generator settings, and documents Enhanced game_0.db plus UE4→UE5 troubleshooting notes.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
