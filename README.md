@@ -476,7 +476,7 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ## 📝 Release Notes
 
-### Unreleased — Enhanced INI/RCON Alignment
+### v2.5.3 — Enhanced INI/RCON Alignment
 
 - Generates `Game.ini` with `[RconPlugin]` so RCON enables correctly on Conan Exiles Enhanced.
 - Writes server name/password under `[OnlineSubsystem]` while keeping `[OnlineSubsystemSteam]` password compatibility.
