@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Run and configure a Conan Exiles Enhanced dedicated server with Docker Compose, Wine, automatic updates, Steam Workshop mods, and a 239-setting web generator.">
+<meta property="og:title" content="Conan Exiles Enhanced Dedicated Server — Docker Edition">
+<meta property="og:description" content="Docker Compose server setup, practical Enhanced runtime guidance, mod support, and a 239-setting .env generator.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://balnaimi.github.io/conan-exiles-server/">
+<meta property="og:image" content="https://balnaimi.github.io/conan-exiles-server/assets/hero-bg.jpg">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <title>Conan Exiles Enhanced Dedicated Server - Docker Edition</title>
 <style>
 :root {
@@ -16,13 +24,24 @@
   --text: #e0ddd5;
   --text-dim: #8a8780;
   --text-bright: #fff;
-  --danger: #c44;
-  --success: #4a4;
+  --danger: #ff6b6b;
+  --success: #69c269;
   --changed: #c8a84e;
   --section-bg: #0e0e16;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
 
 html { scroll-behavior: smooth; }
 
@@ -127,6 +146,13 @@ body {
   color: var(--bg);
   border-color: var(--accent);
   box-shadow: 0 4px 15px var(--accent-glow);
+}
+.tab-btn:focus-visible,
+.section-header:focus-visible,
+.btn:focus-visible,
+.toolbar-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ============================================
@@ -234,6 +260,25 @@ body {
 .code-block .comment {
   color: var(--text-dim);
 }
+.code-wrap {
+  position: relative;
+  margin-top: 1rem;
+}
+.code-wrap .code-block { margin-top: 0; padding-top: 2.8rem; }
+.copy-code-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.copy-code-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ============================================
    PORTS / CONNECTING / COMMANDS
@@ -366,14 +411,21 @@ body {
   justify-content: space-between;
   user-select: none;
   transition: background 0.2s;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
 }
 .section-header:hover { background: var(--card-hover); }
-.section-header h2 {
+.section-header .section-heading {
   font-size: 1.05rem;
   color: var(--accent);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 700;
 }
 .section-header .arrow {
   color: var(--text-dim);
@@ -455,6 +507,17 @@ body {
   cursor: pointer;
 }
 .field-input select:focus { border-color: var(--accent); }
+.password-wrap { display: flex; gap: 0.4rem; }
+.password-wrap input { min-width: 0; }
+.password-toggle {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+}
+.password-toggle:hover { border-color: var(--accent); }
 
 /* Toggle */
 .toggle-wrap {
@@ -469,7 +532,16 @@ body {
   height: 24px;
   cursor: pointer;
 }
-.toggle input { display: none; }
+.toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.toggle input:focus-visible + .toggle-slider {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
 .toggle-slider {
   position: absolute;
   inset: 0;
@@ -640,6 +712,54 @@ body {
 }
 .stat strong { color: var(--accent); }
 
+/* Generator productivity toolbar */
+.generator-toolbar {
+  position: sticky;
+  top: 74px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) repeat(4, auto);
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: rgba(18,18,26,0.97);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+.search-wrap { position: relative; }
+.search-wrap input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.6rem 0.75rem 0.6rem 2rem;
+}
+.search-wrap::before { content: '🔍'; position: absolute; left: 0.55rem; top: 0.45rem; }
+.toolbar-btn,
+.toolbar-check {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+.toolbar-check { display: flex; align-items: center; gap: 0.45rem; }
+.toolbar-check input { accent-color: var(--accent); }
+.filter-summary { color: var(--text-dim); font-size: 0.8rem; margin: -0.35rem 0 1rem; }
+.field.filtered-out,
+.section.filtered-out { display: none; }
+.security-warning { margin-bottom: 1rem; }
+.security-warning[hidden] { display: none; }
+.view-output-count { color: var(--accent); font-weight: 700; }
+
 /* Footer */
 .footer {
   text-align: center;
@@ -660,6 +780,26 @@ body {
   .output-actions { flex-direction: column; }
   .features-grid { grid-template-columns: 1fr; }
   .tab-bar { justify-content: flex-start; flex-wrap: nowrap; }
+  .generator-toolbar { grid-template-columns: 1fr 1fr; top: 65px; }
+  .search-wrap { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .hero { min-height: auto; }
+  .hero-content { padding: 2.5rem 1rem 2rem; }
+  .hero-logo { font-size: 1.85rem; line-height: 1.2; letter-spacing: 0; }
+  .hero-subtitle { font-size: 1rem; }
+  .hero-tagline { font-size: 0.9rem; }
+  .tab-bar { padding: 0.45rem; scroll-snap-type: x proximity; }
+  .tab-btn { padding: 0.65rem 0.9rem; font-size: 0.85rem; scroll-snap-align: start; }
+  .quick-start, .info-section, .config-generator, .features { padding: 2.5rem 1rem; }
+  .qs-title, .config-title { font-size: 1.8rem; margin-bottom: 1.5rem; }
+  .qs-option { padding: 1.1rem; }
+  .container { padding: 0; }
+  .generator-toolbar { position: static; grid-template-columns: 1fr 1fr; }
+  .toolbar-btn, .toolbar-check { justify-content: center; white-space: normal; }
+  .ports-table { overflow-x: auto; }
+  .ports-table table { min-width: 580px; }
+  .output-actions .btn { width: 100%; justify-content: center; }
 }
 </style>
 </head>
@@ -672,12 +812,12 @@ body {
   <div class="hero-bg"></div>
   <div class="hero-overlay"></div>
   <div class="hero-content">
-    <div class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</div>
+    <h1 class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</h1>
     <div class="hero-subtitle">Docker Edition</div>
     <div class="hero-tagline">The most comprehensive Docker image — 239 configurable settings</div>
     <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
-      Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
-      or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" style="color:var(--accent);">Steam</a>
+      Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" rel="noopener" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
+      or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" rel="noopener" style="color:var(--accent);">Steam</a>
     </div>
     <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
       ✅ Compatible with <strong>Conan Exiles Enhanced</strong>. Legacy Conan Exiles names may remain in Steam app IDs, image names, repository URLs, and internal ConanSandbox paths because they are upstream identifiers.
@@ -688,18 +828,18 @@ body {
 <!-- ============================================
      TAB BAR
      ============================================ -->
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('quick-start')">🚀 Quick Start</button>
-  <button class="tab-btn" onclick="switchTab('mods')">🧩 Mods</button>
-  <button class="tab-btn" onclick="switchTab('config-generator')">⚙️ Config Generator</button>
-  <button class="tab-btn" onclick="switchTab('server-management')">🛠️ Server Management</button>
-  <button class="tab-btn" onclick="switchTab('about')">📖 About</button>
+<div class="tab-bar" role="tablist" aria-label="Page sections">
+  <button type="button" class="tab-btn active" id="tab-button-quick-start" role="tab" aria-selected="true" aria-controls="tab-quick-start" tabindex="0" data-tab="quick-start" onclick="activateTab('quick-start', this)" onkeydown="handleTabKeydown(event)">🚀 Quick Start</button>
+  <button type="button" class="tab-btn" id="tab-button-mods" role="tab" aria-selected="false" aria-controls="tab-mods" tabindex="-1" data-tab="mods" onclick="activateTab('mods', this)" onkeydown="handleTabKeydown(event)">🧩 Mods</button>
+  <button type="button" class="tab-btn" id="tab-button-config-generator" role="tab" aria-selected="false" aria-controls="tab-config-generator" tabindex="-1" data-tab="config-generator" onclick="activateTab('config-generator', this)" onkeydown="handleTabKeydown(event)">⚙️ Config Generator</button>
+  <button type="button" class="tab-btn" id="tab-button-server-management" role="tab" aria-selected="false" aria-controls="tab-server-management" tabindex="-1" data-tab="server-management" onclick="activateTab('server-management', this)" onkeydown="handleTabKeydown(event)">🛠️ Server Management</button>
+  <button type="button" class="tab-btn" id="tab-button-about" role="tab" aria-selected="false" aria-controls="tab-about" tabindex="-1" data-tab="about" onclick="activateTab('about', this)" onkeydown="handleTabKeydown(event)">📖 About</button>
 </div>
 
 <!-- ============================================
      TAB 1: QUICK START
      ============================================ -->
-<div id="tab-quick-start" class="tab-content active">
+<div id="tab-quick-start" class="tab-content active" role="tabpanel" aria-labelledby="tab-button-quick-start">
   <section class="quick-start">
     <div class="qs-container">
       <h2 class="qs-title">Quick Start</h2>
@@ -876,7 +1016,7 @@ docker compose up -d</pre>
 <!-- ============================================
      TAB 2: MODS
      ============================================ -->
-<div id="tab-mods" class="tab-content">
+<div id="tab-mods" class="tab-content" role="tabpanel" aria-labelledby="tab-button-mods" hidden>
   <section class="info-section">
     <div class="info-container">
       <h2 class="info-title">Mods</h2>
@@ -884,13 +1024,35 @@ docker compose up -d</pre>
         <strong>What you do:</strong><br>
         Add the Steam Workshop mod IDs you want to <strong>SERVER_MOD_LIST</strong> in your <strong>.env</strong> file or in the Config Generator. Use commas between IDs and keep them in the required load order.
       </div>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Finding Workshop IDs</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;">Open the <a href="https://steamcommunity.com/app/440900/workshop/" target="_blank" rel="noopener" style="color:var(--accent);">Conan Exiles Steam Workshop</a>. A mod page URL normally ends with <code>?id=1234567890</code>; copy only that numeric ID.</p>
+      <pre class="code-block">https://steamcommunity.com/sharedfiles/filedetails/?id=3719513784
+# Workshop ID: 3719513784</pre>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Setting the Load Order</h3>
       <pre class="code-block">SERVER_MOD_LIST=3719513784,3720904511,3361295718</pre>
+      <div class="info-warning" style="margin-top:1rem;">
+        <strong>Load order matters:</strong> Keep dependencies before the mods that depend on them, and follow each mod author's instructions. Changing the order can affect an existing world.
+      </div>
       <div class="info-note" style="margin-top:1rem;">
         <strong>What the container does automatically:</strong><br>
-        On startup, it downloads each mod, copies the downloaded <strong>.pak</strong> files into <strong>ConanSandbox/Mods</strong>, and generates <strong>ConanSandbox/Mods/modlist.txt</strong> in the same order.
+        On startup, it downloads or updates each mod, copies the downloaded <strong>.pak</strong> files into <strong>ConanSandbox/Mods</strong>, and generates <strong>ConanSandbox/Mods/modlist.txt</strong> in the same order.
       </div>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Apply, Update, or Remove Mods</h3>
+      <pre class="code-block"># After changing SERVER_MOD_LIST
+docker compose down
+docker compose up -d
+docker compose logs -f</pre>
+      <ul style="color:var(--text-dim);font-size:0.9rem;line-height:2;margin:0.75rem 0 0 1.5rem;">
+        <li>To update mods, restart the container; configured Workshop items are checked during startup.</li>
+        <li>To remove a mod, delete its ID from <code>SERVER_MOD_LIST</code>, restart, and verify the generated <code>modlist.txt</code>.</li>
+        <li>Back up your world before removing gameplay/content mods from an existing server.</li>
+        <li>After an Enhanced game update, confirm that every mod supports the current build before opening the server to players.</li>
+      </ul>
       <div class="info-warning" style="margin-top:1rem;">
-        <strong>Important:</strong> If a mod ID is invalid, the download output is missing, or no .pak file is found, startup stops with a clear error so the server does not silently run without the requested mods.
+        <strong>If startup stops:</strong> Check <code>docker compose logs</code>. An invalid ID, missing Workshop download, missing <code>.pak</code>, or incompatible mod can stop startup rather than silently launching with an incomplete list.
       </div>
       <div class="info-note" style="margin-top:1rem;">Leave <strong>SERVER_MOD_LIST</strong> empty to run an unmodded server.</div>
     </div>
@@ -900,7 +1062,7 @@ docker compose up -d</pre>
 <!-- ============================================
      TAB 3: CONFIG GENERATOR
      ============================================ -->
-<div id="tab-config-generator" class="tab-content">
+<div id="tab-config-generator" class="tab-content" role="tabpanel" aria-labelledby="tab-button-config-generator" hidden>
   <section class="config-generator">
     <h2 class="config-title">⚙️ Configuration Generator</h2>
     <p class="config-subtitle">Configure all 239 server settings and generate a ready-to-use .env file</p>
@@ -910,6 +1072,20 @@ docker compose up -d</pre>
         💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.<br>
         ⚠️ <strong style="color:var(--accent)">Startup-time config:</strong> Docker <code>.env</code> values generate Conan <code>.ini</code> files when the container starts. Restart/recreate after edits; they are not live in-game settings.
       </div>
+      <div class="info-warning security-warning" id="securityWarning" role="alert" hidden></div>
+      <div class="generator-toolbar" role="group" aria-label="Configuration tools">
+        <label class="search-wrap" for="settingSearch">
+          <span class="sr-only">Search settings</span>
+          <input type="search" id="settingSearch" placeholder="Search label, key, or description…" oninput="filterSettings()" autocomplete="off">
+        </label>
+        <label class="toolbar-check" for="changedOnlyFilter">
+          <input type="checkbox" id="changedOnlyFilter" onchange="filterSettings()"> Changed only
+        </label>
+        <button type="button" class="toolbar-btn" onclick="setAllSections(true)">Expand all</button>
+        <button type="button" class="toolbar-btn" onclick="setAllSections(false)">Collapse all</button>
+        <button type="button" class="toolbar-btn" id="viewOutputButton" onclick="scrollToOutput()">View output <span class="view-output-count">(0)</span></button>
+      </div>
+      <div class="filter-summary" id="filterSummary" aria-live="polite">Showing all 239 settings</div>
       <div class="stats">
         <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
         <div class="stat">Changed: <strong id="changedCount">0</strong></div>
@@ -918,17 +1094,17 @@ docker compose up -d</pre>
 
       <div id="sections"></div>
 
-      <div class="output-section">
+      <div class="output-section" id="generated-output" tabindex="-1">
         <h2>📄 Generated .env</h2>
         <div class="output-actions">
-          <button class="btn btn-primary" onclick="copyOutput()">📋 Copy to Clipboard</button>
-          <button class="btn" onclick="downloadEnv()">⬇️ Download .env</button>
-          <button class="btn" onclick="downloadEnvExample()">📝 Download .env.example</button>
-          <button class="btn btn-reset" onclick="resetAll()">🔄 Reset All</button>
+          <button type="button" class="btn btn-primary" onclick="copyOutput()">📋 Copy to Clipboard</button>
+          <button type="button" class="btn" onclick="downloadEnv()">⬇️ Download .env</button>
+          <button type="button" class="btn" onclick="downloadEnvExample()">📝 Download .env.example</button>
+          <button type="button" class="btn btn-reset" onclick="resetAll()">🔄 Reset All</button>
         </div>
         <div class="output-toggle">
-          <button class="active" onclick="setOutputMode('changed', this)">Changed Only</button>
-          <button onclick="setOutputMode('all', this)">All Settings</button>
+          <button type="button" class="active" onclick="setOutputMode('changed', this)">Changed Only</button>
+          <button type="button" onclick="setOutputMode('all', this)">All Settings</button>
         </div>
         <div id="output"></div>
       </div>
@@ -939,7 +1115,7 @@ docker compose up -d</pre>
 <!-- ============================================
      TAB 4: SERVER MANAGEMENT
      ============================================ -->
-<div id="tab-server-management" class="tab-content">
+<div id="tab-server-management" class="tab-content" role="tabpanel" aria-labelledby="tab-button-server-management" hidden>
   <section class="info-section">
     <div class="info-container">
       <h2 class="info-title">Server Management</h2>
@@ -1159,7 +1335,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
 <!-- ============================================
      TAB 5: ABOUT
      ============================================ -->
-<div id="tab-about" class="tab-content">
+<div id="tab-about" class="tab-content" role="tabpanel" aria-labelledby="tab-button-about" hidden>
   <section class="info-section">
     <div class="info-container">
       <h2 class="info-title">About This Project</h2>
@@ -1264,40 +1440,17 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
-        <strong>v2.5.5 — Enhanced Runtime Requirements and Diagnostics:</strong> Replaces outdated 8 GB / 35 GB sizing guidance, documents the verified 8 GB OOM loop and stable 16 GB runtime, clarifies successful pakchunk0 mounts, and adds readiness, process-tree, Docker OOM, memory-resize, and exit-code 137 diagnostics.
+        <strong>v2.6.0 — Pages UX and Accessibility Upgrade:</strong> Adds deep-linked accessible tabs, searchable and keyboard-friendly settings, safe Compose-verified dotenv output, masked password controls and warnings, invalid-number protection, generator productivity tools, command-copy buttons, improved mobile/SEO presentation, and headless-Chromium CI checks.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.5.4 — Enhanced Settings Status Clarification:</strong> Reclassifies legacy setting warnings using the official Enhanced INI reference, documents StaminaCostMultiplier as the preferred stamina-cost key, and separates officially documented keys from runtime-test candidates.
+        <strong>v2.5.5 — Enhanced Runtime Requirements and Diagnostics:</strong> Replaces outdated sizing guidance, documents verified 8 GB OOM and stable 16 GB runtime results, and adds Enhanced startup diagnostics.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.5.3 — Enhanced INI/RCON Alignment:</strong> Generates Game.ini [RconPlugin] for RCON, writes server name/password under OnlineSubsystem, uses runtime-confirmed clanMaxSize casing, adds three missing generator settings, and documents Enhanced game_0.db plus UE4→UE5 troubleshooting notes.
+        <strong>v2.5.4 — Enhanced Settings Status Clarification:</strong> Separates officially documented Enhanced settings from legacy keys that still need runtime verification.
       </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.5.1 — MULTIHOMEHTTP Server Browser Fix:</strong> Added automatic MULTIHOMEHTTP support when MULTIHOME is set, improving server-browser registration for multi-IP hosts. Also reworded legacy setting warnings for Enhanced verification.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.5.0 — MULTIHOME Network Option:</strong> Added optional MULTIHOME support for CG-NAT, tunnel, port-forwarded VPS, and multi-interface hosting setups.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        🙌 Thanks to <a href="https://github.com/xxirss" style="color:var(--accent);">@xxirss</a> for suggesting this improvement in issue #4.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.4.1 — VPS Headless Runtime Fix:</strong> Added Vulkan, EGL, OpenGL, and Mesa runtime libraries for Wine/UE5 startup on VPS and headless hosts.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        🙌 Thanks to <a href="https://github.com/SummertimeSadnesss" style="color:var(--accent);">@SummertimeSadnesss</a> for reporting the Debian 12 VPS startup issue in issue #3.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.4.0 — Steam Workshop Mod Support:</strong> SERVER_MOD_LIST now downloads Steam Workshop mods, installs their .pak files into ConanSandbox/Mods, and generates modlist.txt automatically in the configured order.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        🙌 Thanks to <a href="https://github.com/pvillaverde" style="color:var(--accent);">@pvillaverde</a> for reporting that configured mods were not being downloaded in issue #2.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.3.1 — Documentation Quick Start Fix:</strong> Updated the website quick start so it downloads .env.example, copies it to .env, then runs docker compose.
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.3.0 — UE5/Wine Compatibility Update:</strong> Debian Bookworm base image, WineHQ Staging, winbind/cabextract dependencies, Microsoft Visual C++ 2022 Redistributable, and headless-safe Wine initialization via xvfb-run.
+      <p style="text-align:center;margin-top:1.25rem;"><a href="https://github.com/balnaimi/conan-exiles-server/releases" target="_blank" rel="noopener" class="btn" style="display:inline-flex;text-decoration:none;">View all releases on GitHub →</a></p>
+      <div class="info-note" style="margin-top:1.25rem;">
+        <strong>Community thanks:</strong> Thanks to @xxirss, @SummertimeSadnesss, @pvillaverde, @UnoYakshi, and everyone sharing logs and testing the image on real servers.
       </div>
     </div>
   </section>
@@ -1349,7 +1502,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
       <h2 class="info-title">Links & Source</h2>
       <div class="info-note">
         <strong>GitHub Repository:</strong><br>
-        <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" style="color:var(--accent);text-decoration:none;font-size:1rem;">
+        <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:1rem;">
           https://github.com/balnaimi/conan-exiles-server
         </a>
       </div>
@@ -1366,25 +1519,64 @@ docker build -t conan-exiles-server .
      FOOTER
      ============================================ -->
 <footer class="footer">
-  <p>Made with ⚔️ for the Conan community — <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank">GitHub</a> — Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GPL-3.0</a></p>
-  <p style="margin-top:0.75rem;font-size:0.7rem;color:#555;">This is a community Docker wrapper — not affiliated with <a href="https://www.funcom.com/" target="_blank">Funcom</a> or <a href="https://www.valvesoftware.com/" target="_blank">Valve</a>. Conan Exiles / Conan Exiles Enhanced is a trademark of Funcom. Steam is a trademark of Valve Corporation.</p>
+  <p>Made with ⚔️ for the Conan community — <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" rel="noopener">GitHub</a> — Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a></p>
+  <p style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-dim);">This is a community Docker wrapper — not affiliated with <a href="https://www.funcom.com/" target="_blank" rel="noopener">Funcom</a> or <a href="https://www.valvesoftware.com/" target="_blank" rel="noopener">Valve</a>. Conan Exiles / Conan Exiles Enhanced is a trademark of Funcom. Steam is a trademark of Valve Corporation.</p>
 </footer>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ============================================
-// TAB SWITCHING
+// ACCESSIBLE, DEEP-LINKED TAB SWITCHING
 // ============================================
-function switchTab(tabName) {
-  // Hide all tabs
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  
-  // Show selected tab
-  document.getElementById('tab-' + tabName).classList.add('active');
-  event.target.classList.add('active');
+const TAB_NAMES = ['quick-start', 'mods', 'config-generator', 'server-management', 'about'];
+
+function activateTab(tabName, button = null, updateHash = true, shouldScroll = true, smooth = true) {
+  if (!TAB_NAMES.includes(tabName)) tabName = 'quick-start';
+  const selectedButton = button || document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+
+  document.querySelectorAll('.tab-btn').forEach(tab => {
+    const selected = tab.dataset.tab === tabName;
+    tab.classList.toggle('active', selected);
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  document.querySelectorAll('.tab-content').forEach(panel => {
+    const selected = panel.id === `tab-${tabName}`;
+    panel.classList.toggle('active', selected);
+    panel.hidden = !selected;
+  });
+
+  if (updateHash && location.hash !== `#${tabName}`) {
+    history.pushState({ tab: tabName }, '', `#${tabName}`);
+  }
+  if (shouldScroll) {
+    const hero = document.querySelector('.hero');
+    const tabTop = hero.offsetTop + hero.offsetHeight;
+    window.scrollTo({ top: tabTop, behavior: smooth ? 'smooth' : 'auto' });
+    const tabBar = document.querySelector('.tab-bar');
+    const left = selectedButton ? selectedButton.offsetLeft - (tabBar.clientWidth - selectedButton.offsetWidth) / 2 : 0;
+    tabBar.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  selectedButton?.focus({ preventScroll: true });
 }
+
+function handleTabKeydown(event) {
+  const tabs = [...document.querySelectorAll('.tab-btn')];
+  const current = tabs.indexOf(event.currentTarget);
+  let next = current;
+  if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+  else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+  else if (event.key === 'Home') next = 0;
+  else if (event.key === 'End') next = tabs.length - 1;
+  else return;
+  event.preventDefault();
+  activateTab(tabs[next].dataset.tab, tabs[next]);
+}
+
+window.addEventListener('hashchange', () => {
+  activateTab(location.hash.slice(1), null, false);
+});
 
 // ============================================
 // CONFIG DEFINITION
@@ -1394,7 +1586,7 @@ const CONFIG = [
     id: 'server', icon: '🖥️', title: 'Server Info', open: true,
     fields: [
       { key: 'SERVER_NAME', label: 'Server Name', desc: 'Name shown in the server browser', type: 'text', default: 'My Conan Server' },
-      { key: 'SERVER_PASSWORD', label: 'Server Password', desc: 'Join password (empty = public)', type: 'text', default: '' },
+      { key: 'SERVER_PASSWORD', label: 'Server Password', desc: 'Optional join password (empty = public)', type: 'password', default: '' },
       { key: 'SERVER_TYPE', label: 'Server Type', desc: 'Game mode', type: 'select', default: 'pve', options: [
         { value: 'pve', label: 'PvE — Peaceful (no player fighting)' },
         { value: 'pvp', label: 'PvP — Player vs Player' },
@@ -1433,9 +1625,9 @@ const CONFIG = [
   {
     id: 'admin', icon: '🔑', title: 'Admin & RCON',
     fields: [
-      { key: 'ADMIN_PASSWORD', label: 'Admin Password', desc: 'Use MakeMeAdmin in-game console', type: 'text', default: 'changeme' },
+      { key: 'ADMIN_PASSWORD', label: 'Admin Password', desc: 'Change the default before opening the server to players', type: 'password', default: 'changeme' },
       { key: 'RCON_ENABLED', label: 'Enable RCON', desc: 'Remote console for server management', type: 'bool', default: false },
-      { key: 'RCON_PASSWORD', label: 'RCON Password', desc: 'Password for RCON connections', type: 'text', default: 'changeme' },
+      { key: 'RCON_PASSWORD', label: 'RCON Password', desc: 'Use a unique password when RCON is enabled', type: 'password', default: 'changeme' },
       { key: 'RCON_PORT', label: 'RCON Port', desc: 'Port for RCON connections', type: 'number', default: 25575 },
     ]
   },
@@ -1850,7 +2042,11 @@ function updateRangeDisplay(input, key) {
   input.nextElementSibling.textContent = val + '×';
   const f = getFieldConfig(key);
   const hint = document.getElementById('hint-' + key);
-  if (hint && f) hint.textContent = getRangeHint(val, f);
+  if (hint && f) {
+    const text = getRangeHint(val, f);
+    hint.textContent = text;
+    input.setAttribute('aria-valuetext', text);
+  }
 }
 
 function init() {
@@ -1862,11 +2058,26 @@ function init() {
   renderSections();
   updateOutput();
   updateStats();
+  updateSecurityWarning();
+  enhanceCodeBlocks();
+  const hashTab = location.hash.slice(1);
+  const hasDeepLink = TAB_NAMES.includes(hashTab);
+  const initialTab = hasDeepLink ? hashTab : 'quick-start';
+  activateTab(initialTab, null, false, hasDeepLink, false);
 }
 
 // ============================================
 // RENDER
 // ============================================
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 function renderSections() {
   const container = document.getElementById('sections');
   container.innerHTML = '';
@@ -1875,53 +2086,62 @@ function renderSections() {
   CONFIG.forEach(section => {
     const div = document.createElement('div');
     div.className = 'section' + (section.open ? ' open' : '');
+    div.dataset.sectionId = section.id;
     div.innerHTML = `
-      <div class="section-header" onclick="toggleSection(this)">
-        <h2>${section.icon} ${section.title} <span class="changed-count" id="cc-${section.id}">0</span></h2>
-        <span class="arrow">▼</span>
-      </div>
-      <div class="section-body" id="body-${section.id}">
+      <button type="button" class="section-header" aria-expanded="${section.open}" aria-controls="body-${section.id}" onclick="toggleSection(this)">
+        <span class="section-heading" role="heading" aria-level="3">${section.icon} ${section.title} <span class="changed-count" id="cc-${section.id}">0</span></span>
+        <span class="arrow" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-${section.id}"${section.open ? '' : ' hidden'}>
         ${section.fields.map(f => renderField(f)).join('')}
       </div>
     `;
     container.appendChild(div);
   });
+  filterSettings();
 }
 
 function renderField(f) {
   let input = '';
   const val = values[f.key];
+  const inputId = `input-${f.key}`;
+  const descId = `desc-${f.key}`;
+  const describedBy = f.desc ? ` aria-describedby="${descId}"` : '';
 
-  if (f.type === 'text' || f.type === 'password') {
-    input = `<input type="${f.type}" value="${val}" onchange="setValue('${f.key}', this.value)" placeholder="${f.default || '(empty)'}">`;
+  if (f.type === 'text') {
+    input = `<input id="${inputId}" type="text" value="${escapeHtml(val)}" onchange="setValue('${f.key}', this.value)" placeholder="${escapeHtml(f.default || '(empty)')}"${describedBy}>`;
+  } else if (f.type === 'password') {
+    input = `<div class="password-wrap">
+      <input id="${inputId}" type="password" value="${escapeHtml(val)}" onchange="setValue('${f.key}', this.value)" autocomplete="new-password"${describedBy}>
+      <button type="button" class="password-toggle" aria-label="Show ${escapeHtml(f.label)}" aria-pressed="false" onclick="togglePasswordVisibility('${inputId}', this)">👁️</button>
+    </div>`;
   } else if (f.type === 'number') {
     const timeKeys = ['KICK_AFK_TIME','DISCONNECTION_GRACE_TIME','UNCONSCIOUS_TIME','PLAYER_CORPSE_LIFETIME','NPC_CORPSE_LIFETIME','FOLLOWER_RESCUE_COOLDOWN','MAX_BUILDING_DECAY_TIME','AVATAR_LIFETIME','AVATAR_SUMMON_TIME','THRALL_DECAY_TIME','MAX_DECAY_AUTO_DEMOLISH'];
     const hourKeys = ['OFFLINE_BODY_HOURS'];
     const isTime = timeKeys.includes(f.key);
     const isHours = hourKeys.includes(f.key);
-    const timeHint = isTime ? `<div class="range-hint">${formatTime(val)}</div>` : (isHours ? `<div class="range-hint">${formatHours(val)}</div>` : '');
-    const onchange = isTime ? `setValue('${f.key}', parseFloat(this.value)); document.getElementById('th-${f.key}').innerHTML=formatTime(this.value)` :
-      (isHours ? `setValue('${f.key}', parseFloat(this.value)); document.getElementById('th-${f.key}').innerHTML=formatHours(this.value)` :
-      `setValue('${f.key}', parseFloat(this.value))`);
-    input = `<input type="number" value="${val}" onchange="${onchange}" ${f.min !== undefined ? 'min="'+f.min+'"' : ''} ${f.max !== undefined ? 'max="'+f.max+'"' : ''}>
+    const onchange = isTime ? `setNumberValue('${f.key}', this, 'th-${f.key}', 'seconds')` :
+      (isHours ? `setNumberValue('${f.key}', this, 'th-${f.key}', 'hours')` :
+      `setNumberValue('${f.key}', this)`);
+    input = `<input id="${inputId}" type="number" step="${f.step !== undefined ? f.step : 'any'}" value="${val}" onchange="${onchange}" ${f.min !== undefined ? 'min="'+f.min+'"' : ''} ${f.max !== undefined ? 'max="'+f.max+'"' : ''}${describedBy}>
     ${(isTime || isHours) ? '<div class="range-hint" id="th-'+f.key+'">' + (isTime ? formatTime(val) : formatHours(val)) + '</div>' : ''}`;
   } else if (f.type === 'bool') {
     input = `
       <div class="toggle-wrap">
-        <span class="toggle-label">${val ? 'On' : 'Off'}</span>
-        <label class="toggle">
-          <input type="checkbox" ${val ? 'checked' : ''} onchange="setValue('${f.key}', this.checked)">
-          <span class="toggle-slider"></span>
+        <span class="toggle-label" id="status-${f.key}">${val ? 'On' : 'Off'}</span>
+        <label class="toggle" for="${inputId}">
+          <input id="${inputId}" type="checkbox" ${val ? 'checked' : ''} onchange="setValue('${f.key}', this.checked)"${describedBy}>
+          <span class="toggle-slider" aria-hidden="true"></span>
         </label>
       </div>`;
   } else if (f.type === 'select') {
-    input = `<select onchange="setValue('${f.key}', this.value)">
-      ${f.options.map(o => `<option value="${o.value}" ${val == o.value ? 'selected' : ''}>${o.label}</option>`).join('')}
+    input = `<select id="${inputId}" onchange="setValue('${f.key}', this.value)"${describedBy}>
+      ${f.options.map(o => `<option value="${escapeHtml(o.value)}" ${val == o.value ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}
     </select>`;
   } else if (f.type === 'range') {
     input = `
       <div class="range-wrap">
-        <input type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}"
+        <input id="${inputId}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}" aria-valuetext="${escapeHtml(getRangeHint(val, f))}"${describedBy}
           oninput="setValue('${f.key}', parseFloat(this.value)); updateRangeDisplay(this, '${f.key}')">
         <span class="range-val">${val}×</span>
       </div>
@@ -1929,12 +2149,13 @@ function renderField(f) {
   }
 
   const isChanged = val !== f.default && String(val) !== String(f.default);
+  const searchText = `${f.label} ${f.key} ${f.desc || ''}`.toLowerCase();
 
   return `
-    <div class="field${isChanged ? ' changed' : ''}" id="field-${f.key}">
+    <div class="field${isChanged ? ' changed' : ''}" id="field-${f.key}" data-search="${escapeHtml(searchText)}">
       <div class="field-info">
-        <div class="field-label">${f.label} <span class="env-name">${f.key}</span></div>
-        ${f.desc ? `<div class="field-desc">${f.desc}</div>` : ''}
+        <label class="field-label" for="${inputId}">${escapeHtml(f.label)} <span class="env-name">${f.key}</span></label>
+        ${f.desc ? `<div class="field-desc" id="${descId}">${escapeHtml(f.desc)}</div>` : ''}
       </div>
       <div class="field-input">${input}</div>
     </div>`;
@@ -1943,15 +2164,33 @@ function renderField(f) {
 // ============================================
 // LOGIC
 // ============================================
+function setNumberValue(key, input, hintId = '', unit = '') {
+  const parsed = Number.parseFloat(input.value);
+  const cfg = getFieldConfig(key);
+  const belowMin = cfg?.min !== undefined && parsed < Number(cfg.min);
+  const aboveMax = cfg?.max !== undefined && parsed > Number(cfg.max);
+
+  if (!Number.isFinite(parsed) || belowMin || aboveMax) {
+    input.value = String(values[key] ?? cfg?.default ?? '');
+    input.setAttribute('aria-invalid', 'true');
+    showToast(`Enter a valid number${cfg?.min !== undefined || cfg?.max !== undefined ? ` (${cfg?.min ?? '−∞'} to ${cfg?.max ?? '∞'})` : ''}`, true);
+    window.setTimeout(() => input.removeAttribute('aria-invalid'), 2000);
+    return;
+  }
+
+  input.removeAttribute('aria-invalid');
+  setValue(key, parsed);
+  const hint = hintId ? document.getElementById(hintId) : null;
+  if (hint) hint.textContent = unit === 'hours' ? formatHours(parsed) : formatTime(parsed);
+}
+
 function setValue(key, val) {
   values[key] = val;
-  // Update field changed state
   const field = document.getElementById('field-' + key);
   const def = getDefault(key);
   const changed = val !== def && String(val) !== String(def);
-  field.className = 'field' + (changed ? ' changed' : '');
+  field.classList.toggle('changed', changed);
 
-  // Update toggle label
   const cfg = getFieldConfig(key);
   if (cfg && cfg.type === 'bool') {
     const label = field.querySelector('.toggle-label');
@@ -1960,6 +2199,8 @@ function setValue(key, val) {
 
   updateOutput();
   updateStats();
+  updateSecurityWarning();
+  filterSettings();
 }
 
 function getDefault(key) {
@@ -1983,7 +2224,94 @@ function getChangedFields() {
 }
 
 function toggleSection(header) {
-  header.parentElement.classList.toggle('open');
+  const sectionElement = header.parentElement;
+  const section = CONFIG.find(item => item.id === sectionElement.dataset.sectionId);
+  const isOpen = !sectionElement.classList.contains('open');
+  sectionElement.classList.toggle('open', isOpen);
+  if (section) section.open = isOpen;
+  header.setAttribute('aria-expanded', String(isOpen));
+  const body = document.getElementById(header.getAttribute('aria-controls'));
+  body.hidden = !isOpen;
+}
+
+function setAllSections(open) {
+  CONFIG.forEach(section => { section.open = open; });
+  document.querySelectorAll('.section').forEach(sectionElement => {
+    sectionElement.classList.toggle('open', open);
+    const header = sectionElement.querySelector('.section-header');
+    const body = sectionElement.querySelector('.section-body');
+    header.setAttribute('aria-expanded', String(open));
+    body.hidden = !open;
+  });
+}
+
+function filterSettings() {
+  const search = document.getElementById('settingSearch');
+  const changedOnlyInput = document.getElementById('changedOnlyFilter');
+  if (!search || !changedOnlyInput) return;
+  const query = search.value.trim().toLowerCase();
+  const changedOnly = changedOnlyInput.checked;
+  const forceOpen = Boolean(query || changedOnly);
+  let visible = 0;
+
+  document.querySelectorAll('.section').forEach(sectionElement => {
+    let sectionVisible = 0;
+    sectionElement.querySelectorAll('.field').forEach(field => {
+      const matchesText = !query || field.dataset.search.includes(query);
+      const matchesChanged = !changedOnly || field.classList.contains('changed');
+      const show = matchesText && matchesChanged;
+      field.classList.toggle('filtered-out', !show);
+      if (show) sectionVisible++;
+    });
+    sectionElement.classList.toggle('filtered-out', sectionVisible === 0);
+    if (sectionVisible > 0) visible += sectionVisible;
+
+    const configSection = CONFIG.find(item => item.id === sectionElement.dataset.sectionId);
+    const isOpen = forceOpen || Boolean(configSection?.open);
+    sectionElement.classList.toggle('open', isOpen);
+    const header = sectionElement.querySelector('.section-header');
+    const body = sectionElement.querySelector('.section-body');
+    header.setAttribute('aria-expanded', String(isOpen));
+    body.hidden = !isOpen;
+  });
+
+  const summary = document.getElementById('filterSummary');
+  summary.textContent = query || changedOnly
+    ? `Showing ${visible} matching setting${visible === 1 ? '' : 's'}`
+    : `Showing all ${CONFIG.reduce((total, section) => total + section.fields.length, 0)} settings`;
+}
+
+function scrollToOutput() {
+  const output = document.getElementById('generated-output');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  output.focus({ preventScroll: true });
+}
+
+function togglePasswordVisibility(inputId, button) {
+  const input = document.getElementById(inputId);
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(show));
+  const key = inputId.replace(/^input-/, '');
+  const label = getFieldConfig(key)?.label || 'Password';
+  button.setAttribute('aria-label', `${show ? 'Hide' : 'Show'} ${label}`);
+  button.textContent = show ? '🙈' : '👁️';
+}
+
+function updateSecurityWarning() {
+  const warning = document.getElementById('securityWarning');
+  if (!warning) return;
+  const issues = [];
+  if (!values.ADMIN_PASSWORD || values.ADMIN_PASSWORD === 'changeme') {
+    issues.push('change ADMIN_PASSWORD from the public default');
+  }
+  if (values.RCON_ENABLED && (!values.RCON_PASSWORD || values.RCON_PASSWORD === 'changeme')) {
+    issues.push('set a unique RCON_PASSWORD before exposing RCON');
+  }
+  warning.hidden = issues.length === 0;
+  warning.innerHTML = issues.length
+    ? `<strong>🔐 Security check:</strong> ${issues.join('; ')}.`
+    : '';
 }
 
 // ============================================
@@ -2039,9 +2367,14 @@ function updateOutput() {
   out.textContent = lines.join('\n');
 }
 
+function formatEnvValue(value) {
+  return `'${String(value ?? '').replaceAll("'", "\\'")}'`;
+}
+
 function formatValue(f) {
   const v = values[f.key];
   if (f.type === 'bool') return v ? 'True' : 'False';
+  if (f.type === 'text' || f.type === 'password' || f.type === 'select') return formatEnvValue(v);
   return String(v);
 }
 
@@ -2074,14 +2407,56 @@ function updateStats() {
   });
   document.getElementById('totalCount').textContent = total;
   document.getElementById('changedCount').textContent = changed;
+  const outputCount = document.querySelector('#viewOutputButton .view-output-count');
+  if (outputCount) outputCount.textContent = `(${changed})`;
 }
 
 // ============================================
 // ACTIONS
 // ============================================
 function copyOutput() {
-  const text = document.getElementById('output').textContent;
-  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard! 📋'));
+  return copyText(document.getElementById('output').textContent, 'Copied to clipboard! 📋');
+}
+
+async function copyText(text, successMessage = 'Copied! 📋') {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      if (!document.execCommand('copy')) throw new Error('Copy command was rejected');
+      textarea.remove();
+    }
+    showToast(successMessage);
+    return true;
+  } catch (error) {
+    console.error('Clipboard copy failed:', error);
+    showToast('Copy failed — select the text and copy it manually.');
+    return false;
+  }
+}
+
+function enhanceCodeBlocks() {
+  document.querySelectorAll('.code-block').forEach(block => {
+    if (block.parentElement.classList.contains('code-wrap')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-wrap';
+    block.parentNode.insertBefore(wrapper, block);
+    wrapper.appendChild(block);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'copy-code-btn';
+    button.textContent = 'Copy command';
+    button.setAttribute('aria-label', 'Copy command block');
+    button.addEventListener('click', () => copyText(block.textContent, 'Command copied! 📋'));
+    wrapper.appendChild(button);
+  });
 }
 
 function downloadEnv() {
@@ -2114,6 +2489,8 @@ function resetAll() {
   renderSections();
   updateOutput();
   updateStats();
+  updateSecurityWarning();
+  filterSettings();
   showToast('All settings reset! 🔄');
 }
 

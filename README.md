@@ -547,6 +547,19 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ## 📝 Release Notes
 
+### v2.6.0 — Pages UX and Accessibility Upgrade
+
+- Added deep-linked tabs with correct scroll behavior, browser Back/Forward support, and keyboard arrow navigation.
+- Rebuilt Config Generator accordions and form labels for keyboard and screen-reader access; closed sections no longer trap focus.
+- Added setting search, Changed Only filtering, Expand/Collapse All, and a direct View Output action.
+- Added safe single-quoted dotenv output for text, password, and select values containing spaces, `#`, `$`, or apostrophes.
+- Changed server, admin, and RCON fields to masked password inputs with show/hide controls and warnings for public defaults.
+- Rejected empty, non-finite, and out-of-range numeric values before they can produce invalid `.env` output.
+- Added reliable clipboard fallback/error feedback and Copy command buttons for documentation examples.
+- Improved the mobile hero, tab strip, generator toolbar, tables, color contrast, metadata, Open Graph data, and favicon.
+- Expanded the Mods guide and simplified the on-page release history to the latest releases plus the full GitHub changelog.
+- Added automated static and headless-Chromium Pages regression checks to GitHub Actions.
+
 ### v2.5.5 — Enhanced Runtime Requirements and Diagnostics
 
 - Replaced outdated 8 GB / 35 GB sizing guidance with practical Enhanced/Wine recommendations.

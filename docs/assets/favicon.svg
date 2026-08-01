@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Conan Exiles server">
+  <rect width="64" height="64" rx="12" fill="#0a0a0f"/>
+  <path d="M14 11l35 39-5 4L9 15z" fill="#e0ddd5"/>
+  <path d="M50 11L15 50l5 4 35-39z" fill="#c8a84e"/>
+  <path d="M8 12l8-3-5 8zM56 12l-8-3 5 8z" fill="#ff6b6b"/>
+</svg>
