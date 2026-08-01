@@ -151,7 +151,31 @@ try {
   const target = await waitForTarget(debugPort, `http://127.0.0.1:${pagePort}/`);
   cdp = createCdp(target.webSocketDebuggerUrl);
   await cdp.send('Runtime.enable');
-  await new Promise(resolveWait => setTimeout(resolveWait, 500));
+  const readiness = await evaluate(cdp, `new Promise(resolve => {
+    const deadline = Date.now() + 5000;
+    const inspect = () => {
+      const tabBar = document.querySelector('.tab-bar');
+      const active = document.querySelector('.tab-btn.active')?.dataset.tab;
+      const state = {
+        readyState: document.readyState,
+        hash: location.hash,
+        active,
+        tabTop: tabBar ? Math.round(tabBar.getBoundingClientRect().top) : null
+      };
+      if (state.readyState === 'complete' && state.hash === '#config-generator' && active === 'config-generator' && Math.abs(state.tabTop) <= 1) {
+        resolve(state);
+      } else if (Date.now() >= deadline) {
+        resolve(state);
+      } else {
+        setTimeout(inspect, 50);
+      }
+    };
+    inspect();
+  })`);
+  assert(
+    readiness.readyState === 'complete' && readiness.hash === '#config-generator' && readiness.active === 'config-generator' && Math.abs(readiness.tabTop) <= 1,
+    `Page did not reach stable deep-link state: ${JSON.stringify(readiness)}`,
+  );
 
   const initial = await evaluate(cdp, `(() => {
     window.__tabActivations = [];
@@ -205,7 +229,53 @@ try {
   })()`);
   assert(numeric.stored === 40 && numeric.input === '40' && !numeric.hasNaN, `Invalid numeric regression: ${JSON.stringify(numeric)}`);
 
-  console.log('Pages browser checks OK: deep link, single activation, Back, numeric guard');
+  const negativeDuration = await evaluate(cdp, `(() => {
+    const input = document.getElementById('input-KICK_AFK_TIME');
+    const before = values.KICK_AFK_TIME;
+    input.value = '-1';
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return {
+      before,
+      stored: values.KICK_AFK_TIME,
+      input: input.value,
+      hint: document.getElementById('th-KICK_AFK_TIME').textContent,
+      emitted: document.getElementById('output').textContent.includes('KICK_AFK_TIME=-1')
+    };
+  })()`);
+  assert(
+    negativeDuration.stored === negativeDuration.before &&
+      negativeDuration.input === String(negativeDuration.before) &&
+      negativeDuration.hint === '45 minutes' &&
+      !negativeDuration.emitted,
+    `Negative duration was accepted: ${JSON.stringify(negativeDuration)}`,
+  );
+
+  const clipboardCleanup = await evaluate(cdp, `(async () => {
+    const existing = new Set(document.querySelectorAll('textarea'));
+    const navPrototype = Object.getPrototypeOf(navigator);
+    const clipboardDescriptor = Object.getOwnPropertyDescriptor(navPrototype, 'clipboard');
+    const originalExecCommand = document.execCommand;
+    const before = document.querySelectorAll('textarea').length;
+    try {
+      Object.defineProperty(navPrototype, 'clipboard', { configurable: true, get: () => undefined });
+      document.execCommand = () => false;
+      const copied = await copyText('clipboard failure QA');
+      return { copied, before, after: document.querySelectorAll('textarea').length };
+    } finally {
+      Object.defineProperty(navPrototype, 'clipboard', clipboardDescriptor);
+      document.execCommand = originalExecCommand;
+      document.querySelectorAll('textarea').forEach(element => {
+        if (!existing.has(element)) element.remove();
+      });
+    }
+  })()`);
+  assert(clipboardCleanup.copied === false, 'Clipboard failure test did not exercise the failure path');
+  assert(
+    clipboardCleanup.after === clipboardCleanup.before,
+    `Clipboard fallback leaked a textarea: ${JSON.stringify(clipboardCleanup)}`,
+  );
+
+  console.log('Pages browser checks OK: deep link, single activation, Back, numeric/duration guards, clipboard cleanup');
 } finally {
   cdp?.close();
   if (chrome && chrome.exitCode === null) chrome.kill('SIGTERM');

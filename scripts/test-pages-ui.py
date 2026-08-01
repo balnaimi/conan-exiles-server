@@ -124,6 +124,53 @@ def test_password_fields_and_warnings_exist() -> None:
     assert_contains("function updateSecurityWarning(", 'id="securityWarning"', "togglePasswordVisibility(")
 
 
+def test_time_formatting_normalizes_boundaries() -> None:
+    functions = "\n".join(
+        extract_js_function(name) for name in ("formatTime", "formatHours")
+    )
+    script = f"""
+{functions}
+console.log(JSON.stringify({{
+  seconds59: formatTime(59),
+  minute1: formatTime(60),
+  hourBoundary: formatTime(3599),
+  hour1: formatTime(3600),
+  hourMinute: formatTime(3660),
+  dayBoundary: formatTime(86399),
+  day1: formatTime(86400),
+  day15Boundary: formatTime(1295999),
+  negativeSeconds: formatTime(-1),
+  hours1: formatHours(1),
+  hours1_5: formatHours(1.5),
+  hours23_5: formatHours(23.5),
+  hours24: formatHours(24),
+  hours25_5: formatHours(25.5)
+}}));
+"""
+    result = subprocess.run(
+        ["node", "-e", script],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    assert json.loads(result.stdout) == {
+        "seconds59": "59 seconds",
+        "minute1": "1 minute",
+        "hourBoundary": "1 hour",
+        "hour1": "1 hour",
+        "hourMinute": "1 hour 1 min",
+        "dayBoundary": "1 day",
+        "day1": "1 day",
+        "day15Boundary": "15 days",
+        "negativeSeconds": "Invalid duration",
+        "hours1": "1 hour",
+        "hours1_5": "1 hour 30 min",
+        "hours23_5": "23 hours 30 min",
+        "hours24": "1 day",
+        "hours25_5": "1 day 1h 30 min",
+    }
+
+
 def test_invalid_numbers_are_rejected() -> None:
     assert_contains(
         "function setNumberValue(",
@@ -263,7 +310,7 @@ def test_polish_features_exist() -> None:
         "@media (max-width: 480px)",
         "Finding Workshop IDs",
         "View all releases on GitHub",
-        "v2.6.0 — Pages UX and Accessibility Upgrade",
+        "v2.6.1 — Duration and Clipboard Reliability Hotfix",
     )
     assert "color:#555" not in HTML.replace(" ", "")
 

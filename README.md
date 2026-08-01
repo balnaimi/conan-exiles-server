@@ -547,6 +547,14 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ## 📝 Release Notes
 
+### v2.6.1 — Duration and Clipboard Reliability Hotfix
+
+- Normalized rounded duration hints so minute/hour/day boundaries never display impossible combinations such as `23 hours 60 min` or `14 days 24h`.
+- Preserved fractional-hour precision and corrected singular/plural labels, including `1.5` hours as `1 hour 30 min`.
+- Rejected negative duration values instead of storing a negative setting while displaying a misleading zero-duration hint.
+- Ensured the legacy clipboard fallback always removes its temporary textarea whether copying succeeds, is rejected, or throws.
+- Expanded automated unit and headless-Chromium regression coverage for duration boundaries and clipboard failure cleanup.
+
 ### v2.6.0 — Pages UX and Accessibility Upgrade
 
 - Added deep-linked tabs with correct scroll behavior, browser Back/Forward support, and keyboard arrow navigation.
