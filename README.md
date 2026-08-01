@@ -104,7 +104,7 @@ docker compose up -d
 
 Or use the [Config Generator](https://balnaimi.github.io/conan-exiles-server/) to create a custom `.env` file from the website.
 
-Watch the logs. The first run takes 10-30 minutes:
+Watch the logs. First-run and update duration depends on storage, memory, CPU, network speed, and cache state:
 
 ```bash
 docker compose logs -f
@@ -279,14 +279,70 @@ docker compose down
 docker compose up -d
 ```
 
-If the log appears to stop while mounting pak files, wait 10-15 minutes on first startup, then check whether the container is still running:
+#### The Log Stops at `pakchunk0`
+
+Conan Exiles Enhanced mounts several Unreal Engine IoStore containers during startup. A final line such as:
+
+```text
+Mounted Pak file '../../../ConanSandbox/Content/Paks/pakchunk0-WindowsServer.pak'
+```
+
+means that `pakchunk0` was mounted successfully. It does **not** mean the server is still downloading or unpacking that file. On a healthy test system, the server progressed from this mount to `InProgress` within a few seconds.
+
+A successful startup normally includes:
+
+```text
+Success! App '443030' fully installed.
+Match State Changed from WaitingToStart to InProgress
+Engine is initialized. Leaving FEngineLoop::Init()
+Started SourceServerQueries on port 27015
+```
+
+If no new messages appear after the successful mount, do not rely on container uptime or the final stdout line alone. Query UDP port `27015`, inspect the actual process tree, and check memory limits, Docker OOM events, CPU virtualization, and the host kernel.
+
+#### Runtime Diagnostics
 
 ```bash
 docker compose ps
-docker compose logs --tail 150
+docker stats --no-stream
+docker inspect conan-exiles-enhanced \
+  --format 'status={{.State.Status}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
+docker events --since 30m \
+  --filter container=conan-exiles-enhanced
+docker top conan-exiles-enhanced \
+  -eo pid,ppid,stat,pcpu,pmem,wchan:32,comm,args
 ```
 
-If the container exits or the VPS has low memory, also check the host for out-of-memory kills.
+Wine wrapper processes may normally wait in `pipe_read` or `anon_pipe_read`; that alone is not proof of a hang. Verify the actual `ConanSandboxServer-Win64-Shipping.exe` process and its `GameThread`.
+
+Check host memory and commit limits:
+
+```bash
+free -h
+grep -E 'CommitLimit|Committed_AS' /proc/meminfo
+sysctl vm.overcommit_memory
+```
+
+If RAM was increased while the VM or container was already running, restart Docker and verify that the daemon sees the new amount before starting the game server again:
+
+```bash
+sudo systemctl restart docker
+docker info --format '{{.MemTotal}}'
+free -b
+```
+
+#### Exit Code 137
+
+Exit code `137` means the process received `SIGKILL`, but it does not prove an out-of-memory event occurred:
+
+```bash
+docker inspect conan-exiles-enhanced \
+  --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
+docker events --since 30m \
+  --filter container=conan-exiles-enhanced
+```
+
+`OOMKilled=true` or an explicit Docker `oom` event confirms memory exhaustion. `OOMKilled=false` may instead mean Docker forcibly terminated Wine after the stop timeout expired.
 
 ### 🗑️ Full Reset (Start Fresh)
 
@@ -294,7 +350,7 @@ Want to wipe everything and start from scratch?
 
 ```bash
 docker compose down -v        # Stop + delete ALL volumes
-docker compose up -d          # Fresh start (re-downloads ~4.5GB)
+docker compose up -d          # Fresh start (re-downloads the full server)
 ```
 
 > ⚠️ **Warning:** `-v` permanently deletes all game data, player saves, and buildings. There is no undo. Back up first!
@@ -345,47 +401,56 @@ docker compose up -d
 
 ## 💻 System Requirements
 
-Based on [Funcom's official recommendations](https://www.conanexiles.com/):
+> [!IMPORTANT]
+> Conan Exiles **Enhanced** uses Unreal Engine 5 and requires substantially more memory and storage than the previous UE4 dedicated server. Older Conan Exiles hardware recommendations should not be treated as reliable sizing guidance for the current Enhanced server running through Wine.
 
-| Server Size | CPU | RAM | Disk |
-|-------------|-----|-----|------|
-| **Small** (up to 10 players) | 2 cores @ 3.0 GHz | 8 GB | 35 GB |
-| **Medium** (up to 35 players) | 4 cores @ 3.1 GHz | 8 GB | 35 GB |
-| **Large** (up to 70 players) | 4 cores @ 3.4 GHz | 16 GB | 35 GB |
+### Practical Enhanced / Wine Sizing
 
-**Storage breakdown:**
-- Docker image: ~1.5 GB
-- Game server files (download ~5 GB, unpacked ~10 GB)
-- World saves & database: grows over time
-- Updates + temp space: ~5-10 GB headroom
-- **Total recommended: 35 GB minimum**
+| Server Profile | CPU | RAM | Disk |
+|----------------|-----|-----|------|
+| **Test / very small server** | 4 modern cores | **16 GB** | **70 GB minimum** |
+| **Small private server** (up to 10 players) | 4+ fast cores | **16 GB recommended** | **100 GB recommended** |
+| **Growing or modded server** | 6+ fast cores | **24 GB or more** | **100 GB or more** |
+
+These are practical planning recommendations for the Enhanced Windows dedicated server running through Wine—not official hard limits. Actual usage depends on the map, database size, buildings, active players, mods, and game updates.
+
+### Verified Runtime Observation
+
+A clean, unmodded Enhanced server using Steam build `24383534` and Wine Staging `11.10` was tested with the following results:
+
+- An **8 GB** host repeatedly reached its memory limit and entered an out-of-memory restart loop.
+- After increasing the host to **16 GB**, the same server started normally, reached `InProgress`, responded to Source/A2S queries on port `27015`, and remained stable during the test.
+- Idle memory usage settled at approximately **9.1 GB**, without players or mods.
+
+For the current Enhanced server, **8 GB RAM should be considered insufficient**. Use at least **16 GB** unless you have verified your own workload under stricter limits.
+
+### Storage Guidance
+
+Keep enough free space for Docker image layers, SteamCMD download/update staging, extracted server files, world databases, backups, logs, mods, and temporary space used by major updates.
+
+A server with only **35–40 GB total storage is not considered sufficient** for reliable updates. Allocate at least **70 GB**, with **100 GB recommended** for comfortable maintenance and future updates.
 
 **Network:**
 - Stable internet with at least **10 Mbps upload** recommended
 - Lower upload speeds may cause rubber-banding and lag for players
 - Each connected player uses roughly **30-60 KB/s** of bandwidth
 
-**Important notes:**
-- This image runs the **Windows** dedicated server through **Wine** on Linux — Wine adds some CPU/RAM overhead compared to running natively on Windows
-- The server is **single-threaded** for game logic — a fast single-core speed matters more than many cores
-- RAM usage grows over time as players build and explore — monitor with `docker stats`
-- No GPU required — the dedicated server is headless (no graphics)
-
-> 💡 For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine. No GPU needed!
+**Additional notes:**
+- This image runs the **Windows** dedicated server through **Wine** on Linux, adding CPU and RAM overhead compared with native Windows
+- Game logic benefits heavily from fast single-core performance
+- RAM usage grows as players build and explore; monitor it with `docker stats`
+- Mods may substantially increase startup time, memory use, and storage
+- No physical GPU is required; the dedicated server remains headless
 
 ---
 
-## ⏱️ First Run
+## ⏱️ First Run and Game Updates
 
-On the first startup the container will:
+On first startup, SteamCMD downloads and verifies the Conan Exiles Enhanced dedicated server. Major updates may also download several gigabytes and temporarily require additional disk space.
 
-1. 📥 Download Conan Exiles Enhanced Dedicated Server (~4.5GB) via SteamCMD
-2. 🍷 Initialize Wine prefix
-3. ⚙️ Apply your `.env` configuration
-4. 🚀 Start the server
+The container then initializes Wine, applies the `.env` configuration, and starts the server. Startup time depends on storage speed, available memory, CPU performance, and whether the game files are already cached. Do not determine readiness from container uptime alone.
 
-This takes **10-30 minutes** depending on your internet speed.
-Subsequent restarts are fast — game files are persisted in Docker volumes.
+Game files are persisted in Docker volumes, so subsequent restarts normally require only verification and any pending updates.
 
 ---
 
@@ -481,6 +546,15 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### v2.5.5 — Enhanced Runtime Requirements and Diagnostics
+
+- Replaced outdated 8 GB / 35 GB sizing guidance with practical Enhanced/Wine recommendations.
+- Documented the verified 8 GB OOM loop and stable 16 GB runtime at approximately 9.1 GB idle memory.
+- Clarified that a successful `pakchunk0` mount is not an active download or unpack operation.
+- Added startup readiness markers and Source/A2S query guidance for port `27015`.
+- Added process-tree diagnostics for Wine wrapper processes, `Shipping.exe`, and `GameThread`.
+- Added Docker OOM, memory-limit, post-resize daemon, and exit-code 137 checks.
 
 ### v2.5.4 — Enhanced Settings Status Clarification
 

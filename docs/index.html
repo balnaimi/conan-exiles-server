@@ -712,7 +712,7 @@ curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/dock
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
 nano .env
 docker compose up -d</pre>
-        <div class="info-note">First run downloads ~4.5GB and takes 10-30 minutes. The minimal .env uses mostly default server settings.</div>
+        <div class="info-note">First-run and update duration depends on storage, memory, CPU, network speed, and cache state. The minimal .env uses mostly default server settings.</div>
       </div>
 
       <div class="qs-option">
@@ -793,17 +793,19 @@ docker compose up -d</pre>
         <strong>CG-NAT / Tunnels:</strong> If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with multiple network interfaces, set <code>MULTIHOME</code> to the public or forwarded IP address that players should use. The container will also use that value for <code>MULTIHOMEHTTP</code> so server-browser registration comes from the same IP. Leave both empty for normal hosting.
       </div>
       <div class="info-note" style="margin-top: 1.5rem;">
-        <strong>⏱️ First Run:</strong> The server downloads ~4.5GB of game files and sets up the database. This takes <strong>10-30 minutes</strong> on first start. Be patient!
+        <strong>⏱️ First Run and Updates:</strong> SteamCMD downloads and verifies the Enhanced server, while major game updates may download several gigabytes and require temporary disk space. Startup time depends on storage, memory, CPU, and cache state—verify the readiness markers instead of relying on container uptime alone.
       </div>
 
       <!-- System Requirements -->
       <h2 class="info-title" style="margin-top:2.5rem;">💻 System Requirements</h2>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;">Hardware requirements based on <a href="https://www.conanexiles.com/" target="_blank" style="color:var(--accent);">Funcom's official recommendations</a>. These are for the game server — Docker adds minimal overhead.</p>
+      <div class="info-warning" style="margin-bottom:1rem;">
+        <strong>Enhanced / UE5 guidance:</strong> Conan Exiles Enhanced requires substantially more memory and storage than the previous UE4 dedicated server. Older Conan Exiles hardware recommendations are not reliable sizing guidance for the current Enhanced server running through Wine.
+      </div>
       <div class="ports-table">
         <table>
           <thead>
             <tr>
-              <th>Server Size</th>
+              <th>Server Profile</th>
               <th>CPU</th>
               <th>RAM</th>
               <th>Disk</th>
@@ -811,34 +813,42 @@ docker compose up -d</pre>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Small</strong> (up to 10 players)</td>
-              <td>2 cores @ 3.0 GHz</td>
-              <td>8 GB</td>
-              <td>35 GB</td>
+              <td><strong>Test / very small</strong></td>
+              <td>4 modern cores</td>
+              <td><strong>16 GB</strong></td>
+              <td><strong>70 GB minimum</strong></td>
             </tr>
             <tr>
-              <td><strong>Medium</strong> (up to 35 players)</td>
-              <td>4 cores @ 3.1 GHz</td>
-              <td>8 GB</td>
-              <td>35 GB</td>
+              <td><strong>Small private server</strong> (up to 10 players)</td>
+              <td>4+ fast cores</td>
+              <td><strong>16 GB recommended</strong></td>
+              <td><strong>100 GB recommended</strong></td>
             </tr>
             <tr>
-              <td><strong>Large</strong> (up to 70 players)</td>
-              <td>4 cores @ 3.4 GHz</td>
-              <td>16 GB</td>
-              <td>35 GB</td>
+              <td><strong>Growing or modded server</strong></td>
+              <td>6+ fast cores</td>
+              <td><strong>24 GB or more</strong></td>
+              <td><strong>100 GB or more</strong></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
-        <strong style="color:var(--text);">Storage breakdown:</strong>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-top:0.75rem;">These are practical planning recommendations for the Enhanced Windows server running through Wine—not official hard limits. Actual usage depends on the map, database, buildings, players, mods, and game updates.</p>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">Verified Runtime Observation</h3>
+      <div class="info-note">
+        A clean, unmodded server using Steam build <code>24383534</code> and Wine Staging <code>11.10</code> repeatedly entered an OOM restart loop on an <strong>8 GB</strong> host. With <strong>16 GB</strong>, the same server reached <code>InProgress</code>, responded to Source/A2S queries on UDP <code>27015</code>, and stabilized at approximately <strong>9.1 GB</strong> idle memory.
+      </div>
+      <div class="info-warning" style="margin-top:0.75rem;">
+        <strong>8 GB RAM should be considered insufficient for the current Enhanced server.</strong> Use at least 16 GB unless you have verified your own workload under stricter limits.
+      </div>
+
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">
+        <strong style="color:var(--text);">Storage guidance:</strong>
         <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
-          <li>Docker image: ~1.5 GB</li>
-          <li>Game server files (download ~5 GB, unpacked ~10 GB)</li>
-          <li>World saves & database: grows over time</li>
-          <li>Updates + temp space: ~5-10 GB headroom</li>
-          <li><strong>Total recommended: 35 GB minimum</strong></li>
+          <li>Allow space for Docker layers, SteamCMD staging, extracted server files, databases, backups, logs, mods, and update temporary files</li>
+          <li><strong>35–40 GB total storage is not sufficient</strong> for reliable Enhanced updates</li>
+          <li>Allocate at least <strong>70 GB</strong>; <strong>100 GB</strong> is recommended for comfortable maintenance</li>
         </ul>
       </div>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
@@ -852,14 +862,12 @@ docker compose up -d</pre>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
         <strong style="color:var(--text);">Good to know:</strong>
         <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
-          <li>This image runs the Windows server through <strong>Wine</strong> on Linux — adds some CPU/RAM overhead vs native Windows</li>
-          <li>Game logic is <strong>single-threaded</strong> — fast single-core speed matters more than many cores</li>
+          <li>Wine adds CPU and memory overhead compared with native Windows</li>
+          <li>Game logic benefits heavily from fast single-core performance</li>
           <li>RAM usage grows as players build and explore — monitor with <code>docker stats</code></li>
-          <li><strong>No GPU required</strong> — the dedicated server is headless</li>
+          <li>Mods may substantially increase startup time, memory use, and storage</li>
+          <li><strong>No physical GPU required</strong> — the dedicated server is headless</li>
         </ul>
-      </div>
-      <div class="info-note" style="margin-top:0.75rem;">
-        💡 <strong>Tip:</strong> For a small private server with friends (2-10 players), any modern PC or VPS with 2+ cores and 8 GB RAM will work fine. You don't need a monster machine!
       </div>
     </div>
   </section>
@@ -963,7 +971,43 @@ Failed to load libEGL.so.1</pre>
       <pre class="code-block">docker compose pull
 docker compose down
 docker compose up -d</pre>
-      <div class="info-warning" style="margin-top:0.75rem;">If the log appears to stop while mounting pak files, wait 10-15 minutes on first startup, then check <code>docker compose ps</code> and <code>docker compose logs --tail 150</code>. Low-memory VPS hosts may also kill the process outside the game log.</div>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">The Log Stops at pakchunk0</h4>
+      <pre class="code-block">Mounted Pak file '../../../ConanSandbox/Content/Paks/pakchunk0-WindowsServer.pak'</pre>
+      <div class="info-note">This line means <code>pakchunk0</code> mounted successfully. It does <strong>not</strong> mean the server is still downloading or unpacking that file. A healthy test system progressed from this mount to <code>InProgress</code> within a few seconds.</div>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin:0.75rem 0;">Normal readiness evidence includes:</p>
+      <pre class="code-block">Success! App '443030' fully installed.
+Match State Changed from WaitingToStart to InProgress
+Engine is initialized. Leaving FEngineLoop::Init()
+Started SourceServerQueries on port 27015</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">Do not rely on container uptime or the final stdout line alone. Query UDP port <code>27015</code>, inspect the actual process tree, and check memory limits, Docker OOM events, CPU virtualization, and the host kernel.</div>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Runtime Diagnostics</h4>
+      <pre class="code-block">docker compose ps
+docker stats --no-stream
+docker inspect conan-exiles-enhanced \
+  --format 'status={{.State.Status}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
+docker events --since 30m \
+  --filter container=conan-exiles-enhanced
+docker top conan-exiles-enhanced \
+  -eo pid,ppid,stat,pcpu,pmem,wchan:32,comm,args</pre>
+      <div class="info-note" style="margin-top:0.75rem;">Wine wrapper processes may normally wait in <code>pipe_read</code> or <code>anon_pipe_read</code>. Verify the actual <code>ConanSandboxServer-Win64-Shipping.exe</code> process and its <code>GameThread</code> before concluding that Wine is hung.</div>
+      <pre class="code-block">free -h
+grep -E 'CommitLimit|Committed_AS' /proc/meminfo
+sysctl vm.overcommit_memory</pre>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">RAM Increased but Docker Still Shows the Old Limit</h4>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">After resizing a VM or container, restart Docker and verify that Docker and the host report the same total memory:</p>
+      <pre class="code-block">sudo systemctl restart docker
+docker info --format '{{.MemTotal}}'
+free -b</pre>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Exit Code 137</h4>
+      <div class="info-note">Exit code <code>137</code> means the process received <code>SIGKILL</code>, but it does not prove OOM. <code>OOMKilled=true</code> or an explicit Docker <code>oom</code> event confirms memory exhaustion; <code>OOMKilled=false</code> may mean Docker killed Wine after the stop timeout.</div>
+      <pre class="code-block">docker inspect conan-exiles-enhanced \
+  --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
+docker events --since 30m \
+  --filter container=conan-exiles-enhanced</pre>
       <div class="info-warning" style="margin-top:0.75rem;">If clients cannot connect after a UE4 → UE5 migration, inspect <code>Engine.ini</code> and remove stale <code>bUseBuildIdOverride</code> / <code>BuildIdOverride</code> lines.</div>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Backup Your Data</h3>
@@ -998,7 +1042,7 @@ docker compose up -d</pre>
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🗑️ Full Reset (Start Fresh)</h3>
       <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Want to wipe everything and start from scratch? This removes all game files, databases, and player data:</p>
       <pre class="code-block">docker compose down -v       <span class="comment"># Stop + delete ALL volumes</span>
-docker compose up -d         <span class="comment"># Fresh start (re-downloads ~4.5GB)</span></pre>
+docker compose up -d         <span class="comment"># Fresh start (re-downloads the full server)</span></pre>
       <div class="info-warning" style="margin-top:0.75rem;border-color:var(--danger);color:var(--danger);">
         <strong>⚠️ DANGER:</strong> The <code>-v</code> flag permanently deletes <strong>all game data, player saves, and buildings</strong>. There is no undo. Back up your data first if needed!
       </div>
@@ -1220,6 +1264,9 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads ~
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
+        <strong>v2.5.5 — Enhanced Runtime Requirements and Diagnostics:</strong> Replaces outdated 8 GB / 35 GB sizing guidance, documents the verified 8 GB OOM loop and stable 16 GB runtime, clarifies successful pakchunk0 mounts, and adds readiness, process-tree, Docker OOM, memory-resize, and exit-code 137 diagnostics.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.5.4 — Enhanced Settings Status Clarification:</strong> Reclassifies legacy setting warnings using the official Enhanced INI reference, documents StaminaCostMultiplier as the preferred stamina-cost key, and separates officially documented keys from runtime-test candidates.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
