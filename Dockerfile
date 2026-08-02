@@ -62,9 +62,10 @@ RUN mkdir -p /steamcmd && \
 # Create directories
 RUN mkdir -p /conanexiles /config /scripts
 
-# Copy entrypoint
+# Copy entrypoint and shared runtime helpers
 COPY entrypoint.sh /scripts/entrypoint.sh
-RUN chmod +x /scripts/entrypoint.sh
+COPY scripts/runtime/ /scripts/runtime/
+RUN chmod +x /scripts/entrypoint.sh /scripts/runtime/*.sh
 
 # Game ports
 EXPOSE 7777/udp 7778/udp 27015/udp

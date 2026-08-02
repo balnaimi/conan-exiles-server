@@ -1,0 +1,374 @@
+#!/usr/bin/env bash
+set -e
+
+# Shared Conan Exiles Enhanced INI renderer for Wine and Native Linux.
+# Call render_server_config after setting GAME_DIR and CONFIG_PLATFORM.
+
+if ! declare -F log >/dev/null 2>&1; then
+    log() { [ "${CONFIG_RENDER_QUIET:-0}" = "1" ] || printf '[CONAN] %s\n' "$*"; }
+fi
+if ! declare -F warn >/dev/null 2>&1; then
+    warn() { printf '[CONAN] WARNING: %s\n' "$*" >&2; }
+fi
+if ! declare -F error >/dev/null 2>&1; then
+    error() { printf '[CONAN] ERROR: %s\n' "$*" >&2; }
+fi
+
+render_server_config() {
+    GAME_DIR="${GAME_DIR:-/conanexiles}"
+    CONFIG_PLATFORM="${CONFIG_PLATFORM:-WindowsServer}"
+    case "$CONFIG_PLATFORM" in
+        WindowsServer|LinuxServer) ;;
+        *)
+            error "CONFIG_PLATFORM must be WindowsServer or LinuxServer (got '$CONFIG_PLATFORM')"
+            return 2
+            ;;
+    esac
+    CONFIG_DIR="${GAME_DIR}/ConanSandbox/Saved/Config/${CONFIG_PLATFORM}"
+
+log "Applying server configuration..."
+mkdir -p "$CONFIG_DIR"
+
+# --- Determine PVP mode ---
+SERVER_TYPE="${SERVER_TYPE:-pve}"
+case "$SERVER_TYPE" in
+    pvp)  PVP_ENABLED="True" ;;
+    pve-c) PVP_ENABLED="True" ;;
+    *)    PVP_ENABLED="False" ;;
+esac
+
+# --- Engine.ini ---
+cat > "$CONFIG_DIR/Engine.ini" << EOF
+[URL]
+Port=${SERVER_PORT:-7777}
+
+[OnlineSubsystem]
+ServerName=${SERVER_NAME:-Conan Exiles Enhanced Server}
+ServerPassword=${SERVER_PASSWORD:-}
+
+[OnlineSubsystemSteam]
+ServerPassword=${SERVER_PASSWORD:-}
+
+[/Script/OnlineSubsystemUtils.IpNetDriver]
+MaxClientRate=${MAX_CLIENT_RATE:-15000}
+MaxInternetClientRate=${MAX_CLIENT_RATE:-15000}
+EOF
+
+# --- ServerSettings.ini ---
+cat > "$CONFIG_DIR/ServerSettings.ini" << EOF
+[ServerSettings]
+AdminPassword=${ADMIN_PASSWORD:-}
+ServerPassword=${SERVER_PASSWORD:-}
+ServerMessageOfTheDay=${SERVER_MOTD:-}
+serverRegion=${SERVER_REGION:-0}
+ServerCommunity=${SERVER_COMMUNITY:-0}
+MaxNudity=${MAX_NUDITY:-2}
+PVPEnabled=${PVP_ENABLED}
+IsBattlEyeEnabled=${BATTLEYE_ENABLED:-False}
+IsVACEnabled=${VAC_ENABLED:-False}
+CreativeModeServer=${CREATIVE_MODE:-0}
+CombatModeModifier=${COMBAT_MODE_MODIFIER:-0}
+
+# --- Combat & Damage ---
+PlayerDamageMultiplier=${PLAYER_DAMAGE:-1.0}
+PlayerDamageTakenMultiplier=${PLAYER_DAMAGE_TAKEN:-1.0}
+NPCDamageMultiplier=${NPC_DAMAGE:-1.0}
+NPCDamageTakenMultiplier=${NPC_DAMAGE_TAKEN:-1.0}
+MinionDamageMultiplier=${MINION_DAMAGE:-1.0}
+MinionDamageTakenMultiplier=${MINION_DAMAGE_TAKEN:-1.0}
+ThrallDamageToPlayersMultiplier=${THRALL_DAMAGE_TO_PLAYERS:-0.5}
+ThrallDamageToNPCsMultiplier=${THRALL_DAMAGE_TO_NPCS:-0.5}
+FriendlyFireDamageMultiplier=${FRIENDLY_FIRE_DAMAGE:-0.25}
+StructureDamageMultiplier=${STRUCTURE_DAMAGE:-1.0}
+StructureHealthMultiplier=${STRUCTURE_HEALTH:-1.0}
+BuildingDamageMultiplier=${BUILDING_DAMAGE:-1.0}
+CanDamagePlayerOwnedStructures=${CAN_DAMAGE_OWN_STRUCTURES:-False}
+DynamicBuildingDamage=${DYNAMIC_BUILDING_DAMAGE:-False}
+DynamicBuildingDamagePeriod=${DYNAMIC_BUILDING_DAMAGE_PERIOD:-1800}
+PlayerKnockbackMultiplier=${PLAYER_KNOCKBACK:-1.0}
+NPCKnockbackMultiplier=${NPC_KNOCKBACK:-1.0}
+ConciousnessDamageMultiplier=${CONSCIOUSNESS_DAMAGE:-1.0}
+EnableTargetLock=${ENABLE_TARGET_LOCK:-True}
+EnableFatalities=${ENABLE_FATALITIES:-True}
+PvPMountEnduranceDamageMultiplier=${PVP_MOUNT_ENDURANCE_DAMAGE:-1.0}
+ClampBuildingDamageToResources=${CLAMP_BUILDING_DAMAGE:-True}
+
+# --- Death & Looting ---
+EverybodyCanLootCorpse=${EVERYBODY_LOOT_CORPSE:-True}
+ContainersIgnoreOwnership=${CONTAINERS_IGNORE_OWNERSHIP:-True}
+LogoutCharactersRemainInTheWorld=${LOGOUT_REMAIN:-True}
+UnconsciousTimeSeconds=${UNCONSCIOUS_TIME:-1800.0}
+OfflinePlayersUnconsciousBodiesHours=${OFFLINE_BODY_HOURS:-168}
+CorpsesPerPlayer=${CORPSES_PER_PLAYER:-10}
+PlayerCorpseLifeTime=${PLAYER_CORPSE_LIFETIME:-1800.0}
+NPCCorpseLifeTime=${NPC_CORPSE_LIFETIME:-600.0}
+
+# --- XP & Progression ---
+PlayerXPRateMultiplier=${XP_RATE:-1.0}
+PlayerXPKillMultiplier=${XP_KILL:-1.0}
+PlayerXPHarvestMultiplier=${XP_HARVEST:-1.0}
+PlayerXPCraftMultiplier=${XP_CRAFT:-1.0}
+PlayerXPTimeMultiplier=${XP_TIME:-1.0}
+
+# --- Harvesting & Crafting ---
+HarvestAmountMultiplier=${HARVEST_AMOUNT:-1.0}
+ResourceRespawnSpeedMultiplier=${RESOURCE_RESPAWN:-1.0}
+ItemSpoilRateScale=${ITEM_SPOIL_RATE:-1.0}
+CraftingCostMultiplier=${CRAFTING_COST:-1.0}
+FuelBurnTimeMultiplier=${FUEL_BURN_TIME:-1.0}
+ItemConvertionMultiplier=${ITEM_CONVERSION:-1.0}
+ItemRepairMinimumDurability=${ITEM_REPAIR_MIN_DURABILITY:-0.1}
+ItemRepairDurabilityLossPenaltyChance=${ITEM_REPAIR_PENALTY_CHANCE:-1.0}
+ItemRepairDurabilityLossByRepairkitTier=${ITEM_REPAIR_LOSS_BY_TIER:-(0.200000,0.200000,0.150000,0.100000,0.050000,0.025000)}
+
+# --- Survival (Hunger & Thirst) ---
+PlayerActiveThirstMultiplier=${ACTIVE_THIRST:-1.0}
+PlayerIdleThirstMultiplier=${IDLE_THIRST:-1.0}
+PlayerOfflineThirstMultiplier=${OFFLINE_THIRST:-1.0}
+PlayerActiveHungerMultiplier=${ACTIVE_HUNGER:-1.0}
+PlayerIdleHungerMultiplier=${IDLE_HUNGER:-1.0}
+PlayerOfflineHungerMultiplier=${OFFLINE_HUNGER:-1.0}
+
+# --- Death (Drop on Death) ---
+DropEquipmentOnDeath=${DROP_EQUIPMENT_ON_DEATH:-True}
+DropShortcutbarOnDeath=${DROP_SHORTCUTBAR_ON_DEATH:-True}
+DropBackpackOnDeath=${DROP_BACKPACK_ON_DEATH:-True}
+
+# --- Day/Night Cycle ---
+DayCycleSpeedScale=${DAY_CYCLE_SPEED:-1.0}
+DayTimeSpeedScale=${DAYTIME_SPEED:-0.25}
+NightTimeSpeedScale=${NIGHTTIME_SPEED:-0.25}
+DawnDuskSpeedScale=${DAWN_DUSK_SPEED:-0.25}
+UseClientCatchUpTime=${USE_CATCHUP_TIME:-True}
+
+# --- Player Stats ---
+PlayerHealthMultiplier=${PLAYER_HEALTH:-1.0}
+PlayerStaminaMultiplier=${PLAYER_STAMINA:-1.0}
+
+# --- Stamina & Movement ---
+PlayerStaminaCostMultiplier=${STAMINA_COST:-1.0}
+PlayerStaminaCostSprintMultiplier=${STAMINA_SPRINT_COST:-1.0}
+PlayerMovementSpeedScale=${PLAYER_MOVE_SPEED:-1.0}
+PlayerSprintSpeedScale=${PLAYER_SPRINT_SPEED:-1.0}
+PlayerHealthRegenSpeedScale=${HEALTH_REGEN_SPEED:-1.0}
+PlayerStaminaRegenSpeedScale=${STAMINA_REGEN_SPEED:-1.0}
+PlayerEncumbranceMultiplier=${PLAYER_ENCUMBRANCE:-1.0}
+PlayerEncumbrancePenaltyMultiplier=${PLAYER_ENCUMBRANCE_PENALTY:-1.0}
+StaminaRegenerationTime=${STAMINA_REGEN_TIME:-3.75}
+StaminaExhaustionTime=${STAMINA_EXHAUSTION_TIME:-3.75}
+StaminaStaticRegenRateMultiplier=${STAMINA_STATIC_REGEN:-1.0}
+StaminaMovingRegenRateMultiplier=${STAMINA_MOVING_REGEN:-1.0}
+StaminaOnConsumeRegenPause=${STAMINA_CONSUME_PAUSE:-1.3}
+StaminaOnExhaustionRegenPause=${STAMINA_EXHAUSTION_PAUSE:-2.75}
+
+# --- Thralls & Followers ---
+ThrallConversionMultiplier=${THRALL_CONVERSION:-1.0}
+ThrallScoutingTimeMinutes=${THRALL_SCOUTING_TIME:-10.0}
+ThrallExclusionRadius=${THRALL_EXCLUSION_RADIUS:-100.0}
+ThrallMinDistanceAwayFromHome=${THRALL_MIN_DISTANCE:-5000.0}
+ThrallTeleportingCooldown=${THRALL_TELEPORT_COOLDOWN:-10.0}
+UseMinionPopulationLimit=${USE_MINION_POP_LIMIT:-False}
+MinionPopulationBaseValue=${MINION_POP_BASE:-50}
+MinionPopulationPerPlayer=${MINION_POP_PER_PLAYER:-5}
+MinionOverpopulationCleanup=${MINION_OVERPOP_CLEANUP:-60}
+MinionOverpopulationAllowed=${MINION_OVERPOP_ALLOWED:-10}
+EnableFollowerDbno=${ENABLE_FOLLOWER_DBNO:-True}
+EnableFollowerRescueOnLandClaimOnly=${ENABLE_FOLLOWER_RESCUE:-True}
+EnableFollowerRescueInBuildExclusionZone=${FOLLOWER_RESCUE_EXCLUSION:-False}
+FollowerRescueCooldown=${FOLLOWER_RESCUE_COOLDOWN:-3600}
+DamageCooldownBeforeRescue=${DAMAGE_COOLDOWN_RESCUE:-600}
+ThrallCorruptionRemovalMultiplier=${THRALL_CORRUPTION_REMOVAL:-1.0}
+PlayerCorruptionGainMultiplier=${PLAYER_CORRUPTION_GAIN:-1.0}
+PlayerCorruptionGainFromSorceryMultiplier=${PLAYER_CORRUPTION_SORCERY:-1.0}
+AnimalPenCraftingTimeMultiplier=${ANIMAL_PEN_CRAFT_TIME:-1.0}
+FeedBoxRangeMultiplier=${FEED_BOX_RANGE:-1.0}
+
+# --- Building & Decay ---
+LandClaimRadiusMultiplier=${LAND_CLAIM_RADIUS:-1.0}
+AllowBuildingAnywhere=${BUILD_ANYWHERE:-False}
+BuildingPickupEnabled=${BUILDING_PICKUP:-True}
+StabilityLossMultiplier=${STABILITY_LOSS:-1.0}
+DisableBuildingAbandonment=${DISABLE_BUILDING_DECAY:-True}
+MaxBuildingDecayTime=${MAX_BUILDING_DECAY_TIME:-1296000.0}
+MaxDecayTimeToAutoDemolish=${MAX_DECAY_AUTO_DEMOLISH:-604800.0}
+DisableThrallDecay=${DISABLE_THRALL_DECAY:-True}
+ThrallDecayTime=${THRALL_DECAY_TIME:-1296000.0}
+BuildingDecayTimePerScore=${BUILDING_DECAY_PER_SCORE:-5400.0}
+BuildingDecayTimeMultiplier=${BUILDING_DECAY_MULTIPLIER:-1.0}
+DecayCleanupTimeMultiplier=${DECAY_CLEANUP_MULTIPLIER:-2.0}
+DecayBonusTimeRate=${DECAY_BONUS_TIME_RATE:-600.0}
+DecayShowBuildingScore=${DECAY_SHOW_SCORE:-False}
+PoiProtectionEnabled=${POI_PROTECTION:-False}
+BuildingValidationEnabled=${BUILDING_VALIDATION:-False}
+BuildingPreloadRadius=${BUILDING_PRELOAD_RADIUS:-80.0}
+DisableLandclaimNotifications=${DISABLE_LANDCLAIM_NOTIFICATIONS:-True}
+CampsIgnoreLandclaim=${CAMPS_IGNORE_LANDCLAIM:-True}
+
+# --- NPC & World ---
+NPCHealthMultiplier=${NPC_HEALTH:-1.0}
+NPCRespawnMultiplier=${NPC_RESPAWN:-1.0}
+NPCMaxSpawnCapMultiplier=${NPC_MAX_SPAWN_CAP:-1.0}
+MaxAggroRange=${MAX_AGGRO_RANGE:-9000.0}
+AmbientLifeEnabled=${AMBIENT_LIFE:-True}
+NPCMindReadingMode=${NPC_MIND_READING:-0}
+DogsOfTheDesertSpawnWithDogs=${DOGS_SPAWN_WITH_DOGS:-False}
+CrossDesertOnce=${CROSS_DESERT_ONCE:-True}
+
+# --- PVP Schedule (for pve-c mode) ---
+RestrictPVPTime=${RESTRICT_PVP_TIME:-False}
+RestrictPVPBuildingDamageTime=${RESTRICT_PVP_BUILDING_DAMAGE_TIME:-False}
+DisableBuildingDuringTimeRestrictedPVP=${DISABLE_BUILDING_DURING_PVP:-False}
+PVPTimeMondayStart=${PVP_TIME_MON_START:-0}
+PVPTimeMondayEnd=${PVP_TIME_MON_END:-0}
+PVPTimeTuesdayStart=${PVP_TIME_TUE_START:-0}
+PVPTimeTuesdayEnd=${PVP_TIME_TUE_END:-0}
+PVPTimeWednesdayStart=${PVP_TIME_WED_START:-0}
+PVPTimeWednesdayEnd=${PVP_TIME_WED_END:-0}
+PVPTimeThursdayStart=${PVP_TIME_THU_START:-0}
+PVPTimeThursdayEnd=${PVP_TIME_THU_END:-0}
+PVPTimeFridayStart=${PVP_TIME_FRI_START:-0}
+PVPTimeFridayEnd=${PVP_TIME_FRI_END:-0}
+PVPTimeSaturdayStart=${PVP_TIME_SAT_START:-0}
+PVPTimeSaturdayEnd=${PVP_TIME_SAT_END:-0}
+PVPTimeSundayStart=${PVP_TIME_SUN_START:-0}
+PVPTimeSundayEnd=${PVP_TIME_SUN_END:-0}
+PVPBuildingDamageTimeMondayStart=${PVP_BUILD_MON_START:-0}
+PVPBuildingDamageTimeMondayEnd=${PVP_BUILD_MON_END:-0}
+PVPBuildingDamageTimeTuesdayStart=${PVP_BUILD_TUE_START:-0}
+PVPBuildingDamageTimeTuesdayEnd=${PVP_BUILD_TUE_END:-0}
+PVPBuildingDamageTimeWednesdayStart=${PVP_BUILD_WED_START:-0}
+PVPBuildingDamageTimeWednesdayEnd=${PVP_BUILD_WED_END:-0}
+PVPBuildingDamageTimeThursdayStart=${PVP_BUILD_THU_START:-0}
+PVPBuildingDamageTimeThursdayEnd=${PVP_BUILD_THU_END:-0}
+PVPBuildingDamageTimeFridayStart=${PVP_BUILD_FRI_START:-0}
+PVPBuildingDamageTimeFridayEnd=${PVP_BUILD_FRI_END:-0}
+PVPBuildingDamageTimeSaturdayStart=${PVP_BUILD_SAT_START:-0}
+PVPBuildingDamageTimeSaturdayEnd=${PVP_BUILD_SAT_END:-0}
+PVPBuildingDamageTimeSundayStart=${PVP_BUILD_SUN_START:-0}
+PVPBuildingDamageTimeSundayEnd=${PVP_BUILD_SUN_END:-0}
+
+# --- Avatars/Gods ---
+AvatarsDisabled=${AVATARS_DISABLED:-False}
+AvatarLifetime=${AVATAR_LIFETIME:-600.0}
+AvatarSummonTime=${AVATAR_SUMMON_TIME:-60.0}
+AvatarDomeDurationMultiplier=${AVATAR_DOME_DURATION:-1.0}
+AvatarDomeDamageMultiplier=${AVATAR_DOME_DAMAGE:-1.0}
+RestrictAvatarSummoningTime=${RESTRICT_AVATAR_TIME:-False}
+AvatarSummoningTimeWeekdayStart=${AVATAR_WEEKDAY_START:-0}
+AvatarSummoningTimeWeekdayEnd=${AVATAR_WEEKDAY_END:-0}
+AvatarSummoningTimeWeekendStart=${AVATAR_WEEKEND_START:-0}
+AvatarSummoningTimeWeekendEnd=${AVATAR_WEEKEND_END:-0}
+
+# --- Durability ---
+DurabilityMultiplier=${DURABILITY:-1.0}
+ShieldDurabilityMultiplier=${SHIELD_DURABILITY:-1.0}
+
+# --- Chat ---
+ChatMaxMessageLength=${CHAT_MAX_LENGTH:-512}
+ChatLocalRadius=${CHAT_LOCAL_RADIUS:-9000.0}
+ChatHasGlobal=${CHAT_HAS_GLOBAL:-True}
+
+# --- Clans ---
+clanMaxSize=${CLAN_MAX_SIZE:-0}
+
+# --- Crafting Extra ---
+ThrallCraftingTimeMultiplier=${THRALL_CRAFTING_TIME:-1.0}
+CraftingSpeedMultiplier=${CRAFTING_SPEED:-1.0}
+
+# --- Thrall Knockout ---
+ThrallWakeupTime=${THRALL_WAKEUP_TIME:-600.0}
+
+# --- Pet & Hunger System ---
+EnableHungerSystemThralls=${HUNGER_SYSTEM_THRALLS:-True}
+EnableHungerSystemPets=${HUNGER_SYSTEM_PETS:-True}
+StarvationTimeInMinutes=${STARVATION_TIME:-10080.0}
+StarvationDamagePenaltyCap=${STARVATION_DAMAGE_CAP:-0.2}
+ExclusiveDiet=${EXCLUSIVE_DIET:-False}
+
+# --- Purge ---
+PurgeEnabled=${PURGE_ENABLED:-True}
+PurgeLevel=${PURGE_LEVEL:-6}
+RestrictPurgeTime=${RESTRICT_PURGE_TIME:-True}
+PurgePreparationTime=${PURGE_PREP_TIME:-10.0}
+PurgeDuration=${PURGE_DURATION:-30.0}
+MinimumNumberOfPlayersForPurge=${PURGE_MIN_PLAYERS:-1}
+PurgeAllowBuilding=${PURGE_ALLOW_BUILDING:-True}
+PurgeMeterTriggerValue=${PURGE_TRIGGER_VALUE:-42000}
+PurgeNPCBuildingDamageMultiplier=${PURGE_NPC_BUILDING_DAMAGE:-1.0}
+
+# --- PVP Blitz ---
+PVPBlitzServer=${PVP_BLITZ:-False}
+
+# --- Events & Features ---
+EventSystemEnabled=${EVENT_SYSTEM:-True}
+serverVoiceChat=${VOICE_CHAT:-1}
+ShowOnlinePlayers=${SHOW_ONLINE_PLAYERS:-0}
+MaxDeathMapMarkers=${MAX_DEATH_MARKERS:-3}
+EnableClanMarkers=${ENABLE_CLAN_MARKERS:-True}
+HealthbarVisibilityDistance=${HEALTHBAR_DISTANCE:-15000.0}
+DisableChatFormatting=${DISABLE_CHAT_FORMATTING:-False}
+bCanBeDamaged=True
+
+# --- AFK & Network ---
+KickAFKPercentage=${KICK_AFK_PERCENTAGE:-80}
+KickAFKTime=${KICK_AFK_TIME:-2700}
+MaxAllowedPing=${MAX_ALLOWED_PING:-0}
+EnableLoginQueue=${ENABLE_LOGIN_QUEUE:-True}
+DisconnectionGraceTime=${DISCONNECTION_GRACE_TIME:-180}
+AllowFamilySharedAccount=${ALLOW_FAMILY_SHARE:-True}
+
+# --- Event Log Privacy ---
+EventLogPvPCauserPrivacy=${EVENT_LOG_PVP_PRIVACY:-2}
+EventLogPvECauserPrivacy=${EVENT_LOG_PVE_PRIVACY:-1}
+
+# --- Validation & Anti-Exploit ---
+ValidatePlayerStats=${VALIDATE_PLAYER_STATS:-False}
+AllowedTimeUndermesh=${ALLOWED_TIME_UNDERMESH:--1.0}
+AllowedDistanceUndermeshSquared=${ALLOWED_DISTANCE_UNDERMESH:-490000.0}
+CapCharacterLayoutScalarParams=${CAP_CHARACTER_LAYOUT:-False}
+PathFollowingSendsAngularVelocity=${PATH_FOLLOWING_ANGULAR:-False}
+
+# --- Region Restrictions ---
+RegionAllowAfrica=${REGION_ALLOW_AFRICA:-True}
+RegionAllowAsia=${REGION_ALLOW_ASIA:-True}
+RegionAllowCentralEurope=${REGION_ALLOW_CENTRAL_EUROPE:-True}
+RegionAllowEasternEurope=${REGION_ALLOW_EASTERN_EUROPE:-True}
+RegionAllowWesternEurope=${REGION_ALLOW_WESTERN_EUROPE:-True}
+RegionAllowNorthAmerica=${REGION_ALLOW_NORTH_AMERICA:-True}
+RegionAllowOceania=${REGION_ALLOW_OCEANIA:-True}
+RegionAllowSouthAmerica=${REGION_ALLOW_SOUTH_AMERICA:-True}
+RegionBlockList=${REGION_BLOCK_LIST:-}
+
+# --- Mods ---
+ServerModList=${SERVER_MOD_LIST:-}
+BlueprintConfigVersion=25
+
+EOF
+
+# --- Game.ini ---
+# Conan Exiles Enhanced reads the RCON plugin settings from Game.ini.
+# Keeping these in ServerSettings.ini can leave RCON disabled even when the file shows RconEnabled=True.
+cat > "$CONFIG_DIR/Game.ini" << EOF
+[/Script/Engine.GameSession]
+MaxPlayers=${MAX_PLAYERS:-40}
+
+[RconPlugin]
+RconEnabled=${RCON_ENABLED:-False}
+RconPassword=${RCON_PASSWORD:-}
+RconPort=${RCON_PORT:-25575}
+RconMaxKarma=${RCON_MAX_KARMA:-60}
+EOF
+
+log "Configuration applied:"
+log "  Server Name: ${SERVER_NAME:-Conan Exiles Enhanced Server}"
+log "  Server Type: ${SERVER_TYPE:-pve}"
+log "  Max Players: ${MAX_PLAYERS:-40}"
+log "  Region: ${SERVER_REGION:-0}"
+log "  RCON: ${RCON_ENABLED:-False}"
+[ -n "${SERVER_PASSWORD:-}" ] && log "  Password: Protected" || log "  Password: None (public)"
+
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+    render_server_config
+fi
