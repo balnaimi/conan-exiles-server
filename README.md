@@ -4,7 +4,28 @@ A community Docker Compose setup for hosting a **Conan Exiles Enhanced dedicated
 
 > ✅ Compatible with the renamed **Conan Exiles Enhanced** dedicated server. Steam app IDs, image names, repository URLs, and internal `ConanSandbox` paths may still use the legacy Conan Exiles naming because those are upstream/internal identifiers.
 
-Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, **SteamCMD**, and headless Vulkan/EGL/OpenGL runtime libraries for better Unreal Engine 5 compatibility on VPS and home servers.
+> [!IMPORTANT]
+> ## 🐧 Native Linux Experimental Available
+> This project now provides two clearly separated runtimes. **Wine Stable** remains the default `latest` image and existing `docker-compose.yml` workflow. The new **Native Linux Experimental** image runs the upstream Linux server without Wine and is available as `ghcr.io/balnaimi/conan-exiles-server:native` with `docker-compose.native.yml`. Native uses separate volumes; do not point Wine and Native at the same live data volume.
+
+| Runtime | Status | Image | Compose file |
+|---|---|---|---|
+| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `docker-compose.yml` |
+| **Native Linux** | **Experimental** | `ghcr.io/balnaimi/conan-exiles-server:native` | `docker-compose.native.yml` |
+
+### Native Linux Quick Start
+
+```bash
+mkdir conan-native && cd conan-native
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose -f docker-compose.native.yml up -d
+```
+
+Native runtime testing on Steam build `24383534` reached A2S/RCON readiness at about **8.70 GiB** idle RAM on a 16 GiB test host. Enhanced-tagged **StayBloody** and **Better Thralls** mounted in configured order. These are dated test observations, not fixed resource promises. The general current UE5 x64 baseline requires guest-visible **SSE4.2**; AVX/AVX2 are reported diagnostically because an AVX2-only Conan requirement has not been officially isolated.
+
+Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, **SteamCMD**, and headless Vulkan/EGL/OpenGL runtime libraries for better Unreal Engine 5 compatibility on VPS and home servers. The experimental Native variant uses a separate minimal Debian image without Wine.
 
 ## About
 
@@ -42,7 +63,7 @@ Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community p
 
 - 🚀 Auto-downloads dedicated server files on first run.
 - 🔄 Auto-updates game files on every container start.
-- ⚙️ **239 settings** through a simple `.env` file.
+- ⚙️ **250 settings** (239 gameplay/server settings plus 11 Native operation controls) through a simple `.env` file.
 - 🌐 **Web-based Config Generator** with sliders, toggles, and download/copy actions.
 - 🧩 Optional Steam Workshop mod downloads via `SERVER_MOD_LIST`.
 - 🎮 PvE / PvP / PvE-C modes with per-day PvP and building damage schedules.
@@ -116,7 +137,7 @@ Done! Connect via **Direct Connect** in-game using your server IP and port `7777
 
 ## ⚙️ Configuration
 
-All settings are in the `.env` file. The `.env.example` includes **239 settings** with descriptions.
+All settings are in the `.env` file. The `.env.example` includes **250 settings** with descriptions: 239 gameplay/server settings shared by both runtimes and 11 Native operation controls.
 
 > ⚠️ **Startup-time configuration:** The Docker `.env` values are used by `entrypoint.sh` to generate Conan `.ini` files when the container starts. Changing `.env` while the server is already running does not update live in-game settings; restart/recreate the container after edits. If you change values in the in-game Admin Panel, remove the matching `.env` keys if you do not want them rewritten on the next startup.
 
@@ -216,10 +237,14 @@ SERVER_MOD_LIST=3719513784,3720904511,3361295718
 
 What the container does automatically on startup:
 
-- Download each mod from the Conan Exiles Steam Workshop.
-- Copy the downloaded `.pak` file into `ConanSandbox/Mods`.
-- Generate `ConanSandbox/Mods/modlist.txt` in the same order as your list.
-- Stop startup with a clear error if a mod ID is invalid, download output is missing, or no `.pak` file is found.
+- Validate the complete ordered list before changing the active configuration.
+- Download each mod from the Conan Exiles Steam Workshop into staging/cache.
+- Require one usable top-level `.pak` package for each configured item.
+- Atomically replace `ConanSandbox/Mods/modlist.txt` only after every item succeeds.
+- Preserve the last-known-good active list and world if any ID/download/package fails.
+- Write compatible `*PakName.pak` entries in the same order as `SERVER_MOD_LIST`.
+
+Native runtime tests mounted Enhanced-tagged StayBloody (`3722881816`) and Better Thralls (`3720904511`) in order. Enhanced extracted each package's embedded `-LinuxServer.pak`, `.utoc`, and `.ucas` files automatically. Removing an ID deactivates that mod; old managed files are pruned only when `NATIVE_PRUNE_REMOVED_MODS=True`.
 
 Leave `SERVER_MOD_LIST` empty to run an unmodded server.
 
@@ -355,7 +380,44 @@ docker compose up -d          # Fresh start (re-downloads the full server)
 
 > ⚠️ **Warning:** `-v` permanently deletes all game data, player saves, and buildings. There is no undo. Back up first!
 
-### 💾 Backup
+### 💾 Native Linux Backup and Restore
+
+The Native image creates SQLite-consistent snapshots without mixing a snapshot database with unrelated live WAL/SHM sidecars:
+
+```bash
+# Light: world, LinuxServer INIs, ordered mod list, Workshop IDs
+docker compose -f docker-compose.native.yml exec conan-native \
+  /scripts/native/backup.sh --reason manual
+
+# Full: set NATIVE_BACKUP_MODE=full to also store active managed PAKs
+```
+
+Verify before restoring:
+
+```bash
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --verify-only
+```
+
+Stop the Native service before applying a restore. Restore validates member paths, SHA-256 checksums, and SQLite integrity, creates a pre-restore backup when replacing an existing world, and refuses to run while the tracked server PID is active. Light restores record required Workshop IDs so all dependencies can be re-downloaded and verified before opening the world.
+
+Optional scheduled backups are disabled by default. Configure `NATIVE_BACKUP_ENABLED`, `NATIVE_BACKUP_MODE`, interval, count, and day retention in `.env` or the Config Generator.
+
+### 🔄 Wine-to-Native Migration
+
+Native uses separate volumes and `Config/LinuxServer/`. Never attach the same live volume to Wine and Native. The migration helper defaults to dry-run, verifies `game_0.db`, creates a source backup, copies into a new destination, and removes stale UE4 Build ID overrides from the migrated Engine.ini:
+
+```bash
+./scripts/migrate-wine-to-native.sh \
+  --source /path/to/wine-data \
+  --destination /path/to/new-native-data
+# Review the plan, then repeat with --apply
+```
+
+The source is never deleted. Keep Wine stopped during migration and do not clean it up until the Native copy passes database, A2S, RCON, and mod checks.
+
+### 💾 Wine Stable Backup
 
 Before major changes, back up your server saves:
 
@@ -479,12 +541,17 @@ docker compose -f docker-compose.build.yml up -d
 
 | File | Description |
 |------|-------------|
-| `Dockerfile` | Image definition (Debian Bookworm + WineHQ Staging + VC++ 2022 runtime + SteamCMD) |
-| `entrypoint.sh` | Startup script (download, configure, run) |
-| `docker-compose.yml` | Production compose (pre-built image) |
-| `docker-compose.build.yml` | Development compose (builds locally) |
+| `Dockerfile` | Stable image definition (Debian Bookworm + WineHQ Staging + VC++ 2022 runtime + SteamCMD) |
+| `Dockerfile.native` | Experimental non-root Native Linux image without Wine |
+| `entrypoint.sh` | Wine Stable startup script |
+| `scripts/native/` | Native install, CPU preflight, A2S/RCON lifecycle, backup, and restore tools |
+| `scripts/runtime/` | Shared INI, secret, and atomic Workshop mod helpers |
+| `docker-compose.yml` | Wine Stable production Compose |
+| `docker-compose.native.yml` | Native Linux Experimental production Compose |
+| `docker-compose.build.yml` | Wine Stable local build Compose |
+| `docker-compose.native.build.yml` | Native Linux local build Compose |
 | `.env.minimal` | Small quick-start template with only basic settings |
-| `.env.example` | Full configuration template (239 settings) |
+| `.env.example` | Full configuration template (250 settings: shared gameplay plus Native operations) |
 | `docs/index.html` | Web-based Config Generator |
 
 ---
@@ -493,12 +560,12 @@ docker compose -f docker-compose.build.yml up -d
 
 | Component | Version |
 |-----------|---------|
-| Base | Debian Bookworm (slim) |
-| Wine | WineHQ Staging |
-| Windows Runtime | Microsoft Visual C++ 2022 Redistributable |
-| Headless Runtime | Xvfb, Vulkan, EGL, OpenGL, Mesa |
-| SteamCMD | Latest |
-| Container | Docker / Docker Compose |
+| Base | Debian Bookworm (slim), pinned separately for each image |
+| Stable runtime | WineHQ Staging + Microsoft VC++ 2022 + Xvfb/Vulkan/EGL/Mesa |
+| Experimental runtime | Upstream Native Linux Shipping binary, non-root, no Wine |
+| Management | Python standard-library A2S/RCON, SQLite-safe backups, atomic mod activation |
+| SteamCMD | Latest bootstrap in a persistent writable Steam volume |
+| Container | Docker / Docker Compose; distinct Wine and Native GHCR tags |
 
 ---
 
@@ -546,6 +613,15 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ---
 
 ## 📝 Release Notes
+
+### v2.7.0 — Native Linux Experimental
+
+- Keeps Wine Stable as the backward-compatible `latest` image and adds a prominent Native Linux Experimental option at `:native` with separate Compose files and volumes.
+- Adds a non-root native image with SSE4.2 CPU preflight, AVX/AVX2 diagnostics, LinuxServer INIs, A2S/RCON health, and real Shipping-process lifecycle tracking.
+- Adds file-backed secret support without placing RCON passwords in process arguments.
+- Replaces destructive mod-list generation with ordered atomic activation that preserves the last-known-good list on any Workshop failure.
+- Adds verified light/full SQLite backups, SHA-256 manifests, safe restore validation, retention, and dry-run Wine-to-Native migration.
+- Adds independent Wine/Native CI and GHCR tags, SBOM/provenance, expanded generator controls, and real CT acceptance coverage.
 
 ### v2.6.1 — Duration and Clipboard Reliability Hotfix
 

@@ -40,6 +40,35 @@ class NativeComposeTests(unittest.TestCase):
         self.assertIn("Native Linux Experimental", text)
 
 
+class CiWorkflowTests(unittest.TestCase):
+    VALIDATE = ROOT / ".github" / "workflows" / "validate.yml"
+    PUBLISH = ROOT / ".github" / "workflows" / "docker-publish.yml"
+
+    def test_validate_runs_native_runtime_compose_and_image_checks(self) -> None:
+        text = self.VALIDATE.read_text(encoding="utf-8")
+        for marker in (
+            "scripts/test-runtime-config.py",
+            "scripts/test-native-runtime.py",
+            "scripts/test-native-image.py",
+            "scripts/test-compose-config.py",
+            "docker-compose.native.yml",
+            "Dockerfile.native",
+            "shellcheck",
+        ):
+            self.assertIn(marker, text)
+
+    def test_publish_matrix_keeps_latest_wine_and_native_separate(self) -> None:
+        text = self.PUBLISH.read_text(encoding="utf-8")
+        self.assertIn("variant: wine", text)
+        self.assertIn("channel: latest", text)
+        self.assertIn("dockerfile: Dockerfile", text)
+        self.assertIn("variant: native", text)
+        self.assertIn("channel: native", text)
+        self.assertIn("dockerfile: Dockerfile.native", text)
+        self.assertIn("semver_suffix: -native", text)
+        self.assertIn("file: ${{ matrix.dockerfile }}", text)
+
+
 class MigrationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()

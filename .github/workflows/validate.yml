@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -15,16 +18,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate shell scripts
-        run: bash -n entrypoint.sh
-
-      - name: Validate configuration consistency
-        run: python3 scripts/validate-config-consistency.py
-
       - name: Set up Node.js for Pages tests
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Validate shell scripts
+        run: |
+          bash -n entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh
+          shellcheck --severity=error -x entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh
+
+      - name: Test shared and Native runtime behavior
+        run: |
+          python3 scripts/test-runtime-config.py
+          python3 scripts/test-native-runtime.py
+          python3 scripts/test-native-image.py
+          python3 scripts/test-compose-config.py
+
+      - name: Validate configuration consistency
+        run: python3 scripts/validate-config-consistency.py
 
       - name: Test GitHub Pages UI
         run: python3 scripts/test-pages-ui.py
@@ -32,13 +49,39 @@ jobs:
       - name: Test GitHub Pages in Chromium
         run: node scripts/test-pages-browser.mjs
 
+      - name: Render Wine and Native Compose
+        run: |
+          cp .env.minimal .env
+          trap 'rm -f .env' EXIT
+          docker compose -f docker-compose.yml config -q
+          docker compose -f docker-compose.native.yml config -q
+          docker compose -f docker-compose.native.build.yml config -q
+
+      - name: Build Native Linux image
+        run: docker build -f Dockerfile.native -t conan-native:ci .
+
+      - name: Verify Native image contract
+        run: |
+          test "$(docker image inspect conan-native:ci --format '{{.Config.User}}')" = "conan:conan"
+          docker run --rm --entrypoint sh conan-native:ci -c 'id -u | grep -qx 1000; command -v sqlite3; command -v python3; ! command -v wine'
+
       - name: Check required files
         run: |
           test -f Dockerfile
+          test -f Dockerfile.native
           test -f docker-compose.yml
+          test -f docker-compose.native.yml
+          test -f docker-compose.native.build.yml
           test -f .env.example
           test -f docs/index.html
           test -f scripts/validate-config-consistency.py
+          test -f scripts/test-runtime-config.py
+          test -f scripts/test-native-runtime.py
+          test -f scripts/test-native-image.py
+          test -f scripts/test-compose-config.py
           test -f scripts/test-pages-ui.py
           test -f scripts/test-pages-browser.mjs
           test -f docs/assets/favicon.svg
+
+      - name: Check whitespace
+        run: git diff --check

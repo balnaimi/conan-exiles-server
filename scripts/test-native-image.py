@@ -39,6 +39,7 @@ class NativeImageContractTests(unittest.TestCase):
     def test_image_documents_native_variant_for_registry_users(self) -> None:
         text = self.text()
         self.assertIn("org.opencontainers.image.title", text)
+        self.assertIn('org.opencontainers.image.licenses="GPL-3.0-only"', text)
         self.assertIn("Native Linux", text)
         self.assertIn("experimental", text.lower())
 

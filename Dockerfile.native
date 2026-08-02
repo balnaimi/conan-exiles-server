@@ -3,7 +3,7 @@ FROM debian:bookworm-slim@sha256:63a496b5d3b99214b39f5ed70eb71a61e590a77979c79cb
 LABEL org.opencontainers.image.title="Conan Exiles Enhanced Dedicated Server — Native Linux"
 LABEL org.opencontainers.image.description="Experimental Native Linux variant; Wine remains the stable default image"
 LABEL org.opencontainers.image.source="https://github.com/balnaimi/conan-exiles-server"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.licenses="GPL-3.0-only"
 LABEL com.balnaimi.conan.runtime="native-linux-experimental"
 
 ENV DEBIAN_FRONTEND=noninteractive \

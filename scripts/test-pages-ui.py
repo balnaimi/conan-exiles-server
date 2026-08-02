@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HTML_PATH = ROOT / "docs" / "index.html"
 HTML = HTML_PATH.read_text(encoding="utf-8")
+README = (ROOT / "README.md").read_text(encoding="utf-8")
 
 
 class PageParser(HTMLParser):
@@ -302,6 +303,28 @@ def test_dotenv_values_are_safely_quoted() -> None:
     )
 
 
+def test_native_linux_is_prominent_and_unambiguous() -> None:
+    readme_top = "\n".join(README.splitlines()[:80])
+    for marker in (
+        "Native Linux Experimental Available",
+        "Wine Stable",
+        "docker-compose.native.yml",
+        "ghcr.io/balnaimi/conan-exiles-server:native",
+    ):
+        assert marker in readme_top, f"README top does not prominently expose Native runtime: {marker}"
+    assert_contains(
+        "Native Linux Experimental Available",
+        "Wine Stable",
+        "docker-compose.native.yml",
+        "ghcr.io/balnaimi/conan-exiles-server:native",
+        "Native Linux Quick Start",
+        "SSE4.2",
+        "8.70 GiB",
+        "StayBloody",
+        "Better Thralls",
+    )
+
+
 def test_polish_features_exist() -> None:
     assert_contains(
         "Copy command",
@@ -310,6 +333,7 @@ def test_polish_features_exist() -> None:
         "@media (max-width: 480px)",
         "Finding Workshop IDs",
         "View all releases on GitHub",
+        "v2.7.0 — Native Linux Experimental",
         "v2.6.1 — Duration and Clipboard Reliability Hotfix",
     )
     assert "color:#555" not in HTML.replace(" ", "")

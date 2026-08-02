@@ -259,6 +259,15 @@ class AtomicModInstallTests(unittest.TestCase):
         self.assertTrue((self.mods_dir / "ManualUnmanaged.pak").is_file())
         self.assertTrue((self.mods_dir / "StayBloody.pak").is_file())
 
+    def test_prune_true_keeps_a_managed_package_that_remains_active(self) -> None:
+        result = self.run_installer("3722881816")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        first_hash = (self.mods_dir / "StayBloody.pak").read_bytes()
+        result = self.run_installer("3722881816", NATIVE_PRUNE_REMOVED_MODS="true")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.mods_dir / "StayBloody.pak").read_bytes(), first_hash)
+        self.assertIn("Activated 1 Workshop mod", result.stdout)
+
     def test_prune_disabled_leaves_stale_managed_file_inactive(self) -> None:
         self.seed_previous()
         result = self.run_installer("3722881816")
@@ -390,6 +399,7 @@ class ReadinessAndLifecycleTests(unittest.TestCase):
         entrypoint = (ROOT / "scripts" / "native" / "entrypoint.sh").read_text(encoding="utf-8")
         self.assertIn("rcon.py", supervisor)
         self.assertIn("server_pid", supervisor)
+        self.assertIn(".runtime/server.pid", supervisor)
         self.assertNotIn("--password", supervisor)
         self.assertIn("a2s-info.py", healthcheck)
         self.assertIn("supervisor.sh", entrypoint)
@@ -399,6 +409,7 @@ class ReadinessAndLifecycleTests(unittest.TestCase):
 class BackupRestoreTests(unittest.TestCase):
     BACKUP = ROOT / "scripts" / "native" / "backup.py"
     RESTORE = ROOT / "scripts" / "native" / "restore.py"
+    BACKUP_LOOP = ROOT / "scripts" / "native" / "backup-loop.sh"
 
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -523,6 +534,52 @@ class BackupRestoreTests(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unsafe", result.stderr.lower())
+
+    def test_backup_loop_run_once_invokes_configured_tool(self) -> None:
+        marker = Path(self.temporary.name) / "backup-loop-marker"
+        fake = Path(self.temporary.name) / "fake-backup"
+        fake.write_text(f"#!/usr/bin/env bash\nprintf invoked > '{marker}'\n", encoding="utf-8")
+        fake.chmod(0o755)
+        env = os.environ.copy()
+        env.update(
+            {
+                "NATIVE_BACKUP_ENABLED": "true",
+                "NATIVE_BACKUP_RUN_ONCE": "1",
+                "NATIVE_BACKUP_INTERVAL_MINUTES": "60",
+                "NATIVE_BACKUP_TOOL": str(fake),
+            }
+        )
+        result = subprocess.run(
+            ["bash", str(self.BACKUP_LOOP)],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(marker.read_text(encoding="utf-8"), "invoked")
+
+    def test_backup_loop_disabled_exits_without_invoking_tool(self) -> None:
+        marker = Path(self.temporary.name) / "disabled-marker"
+        env = os.environ.copy()
+        env.update(
+            {
+                "NATIVE_BACKUP_ENABLED": "false",
+                "NATIVE_BACKUP_RUN_ONCE": "1",
+                "NATIVE_BACKUP_TOOL": f"touch {marker}",
+            }
+        )
+        result = subprocess.run(
+            ["bash", str(self.BACKUP_LOOP)],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(marker.exists())
 
 
 if __name__ == "__main__":

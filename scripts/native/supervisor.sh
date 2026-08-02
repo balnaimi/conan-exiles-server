@@ -6,7 +6,10 @@ RCON_ENABLED="${RCON_ENABLED:-False}"
 RCON_PORT="${RCON_PORT:-25575}"
 NATIVE_STOP_GRACE_SECONDS="${NATIVE_STOP_GRACE_SECONDS:-30}"
 NATIVE_TERM_GRACE_SECONDS="${NATIVE_TERM_GRACE_SECONDS:-10}"
+runtime_dir="${GAME_DIR}/.runtime"
+pid_file="${GAME_DIR}/.runtime/server.pid"
 server_pid=""
+backup_pid=""
 stop_requested=false
 
 log() { printf '[NATIVE] %s\n' "$*"; }
@@ -42,6 +45,9 @@ wait_for_exit() {
 graceful_stop() {
     [ "$stop_requested" = true ] && return 0
     stop_requested=true
+    if [ -n "$backup_pid" ] && kill -0 "$backup_pid" 2>/dev/null; then
+        kill -TERM "$backup_pid" 2>/dev/null || true
+    fi
     log "Stop requested for native Shipping process pid=$server_pid"
 
     if is_true "$RCON_ENABLED" && [ -n "${RCON_PASSWORD:-}" ]; then
@@ -78,12 +84,27 @@ fi
 
 setsid "$GAME_DIR/ConanSandboxServer.sh" "${args[@]}" &
 server_pid=$!
+mkdir -p "$runtime_dir"
+printf '%s\n' "$server_pid" > "$pid_file"
+chmod 0600 "$pid_file"
 log "Started native Shipping process group pid=$server_pid"
+
+if is_true "${NATIVE_BACKUP_ENABLED:-false}"; then
+    /scripts/native/backup-loop.sh &
+    backup_pid=$!
+fi
 
 set +e
 wait "$server_pid"
 status=$?
 set -e
+if [ -n "$backup_pid" ] && kill -0 "$backup_pid" 2>/dev/null; then
+    kill -TERM "$backup_pid" 2>/dev/null || true
+    wait "$backup_pid" 2>/dev/null || true
+fi
+if [ -f "$pid_file" ] && [ "$(tr -cd '0-9' < "$pid_file")" = "$server_pid" ]; then
+    rm -f -- "$pid_file"
+fi
 if [ "$stop_requested" = true ]; then
     wait "$server_pid" 2>/dev/null || true
     exit 0

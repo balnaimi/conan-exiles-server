@@ -250,6 +250,22 @@ try {
     `Negative duration was accepted: ${JSON.stringify(negativeDuration)}`,
   );
 
+  const secretFileOverride = await evaluate(cdp, `(() => {
+    values.ADMIN_PASSWORD = 'must-not-be-emitted';
+    values.ADMIN_PASSWORD_FILE = '/run/secrets/conan_admin';
+    updateOutput();
+    const text = document.getElementById('output').textContent;
+    return {
+      hasDirectKey: text.includes('ADMIN_PASSWORD='),
+      hasDirectValue: text.includes('must-not-be-emitted'),
+      hasFileKey: text.includes("ADMIN_PASSWORD_FILE='/run/secrets/conan_admin'")
+    };
+  })()`);
+  assert(
+    !secretFileOverride.hasDirectKey && !secretFileOverride.hasDirectValue && secretFileOverride.hasFileKey,
+    `Secret-file override emitted an ambiguous direct secret: ${JSON.stringify(secretFileOverride)}`,
+  );
+
   const clipboardCleanup = await evaluate(cdp, `(async () => {
     const existing = new Set(document.querySelectorAll('textarea'));
     const navPrototype = Object.getPrototypeOf(navigator);
@@ -275,7 +291,7 @@ try {
     `Clipboard fallback leaked a textarea: ${JSON.stringify(clipboardCleanup)}`,
   );
 
-  console.log('Pages browser checks OK: deep link, single activation, Back, numeric/duration guards, clipboard cleanup');
+  console.log('Pages browser checks OK: deep link, single activation, Back, numeric/duration guards, secret-file override, clipboard cleanup');
 } finally {
   cdp?.close();
   if (chrome && chrome.exitCode === null) chrome.kill('SIGTERM');

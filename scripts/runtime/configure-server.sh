@@ -26,6 +26,16 @@ render_server_config() {
     esac
     CONFIG_DIR="${GAME_DIR}/ConanSandbox/Saved/Config/${CONFIG_PLATFORM}"
 
+    local variable value
+    for variable in SERVER_NAME SERVER_PASSWORD ADMIN_PASSWORD SERVER_MOTD RCON_PASSWORD REGION_BLOCK_LIST SERVER_MOD_LIST MULTIHOME MULTIHOMEHTTP; do
+        value="${!variable-}"
+        if [[ "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
+            error "$variable must be a single-line INI value"
+            return 2
+        fi
+    done
+    umask 077
+
 log "Applying server configuration..."
 mkdir -p "$CONFIG_DIR"
 
@@ -358,6 +368,7 @@ RconPassword=${RCON_PASSWORD:-}
 RconPort=${RCON_PORT:-25575}
 RconMaxKarma=${RCON_MAX_KARMA:-60}
 EOF
+chmod 0600 "$CONFIG_DIR/Engine.ini" "$CONFIG_DIR/ServerSettings.ini" "$CONFIG_DIR/Game.ini"
 
 log "Configuration applied:"
 log "  Server Name: ${SERVER_NAME:-Conan Exiles Enhanced Server}"

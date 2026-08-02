@@ -80,6 +80,31 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertIn("[RconPlugin]\nRconEnabled=True", game)
         self.assertIn("RconPassword=rcon secret", game)
         self.assertIn("RconPort=25675", game)
+        for path in (config / "Engine.ini", config / "ServerSettings.ini", config / "Game.ini"):
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_renderer_rejects_multiline_ini_values(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            env = os.environ.copy()
+            env.update(
+                {
+                    "GAME_DIR": temporary,
+                    "CONFIG_PLATFORM": "LinuxServer",
+                    "SERVER_NAME": "safe-name\ninjected=value",
+                    "CONFIG_RENDER_QUIET": "1",
+                }
+            )
+            completed = subprocess.run(
+                ["bash", str(RENDERER)],
+                cwd=ROOT,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertIn("single-line", completed.stderr)
 
     def test_linux_renderer_uses_linuxserver_path_with_same_contract(self) -> None:
         config = self.render("LinuxServer")

@@ -20,7 +20,7 @@ install_mods_atomic() {
     local prune="${NATIVE_PRUNE_REMOVED_MODS:-false}"
     local mods_dir="${game_dir}/ConanSandbox/Mods"
     local lock_file="${MOD_INSTALL_LOCK:-${steam_data_dir}/locks/mod-install.lock}"
-    local compact mod_id item_dir pak_name old_id old_name
+    local compact mod_id item_dir pak_name old_id old_name still_active
     local stage old_manifest stage_list stage_manifest
     local -a mod_ids=() pak_files=() workshop_roots=()
     local -A seen_names=()
@@ -139,7 +139,11 @@ install_mods_atomic() {
             case "$old_name" in
                 *.pak)
                     [ "$old_name" = "$(basename "$old_name")" ] || continue
-                    if ! while IFS=$'\t' read -r _ pak_name; do [ "$pak_name" = "$old_name" ] && exit 0; done < "${mods_dir}/.managed-mods.tsv"; then
+                    still_active=false
+                    while IFS=$'\t' read -r _ pak_name; do
+                        if [ "$pak_name" = "$old_name" ]; then still_active=true; break; fi
+                    done < "${mods_dir}/.managed-mods.tsv"
+                    if [ "$still_active" = false ]; then
                         rm -f -- "${mods_dir}/${old_name}"
                         log "Pruned removed managed package $old_name"
                     fi

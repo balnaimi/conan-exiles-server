@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Run and configure a Conan Exiles Enhanced dedicated server with Docker Compose, Wine, automatic updates, Steam Workshop mods, and a 239-setting web generator.">
-<meta property="og:title" content="Conan Exiles Enhanced Dedicated Server — Docker Edition">
-<meta property="og:description" content="Docker Compose server setup, practical Enhanced runtime guidance, mod support, and a 239-setting .env generator.">
+<meta name="description" content="Run Conan Exiles Enhanced with Docker Compose using Wine Stable or the new Native Linux Experimental image, automatic updates, Workshop mods, backups, and a 250-setting web generator.">
+<meta property="og:title" content="Conan Exiles Enhanced Dedicated Server — Wine Stable + Native Linux Experimental">
+<meta property="og:description" content="Choose Wine Stable or Native Linux Experimental, with secure Docker Compose, tested Enhanced mods, backups, and a web config generator.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://balnaimi.github.io/conan-exiles-server/">
 <meta property="og:image" content="https://balnaimi.github.io/conan-exiles-server/assets/hero-bg.jpg">
@@ -105,6 +105,35 @@ body {
   color: var(--text);
   font-weight: 500;
 }
+.native-hero-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(200, 168, 78, 0.14);
+  box-shadow: 0 0 24px rgba(200, 168, 78, 0.18);
+  font-weight: 700;
+  text-decoration: none;
+}
+.native-hero-banner:hover { background: rgba(200, 168, 78, 0.24); }
+.runtime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 2rem;
+}
+.runtime-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem;
+  background: var(--card);
+}
+.runtime-card strong { color: var(--accent); }
+.runtime-card.experimental { border-color: var(--accent); }
 
 /* ============================================
    TAB BAR
@@ -814,7 +843,8 @@ body {
   <div class="hero-content">
     <h1 class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</h1>
     <div class="hero-subtitle">Docker Edition</div>
-    <div class="hero-tagline">The most comprehensive Docker image — 239 configurable settings</div>
+    <div class="hero-tagline">Two Docker runtimes — Wine Stable and Native Linux Experimental</div>
+    <a class="native-hero-banner" href="#quick-start" onclick="activateTab('quick-start', document.getElementById('tab-button-quick-start'))">🐧 Native Linux Experimental Available — View Quick Start</a>
     <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
       Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" rel="noopener" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
       or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" rel="noopener" style="color:var(--accent);">Steam</a>
@@ -843,9 +873,31 @@ body {
   <section class="quick-start">
     <div class="qs-container">
       <h2 class="qs-title">Quick Start</h2>
+
+      <div class="runtime-grid" aria-label="Choose a server runtime">
+        <div class="runtime-card">
+          <strong>🍷 Wine Stable</strong>
+          <p class="qs-option-desc">Default and backward-compatible. Uses <code>ghcr.io/balnaimi/conan-exiles-server:latest</code> with <code>docker-compose.yml</code>.</p>
+        </div>
+        <div class="runtime-card experimental">
+          <strong>🐧 Native Linux Experimental</strong>
+          <p class="qs-option-desc">Runs the upstream Linux server without Wine. Uses <code>ghcr.io/balnaimi/conan-exiles-server:native</code> with isolated Native volumes.</p>
+        </div>
+      </div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">🐧 Native Linux Quick Start</div>
+        <div class="qs-option-desc">The Native version is experimental and intentionally separate from Wine. Do not mount the same live data volumes into both runtimes.</div>
+        <pre class="code-block">mkdir conan-native && cd conan-native
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose -f docker-compose.native.yml up -d</pre>
+        <div class="info-note">Native image: <code>ghcr.io/balnaimi/conan-exiles-server:native</code>. RCON is internal-only by default. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S/RCON health.</div>
+      </div>
       
       <div class="qs-option">
-        <div class="qs-option-title">Fast Start</div>
+        <div class="qs-option-title">🍷 Wine Stable — Fast Start</div>
         <div class="qs-option-desc">Use a small .env file with only the basic settings. Good for testing or getting a simple server online quickly.</div>
         <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
@@ -856,7 +908,7 @@ docker compose up -d</pre>
       </div>
 
       <div class="qs-option">
-        <div class="qs-option-title">Full Configuration</div>
+        <div class="qs-option-title">🍷 Wine Stable — Full Configuration</div>
         <div class="qs-option-desc">Use the full .env.example template if you want every documented setting available for editing.</div>
         <pre class="code-block">mkdir conan-server && cd conan-server
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
@@ -979,6 +1031,9 @@ docker compose up -d</pre>
       <div class="info-note">
         A clean, unmodded server using Steam build <code>24383534</code> and Wine Staging <code>11.10</code> repeatedly entered an OOM restart loop on an <strong>8 GB</strong> host. With <strong>16 GB</strong>, the same server reached <code>InProgress</code>, responded to Source/A2S queries on UDP <code>27015</code>, and stabilized at approximately <strong>9.1 GB</strong> idle memory.
       </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>🐧 Native Linux Experimental observation:</strong> On the same 16 GiB test CT and Steam build <code>24383534</code>, the native Shipping binary reached A2S/RCON readiness and stabilized near <strong>8.70 GiB</strong> unmodded. Enhanced-tagged <strong>StayBloody</strong> and <strong>Better Thralls</strong> mounted in order at roughly 8.42–8.57 GiB. The guest exposed <strong>SSE4.2</strong>, AVX, and AVX2. UE5's general x64 baseline is SSE4.2; these tests do not prove AVX2 alone is a Conan requirement.
+      </div>
       <div class="info-warning" style="margin-top:0.75rem;">
         <strong>8 GB RAM should be considered insufficient for the current Enhanced server.</strong> Use at least 16 GB unless you have verified your own workload under stricter limits.
       </div>
@@ -1037,7 +1092,7 @@ docker compose up -d</pre>
       </div>
       <div class="info-note" style="margin-top:1rem;">
         <strong>What the container does automatically:</strong><br>
-        On startup, it downloads or updates each mod, copies the downloaded <strong>.pak</strong> files into <strong>ConanSandbox/Mods</strong>, and generates <strong>ConanSandbox/Mods/modlist.txt</strong> in the same order.
+        On startup, it validates and stages the complete ordered set, downloads each Workshop item, verifies one usable top-level <strong>.pak</strong>, and atomically replaces <strong>ConanSandbox/Mods/modlist.txt</strong> only after every item succeeds. A bad ID or failed download preserves the last-known-good list and world.
       </div>
 
       <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Apply, Update, or Remove Mods</h3>
@@ -1052,7 +1107,10 @@ docker compose logs -f</pre>
         <li>After an Enhanced game update, confirm that every mod supports the current build before opening the server to players.</li>
       </ul>
       <div class="info-warning" style="margin-top:1rem;">
-        <strong>If startup stops:</strong> Check <code>docker compose logs</code>. An invalid ID, missing Workshop download, missing <code>.pak</code>, or incompatible mod can stop startup rather than silently launching with an incomplete list.
+        <strong>If startup stops:</strong> Check <code>docker compose logs</code>. An invalid ID, missing Workshop download, ambiguous/missing <code>.pak</code>, or incompatible mod stops startup while preserving the previous active list.
+      </div>
+      <div class="info-note" style="margin-top:1rem;">
+        <strong>Verified Native Enhanced test:</strong> StayBloody (<code>3722881816</code>) and Better Thralls (<code>3720904511</code>) mounted in configured order. Conan extracted each top-level Workshop package's embedded <code>-LinuxServer.pak</code>, <code>.utoc</code>, and <code>.ucas</code> payload automatically.
       </div>
       <div class="info-note" style="margin-top:1rem;">Leave <strong>SERVER_MOD_LIST</strong> empty to run an unmodded server.</div>
     </div>
@@ -1085,7 +1143,7 @@ docker compose logs -f</pre>
         <button type="button" class="toolbar-btn" onclick="setAllSections(false)">Collapse all</button>
         <button type="button" class="toolbar-btn" id="viewOutputButton" onclick="scrollToOutput()">View output <span class="view-output-count">(0)</span></button>
       </div>
-      <div class="filter-summary" id="filterSummary" aria-live="polite">Showing all 239 settings</div>
+      <div class="filter-summary" id="filterSummary" aria-live="polite">Showing all 250 settings</div>
       <div class="stats">
         <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
         <div class="stat">Changed: <strong id="changedCount">0</strong></div>
@@ -1186,7 +1244,19 @@ docker events --since 30m \
   --filter container=conan-exiles-enhanced</pre>
       <div class="info-warning" style="margin-top:0.75rem;">If clients cannot connect after a UE4 → UE5 migration, inspect <code>Engine.ini</code> and remove stale <code>bUseBuildIdOverride</code> / <code>BuildIdOverride</code> lines.</div>
 
-      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Backup Your Data</h3>
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Backup and Restore</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Native backups use SQLite's snapshot API, verify <code>game_0.db</code>, write SHA-256 checksums, and never mix a snapshot with separately copied live WAL/SHM files.</p>
+      <pre class="code-block"># Light backup (world, LinuxServer INIs, mod IDs/list)
+docker compose -f docker-compose.native.yml exec conan-native \
+  /scripts/native/backup.sh --reason manual
+
+# Verify a backup using a one-off container
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --verify-only</pre>
+      <div class="info-note">Set <code>NATIVE_BACKUP_MODE=full</code> to include active managed PAKs. Scheduled backups and retention are optional and disabled by default. Stop the Native service before applying a restore.</div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Wine Stable Backup</h3>
       <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
       <pre class="code-block">docker compose down
 docker run --rm \
@@ -1440,6 +1510,9 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
+        <strong>v2.7.0 — Native Linux Experimental:</strong> Keeps Wine Stable on <code>latest</code> while adding a clearly advertised <code>:native</code> image, isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S/RCON lifecycle health, verified backup/restore, migration guardrails, and independent CI/GHCR tags.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.6.1 — Duration and Clipboard Reliability Hotfix:</strong> Normalizes rounded duration hints across minute/hour/day boundaries, preserves fractional-hour precision, rejects negative durations, fixes singular labels, and guarantees temporary clipboard fallback elements are removed on both success and failure.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
@@ -1484,7 +1557,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
             </tr>
             <tr>
               <td><strong>.env.example</strong></td>
-              <td>Template with all 239 settings documented</td>
+              <td>Template with all 250 shared and Native operation settings documented</td>
             </tr>
             <tr>
               <td><strong>entrypoint.sh</strong></td>
@@ -1981,6 +2054,25 @@ const CONFIG = [
     ]
   },
   {
+    id: 'nativeops', icon: '🐧', title: 'Native Linux Experimental Operations',
+    fields: [
+      { key: 'NATIVE_VALIDATE_SERVER', label: 'Validate Native Server Files', desc: 'Native only. Ask SteamCMD to validate every server file on startup (slower).', type: 'bool', default: false },
+      { key: 'NATIVE_PRUNE_REMOVED_MODS', label: 'Prune Removed Managed Mods', desc: 'Native only. Delete only previously managed PAKs removed from the active list.', type: 'bool', default: false },
+      { key: 'NATIVE_STOP_GRACE_SECONDS', label: 'Graceful Stop Window', desc: 'Native only. Seconds to wait after RCON stop before TERM fallback.', type: 'number', default: 30, min: 1, max: 600 },
+      { key: 'NATIVE_BACKUP_ENABLED', label: 'Scheduled Backups', desc: 'Native only. Create periodic SQLite-safe backups.', type: 'bool', default: false },
+      { key: 'NATIVE_BACKUP_MODE', label: 'Backup Mode', desc: 'Native only. Light stores world/config/mod IDs; Full also stores active managed PAKs.', type: 'select', default: 'light', options: [
+        { value: 'light', label: 'Light — world, config, and mod IDs' },
+        { value: 'full', label: 'Full — also include active managed PAKs' }
+      ]},
+      { key: 'NATIVE_BACKUP_INTERVAL_MINUTES', label: 'Backup Interval', desc: 'Native only. Minutes between scheduled backups.', type: 'number', default: 60, min: 1, max: 10080 },
+      { key: 'NATIVE_BACKUP_RETENTION_COUNT', label: 'Backup Retention Count', desc: 'Native only. Maximum number of backup archives to retain.', type: 'number', default: 14, min: 1, max: 1000 },
+      { key: 'NATIVE_BACKUP_RETENTION_DAYS', label: 'Backup Retention Days', desc: 'Native only. Delete backup archives older than this many days.', type: 'number', default: 30, min: 1, max: 3650 },
+      { key: 'ADMIN_PASSWORD_FILE', label: 'Admin Password File', desc: 'Native advanced option. Mounted secret-file path; when set, ADMIN_PASSWORD is omitted from generated output.', type: 'text', default: '' },
+      { key: 'SERVER_PASSWORD_FILE', label: 'Join Password File', desc: 'Native advanced option. Mounted secret-file path; when set, SERVER_PASSWORD is omitted from generated output.', type: 'text', default: '' },
+      { key: 'RCON_PASSWORD_FILE', label: 'RCON Password File', desc: 'Native advanced option. Mounted secret-file path; when set, RCON_PASSWORD is omitted from generated output.', type: 'text', default: '' },
+    ]
+  },
+  {
     id: 'advanced', icon: '🔧', title: 'Advanced / Anti-Exploit',
     fields: [
       { key: 'VAC_ENABLED', label: 'VAC Anti-Cheat', desc: 'Enable Valve Anti-Cheat', type: 'bool', default: false },
@@ -2230,10 +2322,21 @@ function getFieldConfig(key) {
   return null;
 }
 
+const SECRET_FILE_OVERRIDES = {
+  ADMIN_PASSWORD: 'ADMIN_PASSWORD_FILE',
+  SERVER_PASSWORD: 'SERVER_PASSWORD_FILE',
+  RCON_PASSWORD: 'RCON_PASSWORD_FILE',
+};
+
+function shouldEmitField(field) {
+  const fileKey = SECRET_FILE_OVERRIDES[field.key];
+  return !fileKey || !String(values[fileKey] ?? '').trim();
+}
+
 function getChangedFields() {
   const changed = [];
   CONFIG.forEach(s => s.fields.forEach(f => {
-    if (values[f.key] !== f.default && String(values[f.key]) !== String(f.default)) {
+    if (shouldEmitField(f) && values[f.key] !== f.default && String(values[f.key]) !== String(f.default)) {
       changed.push(f);
     }
   }));
@@ -2319,11 +2422,11 @@ function updateSecurityWarning() {
   const warning = document.getElementById('securityWarning');
   if (!warning) return;
   const issues = [];
-  if (!values.ADMIN_PASSWORD || values.ADMIN_PASSWORD === 'changeme') {
-    issues.push('change ADMIN_PASSWORD from the public default');
+  if ((!values.ADMIN_PASSWORD && !values.ADMIN_PASSWORD_FILE) || (values.ADMIN_PASSWORD === 'changeme' && !values.ADMIN_PASSWORD_FILE)) {
+    issues.push('change ADMIN_PASSWORD from the public default or configure ADMIN_PASSWORD_FILE');
   }
-  if (values.RCON_ENABLED && (!values.RCON_PASSWORD || values.RCON_PASSWORD === 'changeme')) {
-    issues.push('set a unique RCON_PASSWORD before exposing RCON');
+  if (values.RCON_ENABLED && ((!values.RCON_PASSWORD && !values.RCON_PASSWORD_FILE) || (values.RCON_PASSWORD === 'changeme' && !values.RCON_PASSWORD_FILE))) {
+    issues.push('set a unique RCON_PASSWORD or RCON_PASSWORD_FILE before enabling RCON');
   }
   warning.hidden = issues.length === 0;
   warning.innerHTML = issues.length
@@ -2351,7 +2454,7 @@ function updateOutput() {
     let lastSection = '';
     CONFIG.forEach(s => {
       const sectionChanged = s.fields.filter(f =>
-        values[f.key] !== f.default && String(values[f.key]) !== String(f.default)
+        shouldEmitField(f) && values[f.key] !== f.default && String(values[f.key]) !== String(f.default)
       );
       if (sectionChanged.length > 0) {
         lines.push(`# --- ${s.icon} ${s.title} ---`);
@@ -2372,6 +2475,7 @@ function updateOutput() {
       lines.push(`# ${s.icon} ${s.title.toUpperCase()}`);
       lines.push(`# ============================================\n`);
       s.fields.forEach(f => {
+        if (!shouldEmitField(f)) return;
         if (f.desc) lines.push(`# ${f.desc}`);
         const v = formatValue(f);
         const changed = values[f.key] !== f.default && String(values[f.key]) !== String(f.default);
@@ -2411,7 +2515,7 @@ function updateStats() {
     let sc = 0;
     s.fields.forEach(f => {
       total++;
-      if (values[f.key] !== f.default && String(values[f.key]) !== String(f.default)) {
+      if (shouldEmitField(f) && values[f.key] !== f.default && String(values[f.key]) !== String(f.default)) {
         changed++;
         sc++;
       }
