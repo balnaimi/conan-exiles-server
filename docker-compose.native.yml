@@ -1,8 +1,14 @@
 # Conan Exiles Enhanced — Native Linux Experimental
-# Wine remains the stable default in docker-compose.yml.
+# EXPERIMENTAL NATIVE LINUX RUNTIME — opt-in; Wine remains the stable default.
+# This file uses :native and separate Native-only volumes.
+# Never replace these volumes with existing Wine volumes. Back up and use the
+# documented dry-run migration helper for an existing server.
+# Default host ports match Wine, so only one default-port runtime can run at a
+# time; Docker rejects the second port bind before its container starts.
 # Native quick start: docker compose -f docker-compose.native.yml up -d
 services:
   conan-native:
+    platform: linux/amd64
     image: ghcr.io/balnaimi/conan-exiles-server:native
     container_name: conan-exiles-enhanced-native
     restart: unless-stopped
@@ -11,7 +17,9 @@ services:
     env_file: .env
     labels:
       org.opencontainers.image.title: "Conan Exiles Enhanced — Native Linux Experimental"
-      com.balnaimi.conan.runtime: "native-linux-experimental"
+      com.balnaimi.conan.runtime: "native-linux"
+      com.balnaimi.conan.support-tier: "experimental"
+      com.balnaimi.conan.default: "false"
     ports:
       - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"
       - "7778:7778/udp"

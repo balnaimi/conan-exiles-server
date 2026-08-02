@@ -71,7 +71,9 @@ def execute(host: str, port: int, command: str, timeout: float) -> str:
             response_id, response_type, _ = receive_packet(sock)
             if response_id == -1:
                 raise RconError("RCON authentication failed")
-            if response_id == auth_id and response_type == AUTH_RESPONSE:
+            # Conan Enhanced returns successful auth as id=0/type=2, while
+            # standard Source servers normally echo auth_id.
+            if response_type == AUTH_RESPONSE:
                 break
         else:
             raise RconError("RCON authentication response was not received")
@@ -79,7 +81,9 @@ def execute(host: str, port: int, command: str, timeout: float) -> str:
         command_id = 992
         sock.sendall(packet(command_id, EXEC_COMMAND, command))
         response_id, response_type, body = receive_packet(sock)
-        if response_id != command_id or response_type not in (RESPONSE_VALUE, AUTH_RESPONSE):
+        # Conan Enhanced replies with the authenticated request ID rather than
+        # the command request ID; accept both Source-compatible variants.
+        if response_id not in (command_id, auth_id) or response_type not in (RESPONSE_VALUE, AUTH_RESPONSE):
             raise RconError("unexpected RCON command response")
         return body
 

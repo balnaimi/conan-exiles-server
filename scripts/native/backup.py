@@ -8,17 +8,21 @@ never combined with that snapshot.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
 import fcntl
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import sys
 import tarfile
 import tempfile
 from pathlib import Path
+
+import runtime_state
 
 
 def positive_int(name: str, default: int, minimum: int, maximum: int) -> int:
@@ -32,10 +36,29 @@ def positive_int(name: str, default: int, minimum: int, maximum: int) -> int:
     return value
 
 
-def safe_copy(source: Path, destination: Path) -> None:
+SECRET_INI_PATTERN = re.compile(
+    r"^(?P<prefix>\s*(?:AdminPassword|ServerPassword|RconPassword)\s*=).*$",
+    flags=re.IGNORECASE,
+)
+
+
+def safe_copy(source: Path, destination: Path, *, redact_ini_secrets: bool = False) -> None:
     if source.is_symlink() or not source.is_file():
         raise RuntimeError(f"Refusing non-regular backup source: {source}")
     destination.parent.mkdir(parents=True, exist_ok=True)
+    if redact_ini_secrets:
+        lines = source.read_text(encoding="utf-8", errors="strict").splitlines(keepends=True)
+        redacted: list[str] = []
+        for line in lines:
+            ending = "\n" if line.endswith("\n") else ""
+            body = line[:-1] if ending else line
+            if body.endswith("\r"):
+                body = body[:-1]
+            match = SECRET_INI_PATTERN.match(body)
+            redacted.append(f"{match.group('prefix')}[REDACTED]{ending}" if match else line)
+        destination.write_text("".join(redacted), encoding="utf-8")
+        destination.chmod(0o600)
+        return
     shutil.copy2(source, destination)
 
 
@@ -55,12 +78,20 @@ def sqlite_snapshot(source_path: Path, destination_path: Path) -> None:
         source.close()
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def checksums(stage: Path) -> None:
     rows: list[str] = []
     for path in sorted(stage.rglob("*")):
         if not path.is_file() or path.name == "checksums.sha256":
             continue
-        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        digest = sha256_file(path)
         rows.append(f"{digest}  {path.relative_to(stage).as_posix()}")
     (stage / "checksums.sha256").write_text("\n".join(rows) + "\n", encoding="utf-8")
 
@@ -89,7 +120,8 @@ def apply_retention(backup_dir: Path, keep_count: int, keep_days: int) -> None:
             archive.unlink()
 
 
-def create_backup(reason: str) -> Path:
+def create_backup(reason: str, *, acquire_operation_lock: bool = True) -> Path:
+    os.umask(0o077)
     game_dir = Path(os.environ.get("GAME_DIR", "/data/server")).resolve()
     backup_dir = Path(os.environ.get("BACKUP_DIR", "/data/backups")).resolve()
     mode = os.environ.get("NATIVE_BACKUP_MODE", "light").lower()
@@ -103,11 +135,33 @@ def create_backup(reason: str) -> Path:
     mods_dir = game_dir / "ConanSandbox" / "Mods"
     world_db = saved_dir / "game_0.db"
     backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_dir.chmod(0o700)
     lock_path = backup_dir / ".backup.lock"
 
-    with lock_path.open("a+b") as lock:
+    with contextlib.ExitStack() as locks:
+        if acquire_operation_lock:
+            game_fd, runtime_fd = runtime_state.open_runtime_directory(game_dir)
+            locks.callback(os.close, game_fd)
+            locks.callback(os.close, runtime_fd)
+            operation_lock = runtime_state.open_regular(
+                runtime_fd, "operation.lock", os.O_RDWR | os.O_CREAT
+            )
+            locks.callback(os.close, operation_lock)
+            try:
+                fcntl.flock(operation_lock, fcntl.LOCK_SH | fcntl.LOCK_NB)
+            except BlockingIOError as exc:
+                raise RuntimeError("Another target operation is already running") from exc
+        backup_fd = os.open(
+            backup_dir,
+            os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC,
+        )
+        locks.callback(os.close, backup_fd)
+        lock = runtime_state.open_regular(
+            backup_fd, lock_path.name, os.O_RDWR | os.O_CREAT
+        )
+        locks.callback(os.close, lock)
         try:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             raise RuntimeError("Another backup operation is already running") from exc
 
@@ -122,7 +176,11 @@ def create_backup(reason: str) -> Path:
             if config_dir.exists():
                 for source in sorted(config_dir.rglob("*")):
                     if source.is_file():
-                        safe_copy(source, stage / "config" / source.relative_to(config_dir))
+                        safe_copy(
+                            source,
+                            stage / "config" / source.relative_to(config_dir),
+                            redact_ini_secrets=source.suffix.lower() == ".ini",
+                        )
 
             for name in ("modlist.txt", ".managed-mods.tsv"):
                 source = mods_dir / name
@@ -142,6 +200,7 @@ def create_backup(reason: str) -> Path:
                 "world_database": "game_0.db",
                 "workshop_ids": [mod_id for mod_id, _ in mods],
                 "active_packages": [pak for _, pak in mods],
+                "config_secrets_redacted": True,
             }
             (stage / "metadata.json").write_text(
                 json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -153,6 +212,7 @@ def create_backup(reason: str) -> Path:
                     if source.is_file():
                         bundle.add(source, arcname=source.relative_to(stage).as_posix(), recursive=False)
             os.replace(temporary_archive, final)
+            final.chmod(0o600)
 
         apply_retention(backup_dir, keep_count, keep_days)
         return final

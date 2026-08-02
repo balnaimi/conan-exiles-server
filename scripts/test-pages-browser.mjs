@@ -151,6 +151,7 @@ try {
   const target = await waitForTarget(debugPort, `http://127.0.0.1:${pagePort}/`);
   cdp = createCdp(target.webSocketDebuggerUrl);
   await cdp.send('Runtime.enable');
+  await cdp.send('Page.enable');
   const readiness = await evaluate(cdp, `new Promise(resolve => {
     const deadline = Date.now() + 5000;
     const inspect = () => {
@@ -216,6 +217,144 @@ try {
     JSON.stringify(afterBack.calls) === JSON.stringify(['mods', 'config-generator']),
     `Back triggered duplicate/missing activation: ${JSON.stringify(afterBack.calls)}`,
   );
+
+  const keyboardTabs = await evaluate(cdp, `(() => {
+    const press = (element, key) => element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    const selected = () => document.querySelector('.tab-btn.active')?.dataset.tab;
+    const quick = document.getElementById('tab-button-quick-start');
+    quick.focus();
+    press(quick, 'End');
+    const afterEnd = selected();
+    const about = document.getElementById('tab-button-about');
+    press(about, 'Home');
+    const afterHome = selected();
+    press(quick, 'ArrowRight');
+    const afterRight = selected();
+    const mods = document.getElementById('tab-button-mods');
+    press(mods, 'ArrowLeft');
+    const focused = document.activeElement;
+    const style = getComputedStyle(focused);
+    return {
+      afterEnd,
+      afterHome,
+      afterRight,
+      afterLeft: selected(),
+      focused: focused?.dataset?.tab,
+      visibleFocus: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0,
+    };
+  })()`);
+  assert(
+    keyboardTabs.afterEnd === 'about' && keyboardTabs.afterHome === 'quick-start' &&
+      keyboardTabs.afterRight === 'mods' && keyboardTabs.afterLeft === 'quick-start' &&
+      keyboardTabs.focused === 'quick-start' && keyboardTabs.visibleFocus,
+    `Keyboard tab navigation/focus failed: ${JSON.stringify(keyboardTabs)}`,
+  );
+
+  await evaluate(cdp, `document.querySelector('.native-hero-banner').click()`);
+  await new Promise(resolveWait => setTimeout(resolveWait, 700));
+  const nativeLanding = await evaluate(cdp, `(() => {
+    const target = document.getElementById('native-quick-start');
+    const tabBar = document.querySelector('.tab-bar').getBoundingClientRect();
+    const rect = target?.getBoundingClientRect();
+    return {
+      hash: location.hash,
+      active: document.querySelector('.tab-btn.active')?.dataset.tab,
+      focusedId: document.activeElement?.id,
+      targetExists: Boolean(target),
+      targetTop: rect?.top ?? null,
+      targetBottom: rect?.bottom ?? null,
+      tabBottom: tabBar.bottom,
+      viewportHeight: innerHeight,
+    };
+  })()`);
+  assert(
+    nativeLanding.hash === '#native-quick-start' && nativeLanding.active === 'quick-start' &&
+      nativeLanding.focusedId === 'native-quick-start' && nativeLanding.targetExists &&
+      nativeLanding.targetTop >= nativeLanding.tabBottom &&
+      nativeLanding.targetTop <= nativeLanding.tabBottom + 32,
+    `Native hero CTA did not land on its command card: ${JSON.stringify(nativeLanding)}`,
+  );
+
+  await evaluate(cdp, `new Promise(resolve => { history.back(); setTimeout(resolve, 500); })`);
+  const nativeBack = await evaluate(cdp, `({
+    hash: location.hash,
+    active: document.querySelector('.tab-btn.active')?.dataset.tab,
+    focused: document.activeElement?.id
+  })`);
+  assert(
+    nativeBack.hash !== '#native-quick-start' && nativeBack.active === 'quick-start',
+    `Back did not leave the Native anchor cleanly: ${JSON.stringify(nativeBack)}`,
+  );
+  await evaluate(cdp, `new Promise(resolve => { history.forward(); setTimeout(resolve, 700); })`);
+  const nativeForward = await evaluate(cdp, `({
+    hash: location.hash,
+    active: document.querySelector('.tab-btn.active')?.dataset.tab,
+    focused: document.activeElement?.id
+  })`);
+  assert(
+    nativeForward.hash === '#native-quick-start' && nativeForward.active === 'quick-start' &&
+      nativeForward.focused === 'native-quick-start',
+    `Forward did not restore the Native anchor/focus: ${JSON.stringify(nativeForward)}`,
+  );
+
+  await cdp.send('Page.navigate', {
+    url: `http://127.0.0.1:${pagePort}/index.html?direct-native=1#native-quick-start`,
+  });
+  await new Promise(resolveWait => setTimeout(resolveWait, 900));
+  const directNative = await evaluate(cdp, `(() => {
+    const target = document.getElementById('native-quick-start');
+    const rect = target.getBoundingClientRect();
+    const tabBottom = document.querySelector('.tab-bar').getBoundingClientRect().bottom;
+    const style = getComputedStyle(target);
+    return {
+      ready: document.readyState,
+      hash: location.hash,
+      active: document.querySelector('.tab-btn.active')?.dataset.tab,
+      focused: document.activeElement?.id,
+      top: rect.top,
+      tabBottom,
+      focusOutlineWidth: parseFloat(style.outlineWidth),
+      focusOutlineStyle: style.outlineStyle,
+    };
+  })()`);
+  assert(
+    directNative.ready === 'complete' && directNative.hash === '#native-quick-start' &&
+      directNative.active === 'quick-start' && directNative.focused === 'native-quick-start' &&
+      directNative.top >= directNative.tabBottom && directNative.top <= directNative.tabBottom + 32 &&
+      directNative.focusOutlineStyle !== 'none' && directNative.focusOutlineWidth >= 3,
+    `Direct Native deep link is hidden or unfocused: ${JSON.stringify(directNative)}`,
+  );
+
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+    mobile: true,
+  });
+  await new Promise(resolveWait => setTimeout(resolveWait, 250));
+  const mobile = await evaluate(cdp, `(() => {
+    const root = document.documentElement;
+    const banner = document.querySelector('.native-hero-banner').getBoundingClientRect();
+    const native = document.getElementById('native-quick-start').getBoundingClientRect();
+    return {
+      width: innerWidth,
+      height: innerHeight,
+      scrollWidth: root.scrollWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+      bannerLeft: banner.left,
+      bannerRight: banner.right,
+      nativeLeft: native.left,
+      nativeRight: native.right,
+    };
+  })()`);
+  assert(
+    mobile.width === 390 && mobile.height === 844 &&
+      mobile.scrollWidth <= mobile.width && mobile.bodyScrollWidth <= mobile.width &&
+      mobile.bannerLeft >= 0 && mobile.bannerRight <= mobile.width &&
+      mobile.nativeLeft >= 0 && mobile.nativeRight <= mobile.width,
+    `Mobile viewport has horizontal overflow or clipping: ${JSON.stringify(mobile)}`,
+  );
+  await cdp.send('Emulation.clearDeviceMetricsOverride');
 
   const numeric = await evaluate(cdp, `(() => {
     const input = document.getElementById('input-MAX_PLAYERS');
@@ -291,7 +430,7 @@ try {
     `Clipboard fallback leaked a textarea: ${JSON.stringify(clipboardCleanup)}`,
   );
 
-  console.log('Pages browser checks OK: deep link, single activation, Back, numeric/duration guards, secret-file override, clipboard cleanup');
+  console.log('Pages browser checks OK: deep links, Native CTA, keyboard tabs/focus, 390x844 overflow, Back, numeric/duration guards, secret-file override, clipboard cleanup');
 } finally {
   cdp?.close();
   if (chrome && chrome.exitCode === null) chrome.kill('SIGTERM');

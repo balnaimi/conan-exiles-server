@@ -24,9 +24,6 @@ mkdir -p "$GAME_DIR" "$STEAM_DATA_DIR" "$(dirname "$STEAM_INSTALL_LOCK")"
 exec 9>"$STEAM_INSTALL_LOCK"
 flock -n 9 || fatal "Another SteamCMD server install/update is already running"
 
-had_working_install=false
-[ -x "$SHIPPING_BINARY" ] && had_working_install=true
-
 steam_args=(
     +force_install_dir "$GAME_DIR"
     +login anonymous
@@ -39,11 +36,7 @@ steam_args+=(+quit)
 
 log "Installing/updating Conan Exiles Enhanced native server (app $STEAM_APP_ID)"
 if ! HOME="$STEAM_DATA_DIR" STEAM_DATA_DIR="$STEAM_DATA_DIR" "$STEAMCMD_BIN" "${steam_args[@]}"; then
-    if [ "$had_working_install" = true ] && [ -x "$SHIPPING_BINARY" ]; then
-        warn "SteamCMD failed; the existing working native binary was preserved"
-    else
-        warn "SteamCMD failed and no verified native binary is available"
-    fi
+    warn "SteamCMD failed; the in-place game installation may be partially updated. The server will not launch. Retry startup, optionally with NATIVE_VALIDATE_SERVER=true."
     exit 1
 fi
 

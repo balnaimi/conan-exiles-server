@@ -17,6 +17,7 @@ install_mods_atomic() {
     local steamcmd_bin="${STEAMCMD_BIN:-/steamcmd/steamcmd.sh}"
     local workshop_app_id="${WORKSHOP_APP_ID:-440900}"
     local raw_mod_list="${SERVER_MOD_LIST:-}"
+    local compat_mode="${MOD_INSTALL_COMPAT_MODE:-native}"
     local prune="${NATIVE_PRUNE_REMOVED_MODS:-false}"
     local mods_dir="${game_dir}/ConanSandbox/Mods"
     local lock_file="${MOD_INSTALL_LOCK:-${steam_data_dir}/locks/mod-install.lock}"
@@ -25,25 +26,49 @@ install_mods_atomic() {
     local -a mod_ids=() pak_files=() workshop_roots=()
     local -A seen_names=()
 
+    case "${compat_mode,,}" in
+        native|wine) ;;
+        *) error "MOD_INSTALL_COMPAT_MODE must be native or wine"; return 2 ;;
+    esac
     case "${prune,,}" in
         true|false) ;;
         *) error "NATIVE_PRUNE_REMOVED_MODS must be true or false"; return 2 ;;
     esac
     [ -x "$steamcmd_bin" ] || { error "SteamCMD is not executable at $steamcmd_bin"; return 1; }
 
-    compact="${raw_mod_list//[[:space:]]/}"
+    if [ "${compat_mode,,}" = native ]; then
+        compact="$raw_mod_list"
+        if [ -n "$raw_mod_list" ] && {
+            [[ "$raw_mod_list" =~ [[:space:]] ]] ||
+            [[ ! "$raw_mod_list" =~ ^[0-9]+(,[0-9]+)*$ ]];
+        }; then
+            error "Malformed SERVER_MOD_LIST: Native requires exact comma-separated numeric IDs without whitespace or blank entries"
+            return 2
+        fi
+    else
+        if [ -z "$raw_mod_list" ]; then
+            log "Wine compatibility: empty SERVER_MOD_LIST leaves the existing mod list unchanged"
+            return 0
+        fi
+        IFS= read -r compact <<< "$raw_mod_list" || true
+        compact="${compact//[[:space:]]/}"
+    fi
     if [ -n "$compact" ]; then
-        IFS=',' read -r -a mod_ids <<< "$compact"
-        for mod_id in "${mod_ids[@]}"; do
+        local -a parsed_ids=()
+        IFS=',' read -r -a parsed_ids <<< "$compact"
+        mod_ids=()
+        for mod_id in "${parsed_ids[@]}"; do
+            if [ -z "$mod_id" ]; then
+                if [ "${compat_mode,,}" = wine ]; then continue; fi
+                error "SERVER_MOD_LIST contains an empty Workshop ID"
+                return 2
+            fi
             if [[ ! "$mod_id" =~ ^[0-9]+$ ]]; then
                 error "Invalid mod ID entry; SERVER_MOD_LIST must contain comma-separated numeric Workshop IDs"
                 return 2
             fi
+            mod_ids+=("$mod_id")
         done
-        if [[ "$compact" == ,* || "$compact" == *, || "$compact" == *,,* ]]; then
-            error "SERVER_MOD_LIST contains an empty Workshop ID"
-            return 2
-        fi
     fi
 
     mkdir -p "$mods_dir" "$(dirname "$lock_file")"
@@ -74,6 +99,7 @@ install_mods_atomic() {
     fi
     workshop_roots+=(
         "${steam_data_dir}/steamcmd/steamapps/workshop/content/${workshop_app_id}"
+        "${steam_data_dir}/Steam/steamapps/workshop/content/${workshop_app_id}"
         "${steam_data_dir}/steamapps/workshop/content/${workshop_app_id}"
         "/steamcmd/steamapps/workshop/content/${workshop_app_id}"
         "/root/Steam/steamapps/workshop/content/${workshop_app_id}"
@@ -103,25 +129,42 @@ install_mods_atomic() {
 
         pak_files=()
         while IFS= read -r -d '' pak; do pak_files+=("$pak"); done \
-            < <(find "$item_dir" -maxdepth 2 -type f -name '*.pak' -print0)
-        if [ "${#pak_files[@]}" -ne 1 ]; then
-            error "Workshop item $mod_id must contain exactly one top-level usable .pak (found ${#pak_files[@]})"
+            < <(find "$item_dir" -maxdepth 2 -type f -name '*.pak' -print0 | LC_ALL=C sort -z)
+        if [ "${#pak_files[@]}" -eq 0 ]; then
+            error "Workshop item $mod_id contains no usable .pak"
             return 1
         fi
+        if [ "${#pak_files[@]}" -gt 1 ]; then
+            if [ "${compat_mode,,}" = wine ]; then
+                warn "Wine compatibility: Workshop item $mod_id contains multiple .pak files; selecting lexical first: ${pak_files[0]}"
+            else
+                error "Workshop item $mod_id must contain exactly one top-level usable .pak (found ${#pak_files[@]})"
+                return 1
+            fi
+        fi
         if [ ! -s "${pak_files[0]}" ]; then
-            error "Workshop item $mod_id contains an empty .pak"
-            return 1
+            if [ "${compat_mode,,}" = wine ]; then
+                warn "Wine compatibility: Workshop item $mod_id contains an empty .pak; preserving legacy activation behavior"
+            else
+                error "Workshop item $mod_id contains an empty .pak"
+                return 1
+            fi
         fi
 
         pak_name="$(basename "${pak_files[0]}")"
         if [ -n "${seen_names[$pak_name]+x}" ]; then
-            error "Two Workshop items resolve to the same package name $pak_name"
-            return 1
+            if [ "${compat_mode,,}" = wine ]; then
+                warn "Wine compatibility: duplicate package name $pak_name; preserving legacy overwrite/list behavior"
+            else
+                error "Two Workshop items resolve to the same package name $pak_name"
+                return 1
+            fi
+        else
+            printf '%s\t%s\n' "$mod_id" "$pak_name" >> "$stage_manifest"
         fi
         seen_names[$pak_name]=1
         cp -- "${pak_files[0]}" "${stage}/${pak_name}"
         printf '*%s\n' "$pak_name" >> "$stage_list"
-        printf '%s\t%s\n' "$mod_id" "$pak_name" >> "$stage_manifest"
     done
 
     # Package moves and list replacement stay on the same filesystem. The live

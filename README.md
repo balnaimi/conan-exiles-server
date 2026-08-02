@@ -8,12 +8,17 @@ A community Docker Compose setup for hosting a **Conan Exiles Enhanced dedicated
 > ## 🐧 Native Linux Experimental Available
 > This project now provides two clearly separated runtimes. **Wine Stable** remains the default `latest` image and existing `docker-compose.yml` workflow. The new **Native Linux Experimental** image runs the upstream Linux server without Wine and is available as `ghcr.io/balnaimi/conan-exiles-server:native` with `docker-compose.native.yml`. Native uses separate volumes; do not point Wine and Native at the same live data volume.
 
-| Runtime | Status | Image | Compose file |
-|---|---|---|---|
-| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `docker-compose.yml` |
-| **Native Linux** | **Experimental** | `ghcr.io/balnaimi/conan-exiles-server:native` | `docker-compose.native.yml` |
+| Runtime | Status | Rolling image | Versioned image | Compose file |
+|---|---|---|---|---|
+| **Wine** | **Stable / default / recommended** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.7.0` | `docker-compose.yml` |
+| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.7.0-native` | `docker-compose.native.yml` |
+
+> **“Stable” is this project's support tier.** The stable image currently uses the upstream **WineHQ Staging** package channel. Updating the default Compose deployment never switches it to Native.
 
 ### Native Linux Quick Start
+
+> [!WARNING]
+> **Fresh Native deployment only:** do not point Native at Wine volumes. For an existing server, stop Wine, create and verify a backup, run the documented runtime migration in dry-run mode, and write into new Native volumes. Keep the original Wine volumes unchanged for rollback.
 
 ```bash
 mkdir conan-native && cd conan-native
@@ -24,6 +29,11 @@ docker compose -f docker-compose.native.yml up -d
 ```
 
 Native runtime testing on Steam build `24383534` reached A2S/RCON readiness at about **8.70 GiB** idle RAM on a 16 GiB test host. Enhanced-tagged **StayBloody** and **Better Thralls** mounted in configured order. These are dated test observations, not fixed resource promises. The general current UE5 x64 baseline requires guest-visible **SSE4.2**; AVX/AVX2 are reported diagnostically because an AVX2-only Conan requirement has not been officially isolated.
+
+> [!CAUTION]
+> SteamCMD updates Native game binaries **in place** at container startup; they are not transactionally rolled back. If SteamCMD fails, the container fails closed and does not launch the server. Retry startup—optionally with `NATIVE_VALIDATE_SERVER=true`—after fixing disk/network issues. This does not affect the separately persisted world backup contract.
+
+**Native permissions:** the image runs as fixed UID/GID `1000:1000`. Fresh named volumes from `docker-compose.native.yml` are initialized with compatible ownership. If you replace them with host bind mounts, create the directories and grant UID/GID 1000 write access before startup; the non-root image intentionally does not recursively `chown` arbitrary host data.
 
 Built on **Debian Bookworm** with **WineHQ Staging**, **MS Visual C++ 2022 Redistributable**, **SteamCMD**, and headless Vulkan/EGL/OpenGL runtime libraries for better Unreal Engine 5 compatibility on VPS and home servers. The experimental Native variant uses a separate minimal Debian image without Wine.
 
@@ -239,7 +249,8 @@ What the container does automatically on startup:
 
 - Validate the complete ordered list before changing the active configuration.
 - Download each mod from the Conan Exiles Steam Workshop into staging/cache.
-- Require one usable top-level `.pak` package for each configured item.
+- **Native Experimental:** require one non-empty, usable top-level `.pak` package for each configured item and reject malformed whitespace/comma lists, duplicate package names, and ambiguous multi-PAK items.
+- **Wine Stable compatibility:** preserve v2.6 behavior for legacy whitespace/comma gaps, deterministic lexical selection from multi-PAK items, duplicate package names, and zero-byte PAK activation; warnings identify these legacy cases.
 - Atomically replace `ConanSandbox/Mods/modlist.txt` only after every item succeeds.
 - Preserve the last-known-good active list and world if any ID/download/package fails.
 - Write compatible `*PakName.pak` entries in the same order as `SERVER_MOD_LIST`.
@@ -382,7 +393,7 @@ docker compose up -d          # Fresh start (re-downloads the full server)
 
 ### 💾 Native Linux Backup and Restore
 
-The Native image creates SQLite-consistent snapshots without mixing a snapshot database with unrelated live WAL/SHM sidecars:
+The Native image creates SQLite-consistent snapshots without mixing a snapshot database with unrelated live WAL/SHM sidecars. Password values in backed-up INIs are replaced with `[REDACTED]`; after a restore, the entrypoint renders current values again from your environment or `_FILE` sources. Archives and staged files use owner-only permissions.
 
 ```bash
 # Light: world, LinuxServer INIs, ordered mod list, Workshop IDs
@@ -398,24 +409,31 @@ Verify before restoring:
 docker compose -f docker-compose.native.yml run --rm --no-deps \
   --entrypoint /scripts/native/restore.sh conan-native \
   /data/backups/ARCHIVE.tar.gz --verify-only
+
+# Apply only while the Native service is stopped
+docker compose -f docker-compose.native.yml stop conan-native
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --target /data/server --apply
+docker compose -f docker-compose.native.yml up -d conan-native
 ```
 
-Stop the Native service before applying a restore. Restore validates member paths, SHA-256 checksums, and SQLite integrity, creates a pre-restore backup when replacing an existing world, and refuses to run while the tracked server PID is active. Light restores record required Workshop IDs so all dependencies can be re-downloaded and verified before opening the world.
+Restore validates member paths, SHA-256 checksums, and SQLite integrity, creates a pre-restore backup when replacing an existing world, and refuses to run while the tracked server PID is active. Light and full restores record the exact required Workshop IDs; the next startup must re-download and verify those dependencies before opening the restored world, and conflicting `SERVER_MOD_LIST` values fail closed.
 
 Optional scheduled backups are disabled by default. Configure `NATIVE_BACKUP_ENABLED`, `NATIVE_BACKUP_MODE`, interval, count, and day retention in `.env` or the Config Generator.
 
 ### 🔄 Wine-to-Native Migration
 
-Native uses separate volumes and `Config/LinuxServer/`. Never attach the same live volume to Wine and Native. The migration helper defaults to dry-run, verifies `game_0.db`, creates a source backup, copies into a new destination, and removes stale UE4 Build ID overrides from the migrated Engine.ini:
+Native uses separate volumes and `Config/LinuxServer/`. Never attach the same live volume to Wine and Native. The helper defaults to dry-run, verifies `game_0.db`, creates a mode-0600 Wine rollback archive, and migrates the world through SQLite's snapshot API into a new destination. It deliberately does **not** activate `WindowsServer` INIs as Linux configuration; the first Native startup renders `LinuxServer` settings from your reviewed `.env`:
 
 ```bash
 ./scripts/migrate-wine-to-native.sh \
   --source /path/to/wine-data \
   --destination /path/to/new-native-data
-# Review the plan, then repeat with --apply
+# Review the plan, stop Wine, then repeat with --source-stopped --apply
 ```
 
-The source is never deleted. Keep Wine stopped during migration and do not clean it up until the Native copy passes database, A2S, RCON, and mod checks.
+The source is never deleted. Keep Wine stopped during migration and do not clean it up until the Native copy passes database, A2S, RCON, mod, and player-connect checks. The rollback archive intentionally preserves the original Wine INIs and may contain credentials; it is created with mode `0600`, so protect it as secret-bearing data.
 
 ### 💾 Wine Stable Backup
 
@@ -615,6 +633,8 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 ## 📝 Release Notes
 
 ### v2.7.0 — Native Linux Experimental
+
+> **Runtime stability contract:** `latest` and `2.7.0` remain Wine Stable. Native Linux is opt-in through `native`, `2.7.0-native`, and `docker-compose.native.yml`. This release never automatically migrates or switches an existing server. Rollback means stopping Native and restarting the unchanged Wine deployment against its original Wine volumes—preferably pinned to `2.6.1` if you need the previous image scripts.
 
 - Keeps Wine Stable as the backward-compatible `latest` image and adds a prominent Native Linux Experimental option at `:native` with separate Compose files and volumes.
 - Adds a non-root native image with SSE4.2 CPU preflight, AVX/AVX2 diagnostics, LinuxServer INIs, A2S/RCON health, and real Shipping-process lifecycle tracking.

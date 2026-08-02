@@ -11,7 +11,7 @@
 <meta property="og:image" content="https://balnaimi.github.io/conan-exiles-server/assets/hero-bg.jpg">
 <meta name="theme-color" content="#0a0a0f">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<title>Conan Exiles Enhanced Dedicated Server - Docker Edition</title>
+<title>Conan Exiles Enhanced Server — Wine Stable &amp; Native Linux Experimental</title>
 <style>
 :root {
   --bg: #0a0a0f;
@@ -176,6 +176,8 @@ body {
   border-color: var(--accent);
   box-shadow: 0 4px 15px var(--accent-glow);
 }
+#native-quick-start:focus,
+.native-hero-banner:focus-visible,
 .tab-btn:focus-visible,
 .section-header:focus-visible,
 .btn:focus-visible,
@@ -844,7 +846,7 @@ body {
     <h1 class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</h1>
     <div class="hero-subtitle">Docker Edition</div>
     <div class="hero-tagline">Two Docker runtimes — Wine Stable and Native Linux Experimental</div>
-    <a class="native-hero-banner" href="#quick-start" onclick="activateTab('quick-start', document.getElementById('tab-button-quick-start'))">🐧 Native Linux Experimental Available — View Quick Start</a>
+    <a class="native-hero-banner" href="#native-quick-start" onclick="openNativeQuickStart(event)">🐧 Native Linux Experimental Available — View Native Quick Start</a>
     <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
       Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" rel="noopener" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
       or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" rel="noopener" style="color:var(--accent);">Steam</a>
@@ -874,7 +876,7 @@ body {
     <div class="qs-container">
       <h2 class="qs-title">Quick Start</h2>
 
-      <div class="runtime-grid" aria-label="Choose a server runtime">
+      <div class="runtime-grid" role="group" aria-label="Choose a server runtime">
         <div class="runtime-card">
           <strong>🍷 Wine Stable</strong>
           <p class="qs-option-desc">Default and backward-compatible. Uses <code>ghcr.io/balnaimi/conan-exiles-server:latest</code> with <code>docker-compose.yml</code>.</p>
@@ -884,17 +886,7 @@ body {
           <p class="qs-option-desc">Runs the upstream Linux server without Wine. Uses <code>ghcr.io/balnaimi/conan-exiles-server:native</code> with isolated Native volumes.</p>
         </div>
       </div>
-
-      <div class="qs-option">
-        <div class="qs-option-title">🐧 Native Linux Quick Start</div>
-        <div class="qs-option-desc">The Native version is experimental and intentionally separate from Wine. Do not mount the same live data volumes into both runtimes.</div>
-        <pre class="code-block">mkdir conan-native && cd conan-native
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
-nano .env
-docker compose -f docker-compose.native.yml up -d</pre>
-        <div class="info-note">Native image: <code>ghcr.io/balnaimi/conan-exiles-server:native</code>. RCON is internal-only by default. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S/RCON health.</div>
-      </div>
+      <div class="info-note"><strong>Stable</strong> describes this project's recommended support tier; the image currently installs the upstream WineHQ Staging package. Updating <code>docker-compose.yml</code> never switches it to Native.</div>
       
       <div class="qs-option">
         <div class="qs-option-title">🍷 Wine Stable — Fast Start</div>
@@ -916,6 +908,18 @@ curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env
 cp .env.example .env
 nano .env
 docker compose up -d</pre>
+      </div>
+
+      <div class="qs-option" id="native-quick-start" tabindex="-1">
+        <div class="qs-option-title">🐧 Native Linux Experimental — Opt-in Quick Start</div>
+        <div class="qs-option-desc"><strong>Fresh Native deployment only.</strong> Do not point Native at Wine volumes. Existing servers must stop Wine, verify a backup, run the runtime migration dry-run, and use new Native volumes while keeping the original Wine volumes unchanged.</div>
+        <pre class="code-block">mkdir conan-native && cd conan-native
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose -f docker-compose.native.yml up -d</pre>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.0-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S/RCON health.</div>
+        <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
       </div>
 
       <div class="qs-option">
@@ -1092,7 +1096,7 @@ docker compose up -d</pre>
       </div>
       <div class="info-note" style="margin-top:1rem;">
         <strong>What the container does automatically:</strong><br>
-        On startup, it validates and stages the complete ordered set, downloads each Workshop item, verifies one usable top-level <strong>.pak</strong>, and atomically replaces <strong>ConanSandbox/Mods/modlist.txt</strong> only after every item succeeds. A bad ID or failed download preserves the last-known-good list and world.
+        On startup, it validates and stages the complete ordered set, downloads each Workshop item, and atomically replaces <strong>ConanSandbox/Mods/modlist.txt</strong> only after every item succeeds. <strong>Native Experimental</strong> strictly requires one non-empty usable top-level <strong>.pak</strong> per item and rejects malformed lists, duplicate package names, and ambiguous multi-PAK items. <strong>Wine Stable</strong> preserves v2.6 legacy behavior for comma gaps, deterministic multi-PAK selection, duplicate names, and zero-byte PAKs with warnings. A bad ID or failed download preserves the last-known-good list and world.
       </div>
 
       <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Apply, Update, or Remove Mods</h3>
@@ -1123,7 +1127,7 @@ docker compose logs -f</pre>
 <div id="tab-config-generator" class="tab-content" role="tabpanel" aria-labelledby="tab-button-config-generator" hidden>
   <section class="config-generator">
     <h2 class="config-title">⚙️ Configuration Generator</h2>
-    <p class="config-subtitle">Configure all 239 server settings and generate a ready-to-use .env file</p>
+    <p class="config-subtitle">Configure all 250 settings and generate a ready-to-use .env file</p>
 
     <div class="container">
       <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
@@ -1245,7 +1249,7 @@ docker events --since 30m \
       <div class="info-warning" style="margin-top:0.75rem;">If clients cannot connect after a UE4 → UE5 migration, inspect <code>Engine.ini</code> and remove stale <code>bUseBuildIdOverride</code> / <code>BuildIdOverride</code> lines.</div>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Backup and Restore</h3>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Native backups use SQLite's snapshot API, verify <code>game_0.db</code>, write SHA-256 checksums, and never mix a snapshot with separately copied live WAL/SHM files.</p>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Native backups use SQLite's snapshot API, verify <code>game_0.db</code>, write SHA-256 checksums, and never mix a snapshot with separately copied live WAL/SHM files. Password values in backed-up INIs are replaced with <code>[REDACTED]</code>; startup renders current values again from the environment or <code>_FILE</code> sources. Archives use owner-only permissions.</p>
       <pre class="code-block"># Light backup (world, LinuxServer INIs, mod IDs/list)
 docker compose -f docker-compose.native.yml exec conan-native \
   /scripts/native/backup.sh --reason manual
@@ -1253,8 +1257,23 @@ docker compose -f docker-compose.native.yml exec conan-native \
 # Verify a backup using a one-off container
 docker compose -f docker-compose.native.yml run --rm --no-deps \
   --entrypoint /scripts/native/restore.sh conan-native \
-  /data/backups/ARCHIVE.tar.gz --verify-only</pre>
-      <div class="info-note">Set <code>NATIVE_BACKUP_MODE=full</code> to include active managed PAKs. Scheduled backups and retention are optional and disabled by default. Stop the Native service before applying a restore.</div>
+  /data/backups/ARCHIVE.tar.gz --verify-only
+
+# Apply only while Native is stopped
+docker compose -f docker-compose.native.yml stop conan-native
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --target /data/server --apply
+docker compose -f docker-compose.native.yml up -d conan-native</pre>
+      <div class="info-note">Set <code>NATIVE_BACKUP_MODE=full</code> to include active managed PAKs. Light and full restores record the exact required Workshop IDs; the next startup re-downloads and verifies those dependencies before opening the world, and conflicting <code>SERVER_MOD_LIST</code> values fail closed. Scheduled backups and retention are optional and disabled by default.</div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Wine-to-Native Runtime Migration</h3>
+      <div class="info-warning"><strong>Do not point Native at Wine volumes.</strong> Stop Wine, verify a backup, run the helper without <code>--apply</code> first, and use a new destination. The helper snapshots <code>game_0.db</code> with SQLite and does not activate WindowsServer INIs as LinuxServer configuration; Native renders the reviewed <code>.env</code> on first start.</div>
+      <pre class="code-block">./scripts/migrate-wine-to-native.sh \
+  --source /path/to/wine-data \
+  --destination /path/to/new-native-data
+<span class="comment"># Review the dry-run, stop Wine, then repeat with --source-stopped --apply</span></pre>
+      <div class="info-note">The source is never deleted. The protected rollback archive intentionally contains the original Wine INIs and may therefore contain credentials; it is created mode 0600. Keep Wine data unchanged until Native passes database, A2S, RCON, mod, and player-connect checks.</div>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Wine Stable Backup</h3>
       <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
@@ -1510,7 +1529,7 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
-        <strong>v2.7.0 — Native Linux Experimental:</strong> Keeps Wine Stable on <code>latest</code> while adding a clearly advertised <code>:native</code> image, isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S/RCON lifecycle health, verified backup/restore, migration guardrails, and independent CI/GHCR tags.
+        <strong>v2.7.0 — Native Linux Experimental:</strong> <strong>Runtime stability contract:</strong> <code>latest</code> and <code>2.7.0</code> remain Wine Stable. Native is opt-in through <code>native</code>, <code>2.7.0-native</code>, and <code>docker-compose.native.yml</code>; no existing server is automatically migrated or switched. Adds isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S/RCON lifecycle health, verified backup/restore, migration guardrails, and independent CI/GHCR tags.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.6.1 — Duration and Clipboard Reliability Hotfix:</strong> Normalizes rounded duration hints across minute/hour/day boundaries, preserves fractional-hour precision, rejects negative durations, fixes singular labels, and guarantees temporary clipboard fallback elements are removed on both success and failure.
@@ -1637,6 +1656,21 @@ function activateTab(tabName, button = null, updateHash = true, shouldScroll = t
   selectedButton?.focus({ preventScroll: true });
 }
 
+function openNativeQuickStart(event = null, updateHash = true, smooth = true) {
+  event?.preventDefault();
+  const quickStartButton = document.getElementById('tab-button-quick-start');
+  activateTab('quick-start', quickStartButton, false, false, smooth);
+  if (updateHash && location.hash !== '#native-quick-start') {
+    history.pushState({ tab: 'quick-start', anchor: 'native-quick-start' }, '', '#native-quick-start');
+  }
+  const target = document.getElementById('native-quick-start');
+  const tabBar = document.querySelector('.tab-bar');
+  if (!target || !tabBar) return;
+  const top = target.getBoundingClientRect().top + window.scrollY - tabBar.offsetHeight - 16;
+  window.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  target.focus({ preventScroll: true });
+}
+
 function handleTabKeydown(event) {
   const tabs = [...document.querySelectorAll('.tab-btn')];
   const current = tabs.indexOf(event.currentTarget);
@@ -1651,7 +1685,9 @@ function handleTabKeydown(event) {
 }
 
 window.addEventListener('hashchange', () => {
-  activateTab(location.hash.slice(1), null, false);
+  const anchor = location.hash.slice(1);
+  if (anchor === 'native-quick-start') openNativeQuickStart(null, false);
+  else activateTab(anchor, null, false);
 });
 
 // ============================================
@@ -2167,6 +2203,11 @@ function init() {
   updateSecurityWarning();
   enhanceCodeBlocks();
   const hashTab = location.hash.slice(1);
+  if (hashTab === 'native-quick-start') {
+    openNativeQuickStart(null, false, false);
+    setTimeout(() => openNativeQuickStart(null, false, false), 100);
+    return;
+  }
   const hasDeepLink = TAB_NAMES.includes(hashTab);
   const initialTab = hasDeepLink ? hashTab : 'quick-start';
   activateTab(initialTab, null, false, hasDeepLink, false);

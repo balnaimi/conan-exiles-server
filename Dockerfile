@@ -1,7 +1,13 @@
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim@sha256:63a496b5d3b99214b39f5ed70eb71a61e590a77979c79cbee4faf991f8c0783e
 
 LABEL maintainer="BuRashid"
-LABEL description="Conan Exiles Enhanced Dedicated Server"
+LABEL org.opencontainers.image.title="Conan Exiles Enhanced Dedicated Server — Wine Stable"
+LABEL org.opencontainers.image.description="Project stable/default Wine runtime; Native Linux is a separate experimental image"
+LABEL org.opencontainers.image.source="https://github.com/balnaimi/conan-exiles-server"
+LABEL org.opencontainers.image.licenses="GPL-3.0-only"
+LABEL com.balnaimi.conan.runtime="wine"
+LABEL com.balnaimi.conan.support-tier="stable"
+LABEL com.balnaimi.conan.default="true"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEPREFIX=/wine

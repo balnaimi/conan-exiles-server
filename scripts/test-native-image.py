@@ -33,6 +33,7 @@ class NativeImageContractTests(unittest.TestCase):
         text = self.text()
         self.assertIn("scripts/native/", text)
         self.assertIn("scripts/runtime/", text)
+        self.assertIn("util-linux", text)
         self.assertRegex(text, r"(?m)^HEALTHCHECK\s")
         self.assertRegex(text, r"(?m)^ENTRYPOINT\s")
 

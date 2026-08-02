@@ -157,7 +157,11 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertIn("scripts/runtime/secrets.sh", text)
         self.assertIn("resolve_server_secrets", text)
         self.assertIn("scripts/runtime/install-mods.sh", text)
+        self.assertIn("restore-required-workshop-ids", text)
+        self.assertIn('if [ -e "$restore_mod_marker" ] || [ -L "$restore_mod_marker" ]', text)
+        self.assertIn("SERVER_MOD_LIST", text)
         self.assertIn("install_mods_atomic", text)
+        self.assertIn('rm -f -- "$restore_mod_marker"', text)
 
 
 if __name__ == "__main__":

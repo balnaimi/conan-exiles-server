@@ -310,6 +310,9 @@ def test_native_linux_is_prominent_and_unambiguous() -> None:
         "Wine Stable",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
+        "ghcr.io/balnaimi/conan-exiles-server:2.7.0-native",
+        "Updating the default Compose deployment never switches it to Native",
+        "Fresh Native deployment only",
     ):
         assert marker in readme_top, f"README top does not prominently expose Native runtime: {marker}"
     assert_contains(
@@ -317,7 +320,14 @@ def test_native_linux_is_prominent_and_unambiguous() -> None:
         "Wine Stable",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
-        "Native Linux Quick Start",
+        ":2.7.0-native",
+        "Native Linux Experimental — Opt-in Quick Start",
+        'href="#native-quick-start"',
+        'id="native-quick-start"',
+        "function openNativeQuickStart(",
+        "Conan Exiles Enhanced Server — Wine Stable &amp; Native Linux Experimental",
+        "Updating <code>docker-compose.yml</code> never switches it to Native",
+        "Password values in backed-up INIs are replaced",
         "SSE4.2",
         "8.70 GiB",
         "StayBloody",

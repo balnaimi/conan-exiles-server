@@ -26,12 +26,19 @@ if [ -n "$workshop_id" ]; then
         echo "Success. Downloaded empty fake item $workshop_id"
         exit 0
     fi
-    case "$workshop_id" in
-        3722881816) pak_name=StayBloody.pak ;;
-        3720904511) pak_name=BetterThralls.pak ;;
-        *) pak_name="Mod${workshop_id}.pak" ;;
-    esac
+    if [ -n "${FAKE_WORKSHOP_SHARED_PAK_NAME:-}" ]; then
+        pak_name="$FAKE_WORKSHOP_SHARED_PAK_NAME"
+    else
+        case "$workshop_id" in
+            3722881816) pak_name=StayBloody.pak ;;
+            3720904511) pak_name=BetterThralls.pak ;;
+            *) pak_name="Mod${workshop_id}.pak" ;;
+        esac
+    fi
     printf 'fake workshop payload %s\n' "$workshop_id" > "$root/$pak_name"
+    if [ "${FAKE_WORKSHOP_ZERO_BYTE_ID:-}" = "$workshop_id" ]; then
+        : > "$root/$pak_name"
+    fi
     if [ "${FAKE_WORKSHOP_AMBIGUOUS_ID:-}" = "$workshop_id" ]; then
         printf 'second package\n' > "$root/SecondPackage.pak"
     fi

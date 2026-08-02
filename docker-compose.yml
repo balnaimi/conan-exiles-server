@@ -1,9 +1,17 @@
+# STABLE WINE RUNTIME — recommended/default
+# :latest and unqualified version tags always remain the Wine runtime.
+# For Experimental Native Linux, use docker-compose.native.yml instead.
+# Never attach Native containers to these Wine data volumes.
 services:
   conan:
     image: ghcr.io/balnaimi/conan-exiles-server:latest
     container_name: conan-exiles-enhanced
     restart: unless-stopped
     env_file: .env
+    labels:
+      com.balnaimi.conan.runtime: "wine"
+      com.balnaimi.conan.support-tier: "stable"
+      com.balnaimi.conan.default: "true"
     ports:
       - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"
       - "7778:7778/udp"

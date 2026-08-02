@@ -82,6 +82,9 @@ render_server_config
 # ============================================
 # 4. Download / install Steam Workshop mods atomically
 # ============================================
+# Preserve v2.6.x Wine behavior for empty lists and multi-PAK Workshop items
+# while still gaining last-known-good atomic activation on failures.
+export MOD_INSTALL_COMPAT_MODE=wine
 # shellcheck source=scripts/runtime/install-mods.sh
 source /scripts/runtime/install-mods.sh
 install_mods_atomic

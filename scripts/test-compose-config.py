@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sqlite3
 import subprocess
 import tempfile
@@ -26,6 +27,13 @@ class NativeComposeTests(unittest.TestCase):
         self.assertIn("native-save-data", text)
         self.assertIn("native-steam-data", text)
         self.assertIn("native-backups", text)
+        self.assertIn("platform: linux/amd64", text)
+        self.assertIn('com.balnaimi.conan.support-tier: "experimental"', text)
+        stable = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+        self.assertIn("ghcr.io/balnaimi/conan-exiles-server:latest", stable)
+        self.assertIn('com.balnaimi.conan.support-tier: "stable"', stable)
+        self.assertNotIn("native-game-data", stable)
+        self.assertNotIn(":latest", text)
         self.assertIn("stop_grace_period: 2m", text)
         self.assertIn("no-new-privileges:true", text)
         self.assertIn("cap_drop:", text)
@@ -59,13 +67,31 @@ class CiWorkflowTests(unittest.TestCase):
 
     def test_publish_matrix_keeps_latest_wine_and_native_separate(self) -> None:
         text = self.PUBLISH.read_text(encoding="utf-8")
-        self.assertIn("variant: wine", text)
-        self.assertIn("channel: latest", text)
-        self.assertIn("dockerfile: Dockerfile", text)
-        self.assertIn("variant: native", text)
-        self.assertIn("channel: native", text)
-        self.assertIn("dockerfile: Dockerfile.native", text)
-        self.assertIn("semver_suffix: -native", text)
+        self.assertIn("variant: wine-stable", text)
+        self.assertIn("variant: native-experimental", text)
+        self.assertIn("flavor: |\n            latest=false", text)
+        self.assertIn("type=semver,pattern={{version}}${{ matrix.semver_suffix }}", text)
+        self.assertIn("platforms: linux/amd64", text)
+        blocks = {
+            match.group("variant"): match.group("body")
+            for match in re.finditer(
+                r"^\s{10}- variant: (?P<variant>[^\n]+)\n(?P<body>(?:^\s{12}[^\n]+\n)+)",
+                text,
+                re.MULTILINE,
+            )
+        }
+        self.assertEqual(set(blocks), {"wine-stable", "native-experimental"})
+        self.assertIn("channel: latest", blocks["wine-stable"])
+        self.assertIn("semver_suffix: ''", blocks["wine-stable"])
+        self.assertNotIn("channel: latest", blocks["native-experimental"])
+        self.assertIn("channel: native", blocks["native-experimental"])
+        self.assertIn("semver_suffix: -native", blocks["native-experimental"])
+        self.assertIn("title: Conan Exiles Enhanced Dedicated Server — Wine Stable", blocks["wine-stable"])
+        self.assertIn("title: Conan Exiles Enhanced Dedicated Server — Native Linux Experimental", blocks["native-experimental"])
+        self.assertIn("support_tier: stable", blocks["wine-stable"])
+        self.assertIn("support_tier: experimental", blocks["native-experimental"])
+        self.assertIn("org.opencontainers.image.title=${{ matrix.title }}", text)
+        self.assertIn("com.balnaimi.conan.support-tier=${{ matrix.support_tier }}", text)
         self.assertIn("file: ${{ matrix.dockerfile }}", text)
 
 
@@ -109,25 +135,40 @@ class MigrationTests(unittest.TestCase):
         self.assertIn("dry-run", result.stdout.lower())
         self.assertFalse(self.destination.exists())
 
-    def test_apply_copies_world_and_translates_config_path(self) -> None:
+    def test_apply_requires_explicit_stopped_source_evidence(self) -> None:
         result = self.run_migration("--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("source-stopped", result.stderr)
+        self.assertFalse(self.destination.exists())
+
+    def test_apply_snapshots_world_without_activating_windows_ini(self) -> None:
+        result = self.run_migration("--apply", "--source-stopped")
         self.assertEqual(result.returncode, 0, result.stderr)
         database = self.destination / "ConanSandbox" / "Saved" / "game_0.db"
-        engine = self.destination / "ConanSandbox" / "Saved" / "Config" / "LinuxServer" / "Engine.ini"
+        linux_config = self.destination / "ConanSandbox" / "Saved" / "Config" / "LinuxServer"
         self.assertTrue(database.is_file())
-        self.assertTrue(engine.is_file())
-        text = engine.read_text(encoding="utf-8")
-        self.assertNotIn("BuildIdOverride", text)
-        self.assertNotIn("bUseBuildIdOverride", text)
+        self.assertFalse(linux_config.exists())
+        self.assertTrue((self.destination / ".migration" / "README.txt").is_file())
+        self.assertIn("rendered from your .env", result.stdout)
+        self.assertIn("Rollback: stop Native and restart Wine", result.stdout)
+        archives = list(self.destination.parent.glob("wine-pre-native-*.tar.gz"))
+        self.assertEqual(len(archives), 1)
+        self.assertEqual(archives[0].stat().st_mode & 0o777, 0o600)
         connection = sqlite3.connect(database)
         self.addCleanup(connection.close)
         self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")
         self.assertEqual(connection.execute("SELECT value FROM migration").fetchone()[0], "ok")
 
+    def test_rollback_archive_uses_exclusive_random_name(self) -> None:
+        text = MIGRATE.read_text(encoding="utf-8")
+        self.assertIn("mktemp", text)
+        self.assertIn("wine-pre-native-", text)
+        self.assertNotIn('backup_path="${destination_parent}/wine-pre-native-${timestamp}.tar.gz"', text)
+
     def test_apply_refuses_nonempty_destination(self) -> None:
         self.destination.mkdir(parents=True)
         (self.destination / "keep.txt").write_text("keep", encoding="utf-8")
-        result = self.run_migration("--apply")
+        result = self.run_migration("--apply", "--source-stopped")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("not empty", result.stderr)
         self.assertEqual((self.destination / "keep.txt").read_text(encoding="utf-8"), "keep")

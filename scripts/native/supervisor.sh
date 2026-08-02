@@ -6,8 +6,6 @@ RCON_ENABLED="${RCON_ENABLED:-False}"
 RCON_PORT="${RCON_PORT:-25575}"
 NATIVE_STOP_GRACE_SECONDS="${NATIVE_STOP_GRACE_SECONDS:-30}"
 NATIVE_TERM_GRACE_SECONDS="${NATIVE_TERM_GRACE_SECONDS:-10}"
-runtime_dir="${GAME_DIR}/.runtime"
-pid_file="${GAME_DIR}/.runtime/server.pid"
 server_pid=""
 backup_pid=""
 stop_requested=false
@@ -33,7 +31,8 @@ server_exited() {
 }
 
 wait_for_exit() {
-    local seconds="$1" ticks=$((seconds * 4))
+    local seconds="$1"
+    local ticks=$((seconds * 4))
     local tick
     for ((tick=0; tick<ticks; tick++)); do
         server_exited && return 0
@@ -50,7 +49,7 @@ graceful_stop() {
     fi
     log "Stop requested for native Shipping process pid=$server_pid"
 
-    if is_true "$RCON_ENABLED" && [ -n "${RCON_PASSWORD:-}" ]; then
+    if is_true "$RCON_ENABLED" && { [ -n "${RCON_PASSWORD:-}" ] || [ -r "${RCON_PASSWORD_FILE:-/nonexistent}" ]; }; then
         if python3 /scripts/native/rcon.py --host 127.0.0.1 --port "$RCON_PORT" --timeout 5 shutdown >/dev/null; then
             log "RCON stop command accepted"
         else
@@ -82,11 +81,21 @@ if [ -n "${MULTIHOME:-}" ]; then
     args+=("-MULTIHOME=${MULTIHOME}" "-MULTIHOMEHTTP=${MULTIHOMEHTTP:-$MULTIHOME}")
 fi
 
-setsid "$GAME_DIR/ConanSandboxServer.sh" "${args[@]}" &
+setsid "$GAME_DIR/ConanSandboxServer.sh" "${args[@]}" 9>&- &
 server_pid=$!
-mkdir -p "$runtime_dir"
-printf '%s\n' "$server_pid" > "$pid_file"
-chmod 0600 "$pid_file"
+if ! python3 /scripts/native/runtime_state.py publish-pid --game-dir "$GAME_DIR" --pid "$server_pid"; then
+    warn "Could not publish server PID safely"
+    kill -TERM -- "-$server_pid" 2>/dev/null || kill -TERM "$server_pid" 2>/dev/null || true
+    wait "$server_pid" 2>/dev/null || true
+    exit 1
+fi
+if ! flock -u 9; then
+    warn "Could not release startup operation lock after PID publication"
+    kill -TERM -- "-$server_pid" 2>/dev/null || kill -TERM "$server_pid" 2>/dev/null || true
+    wait "$server_pid" 2>/dev/null || true
+    exit 1
+fi
+exec 9>&-
 log "Started native Shipping process group pid=$server_pid"
 
 if is_true "${NATIVE_BACKUP_ENABLED:-false}"; then
@@ -102,8 +111,8 @@ if [ -n "$backup_pid" ] && kill -0 "$backup_pid" 2>/dev/null; then
     kill -TERM "$backup_pid" 2>/dev/null || true
     wait "$backup_pid" 2>/dev/null || true
 fi
-if [ -f "$pid_file" ] && [ "$(tr -cd '0-9' < "$pid_file")" = "$server_pid" ]; then
-    rm -f -- "$pid_file"
+if ! python3 /scripts/native/runtime_state.py remove-pid --game-dir "$GAME_DIR" --pid "$server_pid"; then
+    warn "Could not remove tracked server PID safely"
 fi
 if [ "$stop_requested" = true ]; then
     wait "$server_pid" 2>/dev/null || true

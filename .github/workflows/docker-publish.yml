@@ -21,16 +21,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - variant: wine
+          - variant: wine-stable
             dockerfile: Dockerfile
             channel: latest
             semver_suffix: ''
             sha_suffix: ''
-          - variant: native
+            title: Conan Exiles Enhanced Dedicated Server — Wine Stable
+            description: Project stable/default Wine runtime; Native Linux is a separate experimental image
+            runtime: wine
+            support_tier: stable
+            default_runtime: 'true'
+          - variant: native-experimental
             dockerfile: Dockerfile.native
             channel: native
             semver_suffix: -native
             sha_suffix: -native
+            title: Conan Exiles Enhanced Dedicated Server — Native Linux Experimental
+            description: Experimental opt-in Native Linux runtime; Wine remains the stable/default image
+            runtime: native-linux
+            support_tier: experimental
+            default_runtime: 'false'
 
     name: Build ${{ matrix.variant }} image
 
@@ -54,16 +64,25 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
           tags: |
             type=raw,value=${{ matrix.channel }},enable={{is_default_branch}}
             type=semver,pattern={{version}}${{ matrix.semver_suffix }}
             type=sha,suffix=${{ matrix.sha_suffix }}
+          labels: |
+            org.opencontainers.image.title=${{ matrix.title }}
+            org.opencontainers.image.description=${{ matrix.description }}
+            com.balnaimi.conan.runtime=${{ matrix.runtime }}
+            com.balnaimi.conan.support-tier=${{ matrix.support_tier }}
+            com.balnaimi.conan.default=${{ matrix.default_runtime }}
 
       - name: Build and push ${{ matrix.variant }} image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

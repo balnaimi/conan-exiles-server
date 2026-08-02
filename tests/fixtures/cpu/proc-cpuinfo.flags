@@ -1,0 +1,4 @@
+processor	: 0
+vendor_id	: AuthenticAMD
+model name	: AMD Ryzen 7 5800X 8-Core Processor
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge sse sse2 sse4_1 sse4_2 avx avx2

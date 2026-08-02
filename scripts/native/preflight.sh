@@ -8,10 +8,16 @@ fatal() { printf '[NATIVE] ERROR: %s\n' "$*" >&2; exit 1; }
 flags_file="${CPU_FLAGS_FILE:-/proc/cpuinfo}"
 [ -r "$flags_file" ] || fatal "Cannot read CPU flags from $flags_file"
 
-if [ -n "${CPU_FLAGS_FILE:-}" ]; then
+flags=""
+while IFS= read -r line; do
+    if [[ "$line" =~ ^(flags|Features)[[:space:]]*: ]]; then
+        flags="${line#*:}"
+        break
+    fi
+done < "$flags_file"
+# Unit fixtures may contain only the raw space-separated flag list.
+if [ -z "$flags" ] && [ -n "${CPU_FLAGS_FILE:-}" ]; then
     flags="$(tr '\n' ' ' < "$flags_file")"
-else
-    flags="$(while IFS= read -r line; do case "$line" in flags\ *|Features\ *) printf '%s' "${line#*:}"; break;; esac; done < "$flags_file")"
 fi
 
 has_flag() {

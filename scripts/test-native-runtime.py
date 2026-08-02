@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+import io
+import importlib.util
+import hashlib
+import fcntl
 import json
 import os
 import socket
@@ -12,13 +16,16 @@ import subprocess
 import tarfile
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 NATIVE = ROOT / "scripts" / "native"
 PREFLIGHT = NATIVE / "preflight.sh"
 INSTALLER = NATIVE / "install-server.sh"
+RUNTIME_STATE = NATIVE / "runtime_state.py"
 FAKE_STEAMCMD = ROOT / "tests" / "fakes" / "steamcmd"
 CPU_FIXTURES = ROOT / "tests" / "fixtures" / "cpu"
 
@@ -61,6 +68,34 @@ class CpuPreflightTests(unittest.TestCase):
         self.assertIn("sse4_2", result.stderr)
         self.assertIn("VPS", result.stderr)
 
+    def test_proc_cpuinfo_with_tabbed_flags_line_passes(self) -> None:
+        fixture = ROOT / "tests" / "fixtures" / "cpu" / "proc-cpuinfo.flags"
+        source = PREFLIGHT.read_text(encoding="utf-8")
+        source = source.replace(
+            'flags_file="${CPU_FLAGS_FILE:-/proc/cpuinfo}"',
+            f'flags_file="${{CPU_FLAGS_FILE:-{fixture}}}"',
+        )
+        descriptor, temporary_path = tempfile.mkstemp(prefix="preflight-proc-cpuinfo-", suffix=".sh")
+        os.close(descriptor)
+        script = Path(temporary_path)
+        self.addCleanup(script.unlink, missing_ok=True)
+        script.write_text(source, encoding="utf-8")
+        script.chmod(0o755)
+        environment = os.environ.copy()
+        environment.pop("CPU_FLAGS_FILE", None)
+        environment["NATIVE_PREFLIGHT_SKIP_RESOURCES"] = "1"
+        result = subprocess.run(
+            ["bash", str(script)],
+            env=environment,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("sse4_2=yes", result.stdout)
+        self.assertIn("avx2=yes", result.stdout)
+
     def test_sse42_without_avx2_warns_but_passes(self) -> None:
         result = self.run_fixture("sse42-no-avx2.flags")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -101,15 +136,15 @@ class NativeInstallTests(unittest.TestCase):
         self.assertIn('"buildid" "24383534"', manifest.read_text(encoding="utf-8"))
         self.assertIn("installed_build_id=24383534", result.stdout)
 
-    def test_failed_update_preserves_existing_working_install(self) -> None:
+    def test_failed_update_fails_closed_without_claiming_transactional_rollback(self) -> None:
         shipping = self.game_dir / "ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping"
         shipping.parent.mkdir(parents=True)
         shipping.write_text("known-good", encoding="utf-8")
         shipping.chmod(0o755)
         result = run_script(INSTALLER, self.environment(FAKE_STEAMCMD_FAIL="1"))
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(shipping.read_text(encoding="utf-8"), "known-good")
-        self.assertIn("preserved", result.stderr)
+        self.assertNotIn("preserved", result.stderr.lower())
+        self.assertIn("may be partially updated", result.stderr)
 
     def test_invalid_validate_value_is_rejected_before_steamcmd(self) -> None:
         result = run_script(INSTALLER, self.environment(NATIVE_VALIDATE_SERVER="sometimes"))
@@ -210,6 +245,19 @@ class AtomicModInstallTests(unittest.TestCase):
         (self.mods_dir / ".managed-mods.tsv").write_text("99\tKnownGood.pak\n", encoding="utf-8")
         return previous
 
+    def test_runtime_steam_home_workshop_path_is_discovered(self) -> None:
+        runtime_root = self.steam_dir / "Steam" / "steamapps" / "workshop" / "content" / "440900"
+        result = self.run_installer(
+            "3722881816",
+            STEAM_WORKSHOP_ROOT="",
+            FAKE_WORKSHOP_ROOT=str(runtime_root),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            (self.mods_dir / "modlist.txt").read_text(encoding="utf-8"),
+            "*StayBloody.pak\n",
+        )
+
     def test_two_mods_activate_atomically_in_requested_order(self) -> None:
         result = self.run_installer("3722881816,3720904511")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -239,6 +287,34 @@ class AtomicModInstallTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual((self.mods_dir / "modlist.txt").read_bytes(), previous)
 
+    def test_native_empty_comma_entry_fails_before_touching_live_list(self) -> None:
+        previous = self.seed_previous()
+        result = self.run_installer("3722881816,,3720904511")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Malformed SERVER_MOD_LIST", result.stderr)
+        self.assertEqual((self.mods_dir / "modlist.txt").read_bytes(), previous)
+
+    def test_native_rejects_whitespace_and_all_comma_gap_forms(self) -> None:
+        malformed = (
+            "   \t ",
+            "3722881816, 3720904511",
+            "3722881816\t3720904511",
+            "3722881816 3720904511",
+            "3722881816\r3720904511",
+            "3722881816\n3720904511",
+            ",3722881816",
+            "3722881816,",
+            "3722881816,,3720904511",
+            ",",
+        )
+        for value in malformed:
+            with self.subTest(value=value):
+                previous = self.seed_previous()
+                result = self.run_installer(value)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("malformed", result.stderr.lower())
+                self.assertEqual((self.mods_dir / "modlist.txt").read_bytes(), previous)
+
     def test_ambiguous_multiple_paks_preserve_live_list(self) -> None:
         previous = self.seed_previous()
         result = self.run_installer(
@@ -247,6 +323,74 @@ class AtomicModInstallTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("exactly one", result.stderr)
         self.assertEqual((self.mods_dir / "modlist.txt").read_bytes(), previous)
+
+    def test_wine_compatibility_keeps_exactly_empty_list_untouched(self) -> None:
+        previous = self.seed_previous()
+        result = self.run_installer("", MOD_INSTALL_COMPAT_MODE="wine")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.mods_dir / "modlist.txt").read_bytes(), previous)
+
+    def test_wine_compatibility_whitespace_list_deactivates_mods(self) -> None:
+        self.seed_previous()
+        result = self.run_installer("   \t ", MOD_INSTALL_COMPAT_MODE="wine")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.mods_dir / "modlist.txt").read_text(encoding="utf-8"), "")
+
+    def test_wine_compatibility_skips_empty_comma_entries(self) -> None:
+        result = self.run_installer(
+            ",3722881816,,3720904511,",
+            MOD_INSTALL_COMPAT_MODE="wine",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            (self.mods_dir / "modlist.txt").read_text(encoding="utf-8"),
+            "*StayBloody.pak\n*BetterThralls.pak\n",
+        )
+
+    def test_wine_compatibility_multiline_uses_only_first_physical_line(self) -> None:
+        result = self.run_installer(
+            "3722881816\n3720904511",
+            MOD_INSTALL_COMPAT_MODE="wine",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            (self.mods_dir / "modlist.txt").read_text(encoding="utf-8"),
+            "*StayBloody.pak\n",
+        )
+
+    def test_wine_compatibility_selects_deterministic_lexical_pak(self) -> None:
+        result = self.run_installer(
+            "3722881816",
+            MOD_INSTALL_COMPAT_MODE="wine",
+            FAKE_WORKSHOP_AMBIGUOUS_ID="3722881816",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            (self.mods_dir / "modlist.txt").read_text(encoding="utf-8"),
+            "*SecondPackage.pak\n",
+        )
+        self.assertIn("selecting lexical first", result.stderr)
+
+    def test_wine_compatibility_allows_duplicate_package_names(self) -> None:
+        result = self.run_installer(
+            "3722881816,3720904511",
+            MOD_INSTALL_COMPAT_MODE="wine",
+            FAKE_WORKSHOP_SHARED_PAK_NAME="SharedPackage.pak",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            (self.mods_dir / "modlist.txt").read_text(encoding="utf-8"),
+            "*SharedPackage.pak\n*SharedPackage.pak\n",
+        )
+
+    def test_wine_compatibility_allows_zero_byte_pak(self) -> None:
+        result = self.run_installer(
+            "3722881816",
+            MOD_INSTALL_COMPAT_MODE="wine",
+            FAKE_WORKSHOP_ZERO_BYTE_ID="3722881816",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.mods_dir / "StayBloody.pak").stat().st_size, 0)
 
     def test_prune_removes_only_previously_managed_stale_paks(self) -> None:
         self.seed_previous()
@@ -274,6 +418,134 @@ class AtomicModInstallTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((self.mods_dir / "KnownGood.pak").is_file())
         self.assertNotIn("KnownGood.pak", (self.mods_dir / "modlist.txt").read_text(encoding="utf-8"))
+
+
+class RuntimeStateSecurityTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.game = self.root / "server"
+        self.runtime = self.game / ".runtime"
+        self.runtime.mkdir(parents=True)
+
+    def run_state(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["python3", str(RUNTIME_STATE), *args],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+    def test_lock_exec_rejects_symlink_without_truncating_victim(self) -> None:
+        victim = self.root / "victim"
+        victim.write_bytes(b"do-not-truncate")
+        (self.runtime / "operation.lock").symlink_to(victim)
+        result = self.run_state(
+            "lock-exec", "--game-dir", str(self.game), "--", "/bin/true"
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("symlink", result.stderr.lower())
+        self.assertEqual(victim.read_bytes(), b"do-not-truncate")
+
+    def test_publish_pid_atomically_replaces_symlink_without_touching_victim(self) -> None:
+        victim = self.root / "pid-victim"
+        victim.write_bytes(b"keep-me")
+        (self.runtime / "server.pid").symlink_to(victim)
+        result = self.run_state(
+            "publish-pid", "--game-dir", str(self.game), "--pid", "1234"
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(victim.read_bytes(), b"keep-me")
+        self.assertFalse((self.runtime / "server.pid").is_symlink())
+        self.assertEqual((self.runtime / "server.pid").read_text(encoding="ascii"), "1234\n")
+        self.assertEqual((self.runtime / "server.pid").stat().st_mode & 0o777, 0o600)
+
+    def test_exec_failure_closes_fd9_and_releases_lock(self) -> None:
+        probe = (
+            "import fcntl, importlib.util, os, pathlib\n"
+            f"p=pathlib.Path({str(RUNTIME_STATE)!r})\n"
+            "s=importlib.util.spec_from_file_location('runtime_state_probe', p)\n"
+            "m=importlib.util.module_from_spec(s); s.loader.exec_module(m)\n"
+            f"g=pathlib.Path({str(self.game)!r})\n"
+            "try:\n m.lock_exec(g, ['/definitely/missing-command'])\n"
+            "except OSError:\n pass\n"
+            "try:\n os.fstat(9); raise SystemExit('fd9 leaked')\n"
+            "except OSError:\n pass\n"
+            "fd=os.open(g/'.runtime'/'operation.lock', os.O_RDWR|os.O_NOFOLLOW)\n"
+            "fcntl.flock(fd, fcntl.LOCK_EX|fcntl.LOCK_NB); os.close(fd)\n"
+        )
+        result = subprocess.run(
+            ["python3", "-c", probe],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_verify_lock_rejects_spoofed_environment_without_fd9(self) -> None:
+        result = self.run_state("verify-lock", "--game-dir", str(self.game))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("fd 9", result.stderr.lower())
+
+    def test_lock_stays_held_until_pid_is_published(self) -> None:
+        entered = self.root / "entered"
+        child = self.root / "publish-after-delay.sh"
+        child.write_text(
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            f": > {entered!s}\n"
+            "sleep 0.4\n"
+            f"python3 {RUNTIME_STATE!s} publish-pid --game-dir {self.game!s} --pid $$\n"
+            "flock -u 9\n"
+            "exec 9>&-\n"
+            "sleep 0.2\n",
+            encoding="utf-8",
+        )
+        child.chmod(0o755)
+        process = subprocess.Popen(
+            [
+                "python3",
+                str(RUNTIME_STATE),
+                "lock-exec",
+                "--game-dir",
+                str(self.game),
+                "--",
+                str(child),
+            ],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        self.addCleanup(lambda: process.poll() is None and process.kill())
+        deadline = time.monotonic() + 3
+        while not entered.exists() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertTrue(entered.exists(), "lock holder did not start")
+        lock_fd = os.open(self.runtime / "operation.lock", os.O_RDWR | os.O_NOFOLLOW)
+        try:
+            with self.assertRaises(BlockingIOError):
+                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.assertFalse((self.runtime / "server.pid").exists())
+            while not (self.runtime / "server.pid").exists() and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertTrue((self.runtime / "server.pid").exists())
+            acquired = False
+            while not acquired and time.monotonic() < deadline:
+                try:
+                    fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    acquired = True
+                except BlockingIOError:
+                    time.sleep(0.01)
+            self.assertTrue(acquired, "operation lock was not released after PID publication")
+        finally:
+            os.close(lock_fd)
+        stdout, stderr = process.communicate(timeout=3)
+        self.assertEqual(process.returncode, 0, stdout + stderr)
 
 
 class ReadinessAndLifecycleTests(unittest.TestCase):
@@ -363,10 +635,10 @@ class ReadinessAndLifecycleTests(unittest.TestCase):
             with connection:
                 auth_id, auth_type, password = read_packet(connection)
                 observed.update(auth_type=auth_type, password=password)
-                send_packet(connection, auth_id, 2, "")
+                send_packet(connection, 0, 2, "Authenticated.")
                 command_id, command_type, command = read_packet(connection)
                 observed.update(command_type=command_type, command=command)
-                send_packet(connection, command_id, 0, "command-ok")
+                send_packet(connection, auth_id, 0, "command-ok")
             listener.close()
 
         thread = threading.Thread(target=server, daemon=True)
@@ -399,10 +671,27 @@ class ReadinessAndLifecycleTests(unittest.TestCase):
         entrypoint = (ROOT / "scripts" / "native" / "entrypoint.sh").read_text(encoding="utf-8")
         self.assertIn("rcon.py", supervisor)
         self.assertIn("server_pid", supervisor)
-        self.assertIn(".runtime/server.pid", supervisor)
+        self.assertIn('local seconds="$1"\n', supervisor)
+        self.assertIn('local ticks=$((seconds * 4))', supervisor)
+        self.assertNotIn('local seconds="$1" ticks=', supervisor)
+        self.assertNotIn('> "$pid_file"', supervisor)
         self.assertNotIn("--password", supervisor)
         self.assertIn("a2s-info.py", healthcheck)
+        self.assertIn("listplayers", healthcheck)
+        self.assertIn("NATIVE_HEALTHCHECK_RCON", healthcheck)
+        self.assertNotIn('case "${RCON_ENABLED,,}"', healthcheck)
+        self.assertNotIn(" help ", healthcheck)
         self.assertIn("supervisor.sh", entrypoint)
+        self.assertIn("RUNTIME_RCON_SECRET_FILE", entrypoint)
+        self.assertIn("runtime_state.py lock-exec", entrypoint)
+        self.assertIn("runtime_state.py verify-lock", entrypoint)
+        self.assertNotIn('exec 9> "$GAME_DIR/.runtime/operation.lock"', entrypoint)
+        self.assertNotIn("flock -u 9", entrypoint)
+        self.assertIn("runtime_state.py publish-pid", supervisor)
+        self.assertIn("flock -u 9", supervisor)
+        self.assertLess(supervisor.index("runtime_state.py publish-pid"), supervisor.index("flock -u 9"))
+        self.assertRegex(supervisor, r'setsid .* 9>&- &')
+        self.assertIn("unset ADMIN_PASSWORD SERVER_PASSWORD RCON_PASSWORD", entrypoint)
         self.assertNotIn('exec "$GAME_DIR/ConanSandboxServer.sh"', entrypoint)
 
 
@@ -423,8 +712,16 @@ class BackupRestoreTests(unittest.TestCase):
         self.config.mkdir(parents=True)
         self.mods.mkdir(parents=True)
         self.backups.mkdir()
-        (self.config / "Engine.ini").write_text("[OnlineSubsystem]\nServerName=Backup Test\n", encoding="utf-8")
-        (self.config / "Game.ini").write_text("[RconPlugin]\nRconEnabled=False\n", encoding="utf-8")
+        (self.config / "Engine.ini").write_text(
+            "[OnlineSubsystem]\nServerName=Backup Test\nServerPassword=UNIT_SERVER_SECRET\n",
+            encoding="utf-8",
+        )
+        (self.config / "ServerSettings.ini").write_text(
+            "[ServerSettings]\nAdminPassword=UNIT_ADMIN_SECRET\n", encoding="utf-8"
+        )
+        (self.config / "Game.ini").write_text(
+            "[RconPlugin]\nRconEnabled=False\nRconPassword=UNIT_RCON_SECRET\n", encoding="utf-8"
+        )
         (self.mods / "modlist.txt").write_text("*StayBloody.pak\n", encoding="utf-8")
         (self.mods / ".managed-mods.tsv").write_text("3722881816\tStayBloody.pak\n", encoding="utf-8")
         (self.mods / "StayBloody.pak").write_bytes(b"test-pak")
@@ -467,6 +764,27 @@ class BackupRestoreTests(unittest.TestCase):
         with tarfile.open(archive, "r:gz") as bundle:
             return {member.name for member in bundle.getmembers()}
 
+    def archive_with_metadata(self, archive: Path, metadata: dict[str, object]) -> Path:
+        stage = Path(self.temporary.name) / "tampered-stage"
+        stage.mkdir()
+        with tarfile.open(archive, "r:gz") as bundle:
+            bundle.extractall(stage)
+        (stage / "metadata.json").write_text(
+            json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        rows = []
+        for path in sorted(stage.rglob("*")):
+            if path.is_file() and path.name != "checksums.sha256":
+                digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                rows.append(f"{digest}  {path.relative_to(stage).as_posix()}")
+        (stage / "checksums.sha256").write_text("\n".join(rows) + "\n", encoding="utf-8")
+        tampered = Path(self.temporary.name) / "tampered.tar.gz"
+        with tarfile.open(tampered, "w:gz") as bundle:
+            for path in sorted(stage.rglob("*")):
+                if path.is_file():
+                    bundle.add(path, arcname=path.relative_to(stage).as_posix(), recursive=False)
+        return tampered
+
     def test_light_backup_uses_sqlite_snapshot_without_wal_or_paks(self) -> None:
         archive = self.backup("light")
         names = self.archive_names(archive)
@@ -476,6 +794,17 @@ class BackupRestoreTests(unittest.TestCase):
         self.assertIn("metadata.json", names)
         self.assertIn("checksums.sha256", names)
         self.assertFalse(any(name.endswith(("-wal", "-shm", ".pak")) for name in names))
+        self.assertEqual(archive.stat().st_mode & 0o777, 0o600)
+        config_payload = b""
+        with tarfile.open(archive, "r:gz") as bundle:
+            for name in ("config/Engine.ini", "config/ServerSettings.ini", "config/Game.ini"):
+                extracted = bundle.extractfile(name)
+                self.assertIsNotNone(extracted)
+                assert extracted is not None
+                config_payload += extracted.read() + b"\n"
+        for marker in (b"UNIT_SERVER_SECRET", b"UNIT_ADMIN_SECRET", b"UNIT_RCON_SECRET"):
+            self.assertNotIn(marker, config_payload)
+        self.assertGreaterEqual(config_payload.count(b"[REDACTED]"), 3)
         with tempfile.TemporaryDirectory() as extracted:
             with tarfile.open(archive, "r:gz") as bundle:
                 bundle.extract("world/game_0.db", path=extracted)
@@ -490,6 +819,29 @@ class BackupRestoreTests(unittest.TestCase):
         names = self.archive_names(archive)
         self.assertIn("mods/StayBloody.pak", names)
         self.assertNotIn("mods/Unmanaged.pak", names)
+
+    def test_empty_mod_restore_records_explicit_empty_dependency_set(self) -> None:
+        for path in (self.mods / "modlist.txt", self.mods / ".managed-mods.tsv", self.mods / "StayBloody.pak"):
+            path.unlink()
+        for mode in ("light", "full"):
+            with self.subTest(mode=mode):
+                archive = self.backup(mode)
+                target = Path(self.temporary.name) / f"empty-mod-{mode}"
+                result = subprocess.run(
+                    ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                marker = target / ".runtime" / "restore-required-workshop-ids"
+                self.assertTrue(marker.is_file())
+                self.assertEqual(marker.read_text(encoding="ascii"), "\n")
+
+    def test_backup_and_restore_hash_files_incrementally(self) -> None:
+        self.assertNotIn(".read_bytes()", self.BACKUP.read_text(encoding="utf-8"))
+        self.assertNotIn(".read_bytes()", self.RESTORE.read_text(encoding="utf-8"))
 
     def test_restore_verify_and_apply_to_fresh_target(self) -> None:
         archive = self.backup("light")
@@ -519,6 +871,171 @@ class BackupRestoreTests(unittest.TestCase):
         self.addCleanup(connection.close)
         self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")
 
+    def test_restore_existing_world_creates_pre_restore_backup_without_lock_deadlock(self) -> None:
+        archive = self.backup("light")
+        target = Path(self.temporary.name) / "existing-target"
+        target_saved = target / "ConanSandbox" / "Saved"
+        target_saved.mkdir(parents=True)
+        existing = sqlite3.connect(target_saved / "game_0.db")
+        existing.execute("CREATE TABLE old_world (value TEXT)")
+        existing.execute("INSERT INTO old_world VALUES ('before-restore')")
+        existing.commit()
+        existing.close()
+        target_backups = Path(self.temporary.name) / "target-backups"
+        env = os.environ.copy()
+        env["BACKUP_DIR"] = str(target_backups)
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(list(target_backups.glob("conan-native-*.tar.gz"))), 1)
+
+    def test_backup_uses_shared_target_operation_lock(self) -> None:
+        runtime = self.game_dir / ".runtime"
+        runtime.mkdir()
+        lock_path = runtime / "operation.lock"
+        env = os.environ.copy()
+        env.update(
+            {
+                "GAME_DIR": str(self.game_dir),
+                "BACKUP_DIR": str(self.backups),
+                "NATIVE_BACKUP_MODE": "light",
+            }
+        )
+        with lock_path.open("a+b") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = subprocess.run(
+                ["python3", str(self.BACKUP), "--reason", "locked-test"],
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("operation", result.stderr.lower())
+
+    def test_restore_acquires_target_lock_before_archive_processing(self) -> None:
+        archive = Path(self.temporary.name) / "locked-malicious.tar.gz"
+        payload = Path(self.temporary.name) / "locked-payload"
+        payload.write_text("bad", encoding="utf-8")
+        with tarfile.open(archive, "w:gz") as bundle:
+            bundle.add(payload, arcname="../escape")
+        target = Path(self.temporary.name) / "locked-before-verify"
+        runtime = target / ".runtime"
+        runtime.mkdir(parents=True)
+        with (runtime / "operation.lock").open("a+b") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = subprocess.run(
+                ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("operation", result.stderr.lower())
+        self.assertNotIn("unsafe archive", result.stderr.lower())
+
+    def test_restore_rejects_symlinked_operation_lock_without_touching_victim(self) -> None:
+        archive = self.backup("light")
+        target = Path(self.temporary.name) / "restore-lock-symlink"
+        runtime = target / ".runtime"
+        runtime.mkdir(parents=True)
+        victim = Path(self.temporary.name) / "restore-lock-victim"
+        victim.write_bytes(b"unchanged")
+        (runtime / "operation.lock").symlink_to(victim)
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("symlink", result.stderr.lower())
+        self.assertEqual(victim.read_bytes(), b"unchanged")
+
+    def test_restore_uses_target_scoped_operation_lock(self) -> None:
+        archive = self.backup("light")
+        target = Path(self.temporary.name) / "locked-target"
+        runtime = target / ".runtime"
+        runtime.mkdir(parents=True)
+        lock_path = runtime / "operation.lock"
+        with lock_path.open("a+b") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = subprocess.run(
+                ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("operation", result.stderr.lower())
+        self.assertFalse((target / "ConanSandbox" / "Saved" / "game_0.db").exists())
+
+    def test_restore_rejects_malformed_metadata_before_target_mutation(self) -> None:
+        archive = self.backup("light")
+        metadata = {
+            "format_version": 1,
+            "created_utc": "2026-08-02T00:00:00+00:00",
+            "reason": "unit-test",
+            "mode": "light",
+            "world_database": "game_0.db",
+            "workshop_ids": [3722881816],
+            "active_packages": ["StayBloody.pak"],
+            "config_secrets_redacted": True,
+        }
+        tampered = self.archive_with_metadata(archive, metadata)
+        target = Path(self.temporary.name) / "malformed-target"
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(tampered), "--target", str(target), "--apply"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("metadata", result.stderr.lower())
+        self.assertFalse((target / "ConanSandbox" / "Saved" / "game_0.db").exists())
+
+    def test_restore_pid_permission_error_fails_closed(self) -> None:
+        spec = importlib.util.spec_from_file_location("native_restore_under_test", self.RESTORE)
+        self.assertIsNotNone(spec)
+        self.assertIsNotNone(spec.loader if spec else None)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        pid_file = Path(self.temporary.name) / "server.pid"
+        pid_file.write_text("123\n", encoding="ascii")
+        with mock.patch.object(module.os, "kill", side_effect=PermissionError("denied")):
+            with self.assertRaisesRegex(RuntimeError, "cannot verify"):
+                module.process_is_active(pid_file)
+
+    def test_restore_rejects_symlinked_target_component(self) -> None:
+        archive = self.backup("light")
+        target = Path(self.temporary.name) / "symlink-target"
+        outside = Path(self.temporary.name) / "outside"
+        outside.mkdir()
+        target.mkdir()
+        (target / "ConanSandbox").symlink_to(outside, target_is_directory=True)
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("symlink", result.stderr.lower())
+        self.assertFalse((outside / "Saved" / "game_0.db").exists())
+
     def test_restore_rejects_path_traversal_member(self) -> None:
         archive = Path(self.temporary.name) / "malicious.tar.gz"
         payload = Path(self.temporary.name) / "payload"
@@ -534,6 +1051,61 @@ class BackupRestoreTests(unittest.TestCase):
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unsafe", result.stderr.lower())
+
+    def test_restore_streams_archive_members_before_limit_enforcement(self) -> None:
+        source = self.RESTORE.read_text(encoding="utf-8")
+        self.assertNotIn("getmembers()", source)
+        self.assertIn('tarfile.open(archive, "r|gz")', source)
+
+    def test_restore_rejects_duplicate_archive_members(self) -> None:
+        archive = Path(self.temporary.name) / "duplicate.tar.gz"
+        with tarfile.open(archive, "w:gz") as bundle:
+            for payload in (b"first", b"second"):
+                member = tarfile.TarInfo("world/game_0.db")
+                member.size = len(payload)
+                bundle.addfile(member, io.BytesIO(payload))
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--verify-only"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("duplicate", result.stderr.lower())
+
+    def test_restore_default_expansion_limit_is_conservative(self) -> None:
+        spec = importlib.util.spec_from_file_location("native_restore_limits_under_test", self.RESTORE)
+        self.assertIsNotNone(spec)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("NATIVE_RESTORE_MAX_BYTES", None)
+            self.assertLessEqual(
+                module.restore_limit("NATIVE_RESTORE_MAX_BYTES", module.DEFAULT_MAX_BYTES, 1024**4),
+                20 * 1024**3,
+            )
+
+    def test_restore_enforces_archive_expansion_limit(self) -> None:
+        archive = Path(self.temporary.name) / "oversized.tar.gz"
+        payload = b"oversized"
+        with tarfile.open(archive, "w:gz") as bundle:
+            member = tarfile.TarInfo("world/game_0.db")
+            member.size = len(payload)
+            bundle.addfile(member, io.BytesIO(payload))
+        env = os.environ.copy()
+        env["NATIVE_RESTORE_MAX_BYTES"] = "4"
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--verify-only"],
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("size limit", result.stderr.lower())
 
     def test_backup_loop_run_once_invokes_configured_tool(self) -> None:
         marker = Path(self.temporary.name) / "backup-loop-marker"
