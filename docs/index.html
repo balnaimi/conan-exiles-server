@@ -260,6 +260,23 @@ body {
 .code-block .comment {
   color: var(--text-dim);
 }
+/* NEW: Gold selection styling for code blocks */
+.code-block::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+.code-block *::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+.code-block::-moz-selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+.code-block *::-moz-selection {
+  background: var(--accent);
+  color: var(--bg);
+}
 .code-wrap {
   position: relative;
   margin-top: 1rem;
@@ -277,8 +294,15 @@ body {
   padding: 0.35rem 0.65rem;
   font-size: 0.75rem;
   cursor: pointer;
+  transition: all 0.3s;
 }
-.copy-code-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* UPDATED: Glow effect on hover */
+.copy-code-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: 0 0 12px rgba(200,168,78,0.4), 0 0 24px rgba(200,168,78,0.25);
+}
 
 /* ============================================
    PORTS / CONNECTING / COMMANDS
