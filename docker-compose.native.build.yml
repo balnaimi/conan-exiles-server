@@ -1,0 +1,38 @@
+# Local build of Conan Exiles Enhanced — Native Linux Experimental
+services:
+  conan-native:
+    build:
+      context: .
+      dockerfile: Dockerfile.native
+    image: conan-exiles-server:native-local
+    container_name: conan-exiles-enhanced-native
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 2m
+    env_file: .env
+    labels:
+      org.opencontainers.image.title: "Conan Exiles Enhanced — Native Linux Experimental"
+      com.balnaimi.conan.runtime: "native-linux-experimental"
+    ports:
+      - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"
+      - "7778:7778/udp"
+      - "${QUERY_PORT:-27015}:${QUERY_PORT:-27015}/udp"
+    volumes:
+      - native-game-data:/data/server
+      - native-save-data:/data/server/ConanSandbox/Saved
+      - native-steam-data:/data/steam
+      - native-backups:/data/backups
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+
+volumes:
+  native-game-data:
+  native-save-data:
+  native-steam-data:
+  native-backups:

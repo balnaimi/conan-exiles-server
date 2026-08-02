@@ -6,8 +6,10 @@ from __future__ import annotations
 import json
 import os
 import socket
+import sqlite3
 import struct
 import subprocess
+import tarfile
 import tempfile
 import threading
 import unittest
@@ -392,6 +394,135 @@ class ReadinessAndLifecycleTests(unittest.TestCase):
         self.assertIn("a2s-info.py", healthcheck)
         self.assertIn("supervisor.sh", entrypoint)
         self.assertNotIn('exec "$GAME_DIR/ConanSandboxServer.sh"', entrypoint)
+
+
+class BackupRestoreTests(unittest.TestCase):
+    BACKUP = ROOT / "scripts" / "native" / "backup.py"
+    RESTORE = ROOT / "scripts" / "native" / "restore.py"
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        root = Path(self.temporary.name)
+        self.game_dir = root / "server"
+        self.saved = self.game_dir / "ConanSandbox" / "Saved"
+        self.config = self.saved / "Config" / "LinuxServer"
+        self.mods = self.game_dir / "ConanSandbox" / "Mods"
+        self.backups = root / "backups"
+        self.config.mkdir(parents=True)
+        self.mods.mkdir(parents=True)
+        self.backups.mkdir()
+        (self.config / "Engine.ini").write_text("[OnlineSubsystem]\nServerName=Backup Test\n", encoding="utf-8")
+        (self.config / "Game.ini").write_text("[RconPlugin]\nRconEnabled=False\n", encoding="utf-8")
+        (self.mods / "modlist.txt").write_text("*StayBloody.pak\n", encoding="utf-8")
+        (self.mods / ".managed-mods.tsv").write_text("3722881816\tStayBloody.pak\n", encoding="utf-8")
+        (self.mods / "StayBloody.pak").write_bytes(b"test-pak")
+        self.connection = sqlite3.connect(self.saved / "game_0.db")
+        self.addCleanup(self.connection.close)
+        self.connection.execute("PRAGMA journal_mode=WAL")
+        self.connection.execute("CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT)")
+        self.connection.execute("INSERT INTO players(name) VALUES ('Seren')")
+        self.connection.commit()
+
+    def backup(self, mode: str) -> Path:
+        self.assertTrue(self.BACKUP.is_file(), f"missing backup tool: {self.BACKUP}")
+        env = os.environ.copy()
+        env.update(
+            {
+                "GAME_DIR": str(self.game_dir),
+                "BACKUP_DIR": str(self.backups),
+                "NATIVE_BACKUP_MODE": mode,
+                "NATIVE_BACKUP_RETENTION_COUNT": "10",
+                "NATIVE_BACKUP_RETENTION_DAYS": "30",
+            }
+        )
+        result = subprocess.run(
+            ["python3", str(self.BACKUP), "--reason", "unit-test"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        marker = "backup_created="
+        line = next(line for line in result.stdout.splitlines() if line.startswith(marker))
+        archive = Path(line[len(marker) :])
+        self.assertTrue(archive.is_file())
+        return archive
+
+    def archive_names(self, archive: Path) -> set[str]:
+        with tarfile.open(archive, "r:gz") as bundle:
+            return {member.name for member in bundle.getmembers()}
+
+    def test_light_backup_uses_sqlite_snapshot_without_wal_or_paks(self) -> None:
+        archive = self.backup("light")
+        names = self.archive_names(archive)
+        self.assertIn("world/game_0.db", names)
+        self.assertIn("config/Engine.ini", names)
+        self.assertIn("mods/modlist.txt", names)
+        self.assertIn("metadata.json", names)
+        self.assertIn("checksums.sha256", names)
+        self.assertFalse(any(name.endswith(("-wal", "-shm", ".pak")) for name in names))
+        with tempfile.TemporaryDirectory() as extracted:
+            with tarfile.open(archive, "r:gz") as bundle:
+                bundle.extract("world/game_0.db", path=extracted)
+            check = sqlite3.connect(Path(extracted) / "world" / "game_0.db")
+            self.addCleanup(check.close)
+            self.assertEqual(check.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+            self.assertEqual(check.execute("SELECT name FROM players").fetchone()[0], "Seren")
+
+    def test_full_backup_includes_only_active_managed_paks(self) -> None:
+        (self.mods / "Unmanaged.pak").write_bytes(b"manual")
+        archive = self.backup("full")
+        names = self.archive_names(archive)
+        self.assertIn("mods/StayBloody.pak", names)
+        self.assertNotIn("mods/Unmanaged.pak", names)
+
+    def test_restore_verify_and_apply_to_fresh_target(self) -> None:
+        archive = self.backup("light")
+        target = Path(self.temporary.name) / "restored"
+        verify = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--verify-only"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(verify.returncode, 0, verify.stderr)
+        self.assertFalse(target.exists())
+        apply = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--target", str(target), "--apply"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(apply.returncode, 0, apply.stderr)
+        restored_db = target / "ConanSandbox" / "Saved" / "game_0.db"
+        self.assertTrue(restored_db.is_file())
+        self.assertTrue((target / "ConanSandbox" / "Saved" / "Config" / "LinuxServer" / "Engine.ini").is_file())
+        self.assertTrue((target / "ConanSandbox" / "Mods" / "modlist.txt").is_file())
+        connection = sqlite3.connect(restored_db)
+        self.addCleanup(connection.close)
+        self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+
+    def test_restore_rejects_path_traversal_member(self) -> None:
+        archive = Path(self.temporary.name) / "malicious.tar.gz"
+        payload = Path(self.temporary.name) / "payload"
+        payload.write_text("bad", encoding="utf-8")
+        with tarfile.open(archive, "w:gz") as bundle:
+            bundle.add(payload, arcname="../escape")
+        result = subprocess.run(
+            ["python3", str(self.RESTORE), str(archive), "--verify-only"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unsafe", result.stderr.lower())
 
 
 if __name__ == "__main__":
