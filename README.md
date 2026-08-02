@@ -10,8 +10,8 @@ A community Docker Compose setup for hosting a **Conan Exiles Enhanced dedicated
 
 | Runtime | Status | Rolling image | Versioned image | Compose file |
 |---|---|---|---|---|
-| **Wine** | **Stable / default / recommended** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.7.0` | `docker-compose.yml` |
-| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.7.0-native` | `docker-compose.native.yml` |
+| **Wine** | **Stable / default / recommended** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.7.1` | `docker-compose.yml` |
+| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.7.1-native` | `docker-compose.native.yml` |
 
 > **“Stable” is this project's support tier.** The stable image currently uses the upstream **WineHQ Staging** package channel. Updating the default Compose deployment never switches it to Native.
 
@@ -632,12 +632,18 @@ For unreliable settings, change them via the **in-game Admin Panel**:
 
 ## 📝 Release Notes
 
+### v2.7.1 — Native Health Documentation Hotfix
+
+- Clarifies that Docker health uses the stable A2S readiness probe by default.
+- Documents RCON as an internal, explicit diagnostic rather than a required liveness signal; this avoids false-unhealthy states from Conan's timing-sensitive RCON endpoint.
+- Keeps `latest`/`2.7.1` on Wine Stable and `native`/`2.7.1-native` on Native Linux Experimental.
+
 ### v2.7.0 — Native Linux Experimental
 
 > **Runtime stability contract:** `latest` and `2.7.0` remain Wine Stable. Native Linux is opt-in through `native`, `2.7.0-native`, and `docker-compose.native.yml`. This release never automatically migrates or switches an existing server. Rollback means stopping Native and restarting the unchanged Wine deployment against its original Wine volumes—preferably pinned to `2.6.1` if you need the previous image scripts.
 
 - Keeps Wine Stable as the backward-compatible `latest` image and adds a prominent Native Linux Experimental option at `:native` with separate Compose files and volumes.
-- Adds a non-root native image with SSE4.2 CPU preflight, AVX/AVX2 diagnostics, LinuxServer INIs, A2S/RCON health, and real Shipping-process lifecycle tracking.
+- Adds a non-root native image with SSE4.2 CPU preflight, AVX/AVX2 diagnostics, LinuxServer INIs, A2S health, optional RCON diagnostics, and real Shipping-process lifecycle tracking.
 - Adds file-backed secret support without placing RCON passwords in process arguments.
 - Replaces destructive mod-list generation with ordered atomic activation that preserves the last-known-good list on any Workshop failure.
 - Adds verified light/full SQLite backups, SHA-256 manifests, safe restore validation, retention, and dry-run Wine-to-Native migration.

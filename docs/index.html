@@ -918,7 +918,7 @@ curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/dock
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
 nano .env
 docker compose -f docker-compose.native.yml up -d</pre>
-        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.0-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S/RCON health.</div>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.1-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
         <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
       </div>
 
@@ -1529,7 +1529,10 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
-        <strong>v2.7.0 — Native Linux Experimental:</strong> <strong>Runtime stability contract:</strong> <code>latest</code> and <code>2.7.0</code> remain Wine Stable. Native is opt-in through <code>native</code>, <code>2.7.0-native</code>, and <code>docker-compose.native.yml</code>; no existing server is automatically migrated or switched. Adds isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S/RCON lifecycle health, verified backup/restore, migration guardrails, and independent CI/GHCR tags.
+        <strong>v2.7.1 — Native Health Documentation Hotfix:</strong> Clarifies that Docker health uses A2S readiness by default and that RCON is an internal, explicit diagnostic—not a required liveness signal. Wine remains <code>latest</code>/<code>2.7.1</code>; Native remains experimental at <code>native</code>/<code>2.7.1-native</code>.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.7.0 — Native Linux Experimental:</strong> <strong>Runtime stability contract:</strong> <code>latest</code> and <code>2.7.0</code> remain Wine Stable. Native is opt-in through <code>native</code>, <code>2.7.0-native</code>, and <code>docker-compose.native.yml</code>; no existing server is automatically migrated or switched. Adds isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S health with optional RCON diagnostics, verified backup/restore, migration guards, and separate registry channels.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.6.1 — Duration and Clipboard Reliability Hotfix:</strong> Normalizes rounded duration hints across minute/hour/day boundaries, preserves fractional-hour precision, rejects negative durations, fixes singular labels, and guarantees temporary clipboard fallback elements are removed on both success and failure.
