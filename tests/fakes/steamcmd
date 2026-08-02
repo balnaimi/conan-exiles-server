@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+args=("$@")
+workshop_id=""
+install_dir=""
+for ((index=0; index<${#args[@]}; index++)); do
+    case "${args[$index]}" in
+        +force_install_dir)
+            install_dir="${args[$((index+1))]:-}"
+            ;;
+        +workshop_download_item)
+            workshop_id="${args[$((index+2))]:-}"
+            ;;
+    esac
+done
+
+if [ -n "$workshop_id" ]; then
+    if [ "${FAKE_WORKSHOP_FAIL_ID:-}" = "$workshop_id" ]; then
+        echo "ERROR! fake Workshop failure for $workshop_id" >&2
+        exit 1
+    fi
+    root="${FAKE_WORKSHOP_ROOT:?}/$workshop_id"
+    mkdir -p "$root"
+    if [ "${FAKE_WORKSHOP_EMPTY_ID:-}" = "$workshop_id" ]; then
+        echo "Success. Downloaded empty fake item $workshop_id"
+        exit 0
+    fi
+    case "$workshop_id" in
+        3722881816) pak_name=StayBloody.pak ;;
+        3720904511) pak_name=BetterThralls.pak ;;
+        *) pak_name="Mod${workshop_id}.pak" ;;
+    esac
+    printf 'fake workshop payload %s\n' "$workshop_id" > "$root/$pak_name"
+    if [ "${FAKE_WORKSHOP_AMBIGUOUS_ID:-}" = "$workshop_id" ]; then
+        printf 'second package\n' > "$root/SecondPackage.pak"
+    fi
+    echo "Success. Downloaded fake item $workshop_id"
+    exit 0
+fi
+
+if [ "${FAKE_STEAMCMD_FAIL:-0}" = "1" ]; then
+    echo "ERROR! fake SteamCMD failure" >&2
+    exit 1
+fi
+if [ -z "$install_dir" ]; then
+    echo "fake SteamCMD: missing +force_install_dir" >&2
+    exit 2
+fi
+mkdir -p "$install_dir/ConanSandbox/Binaries/Linux" "${STEAM_DATA_DIR:?}/steamapps"
+printf '#!/usr/bin/env bash\nexec "$(dirname "$0")/ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping" "$@"\n' > "$install_dir/ConanSandboxServer.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$install_dir/ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping"
+chmod +x "$install_dir/ConanSandboxServer.sh" "$install_dir/ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping"
+cat > "${STEAM_DATA_DIR}/steamapps/appmanifest_443030.acf" <<'EOF'
+"AppState"
+{
+    "appid" "443030"
+    "buildid" "24383534"
+}
+EOF
+echo "Success! App '443030' fully installed."

@@ -22,6 +22,11 @@ log() { echo -e "${GREEN}[CONAN]${NC} $1"; }
 warn() { echo -e "${YELLOW}[CONAN]${NC} $1"; }
 error() { echo -e "${RED}[CONAN]${NC} $1"; }
 
+# Resolve direct or file-backed secrets before writing configuration.
+# shellcheck source=scripts/runtime/secrets.sh
+source /scripts/runtime/secrets.sh
+resolve_server_secrets
+
 # ============================================
 # 1. Download / Update game
 # ============================================
@@ -75,74 +80,11 @@ source /scripts/runtime/configure-server.sh
 render_server_config
 
 # ============================================
-# 4. Download / install Steam Workshop mods
+# 4. Download / install Steam Workshop mods atomically
 # ============================================
-install_mods() {
-    local raw_mod_list="${SERVER_MOD_LIST:-}"
-    local mods_dir="${GAME_DIR}/ConanSandbox/Mods"
-    local modlist_file="${mods_dir}/modlist.txt"
-    local steam_root workshop_root mod_id mod_dir pak_file pak_name
-
-    if [ -z "$raw_mod_list" ]; then
-        log "  Mods: None"
-        return 0
-    fi
-
-    log "Installing Steam Workshop mods..."
-    mkdir -p "$mods_dir"
-    : > "$modlist_file"
-
-    IFS=',' read -ra MOD_IDS <<< "$raw_mod_list"
-    for mod_id in "${MOD_IDS[@]}"; do
-        mod_id="${mod_id//[[:space:]]/}"
-        [ -z "$mod_id" ] && continue
-
-        if [[ ! "$mod_id" =~ ^[0-9]+$ ]]; then
-            error "Invalid mod ID '$mod_id'. SERVER_MOD_LIST must contain comma-separated numeric Steam Workshop IDs."
-            exit 1
-        fi
-
-        log "  Downloading workshop mod $mod_id..."
-        "$STEAMCMD_BIN" \
-            +login anonymous \
-            +workshop_download_item "$WORKSHOP_APP_ID" "$mod_id" validate \
-            +quit
-
-        mod_dir=""
-        for steam_root in ${WORKSHOP_CONTENT_ROOTS:-/root/Steam /home/steam/Steam /steamcmd /root/.steam/steam}; do
-            workshop_root="${steam_root}/steamapps/workshop/content/${WORKSHOP_APP_ID}/${mod_id}"
-            if [ -d "$workshop_root" ]; then
-                mod_dir="$workshop_root"
-                break
-            fi
-        done
-
-        if [ -z "$mod_dir" ]; then
-            mod_dir="$(find / -path "*/steamapps/workshop/content/${WORKSHOP_APP_ID}/${mod_id}" -type d -print -quit 2>/dev/null || true)"
-        fi
-
-        if [ -z "$mod_dir" ]; then
-            error "Workshop mod $mod_id was not found after download."
-            exit 1
-        fi
-
-        pak_file="$(find "$mod_dir" -maxdepth 2 -type f -name '*.pak' -print -quit)"
-        if [ -z "$pak_file" ]; then
-            error "Workshop mod $mod_id downloaded, but no .pak file was found in $mod_dir."
-            exit 1
-        fi
-
-        pak_name="$(basename "$pak_file")"
-        cp -f "$pak_file" "${mods_dir}/${pak_name}"
-        printf '*%s\n' "$pak_name" >> "$modlist_file"
-        log "  Installed $mod_id as $pak_name"
-    done
-
-    log "Mods installed. modlist.txt:"
-    sed 's/^/[CONAN]   /' "$modlist_file"
-}
-
-install_mods
+# shellcheck source=scripts/runtime/install-mods.sh
+source /scripts/runtime/install-mods.sh
+install_mods_atomic
 
 # ============================================
 # 5. Start server

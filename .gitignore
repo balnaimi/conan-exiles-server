@@ -1,4 +1,7 @@
 .env
+.hermes/
+__pycache__/
+*.py[cod]
 
 # Runtime research may include real world saves/backups or server secrets; keep raw
 # runtime snapshots local unless intentionally sanitized and committed.

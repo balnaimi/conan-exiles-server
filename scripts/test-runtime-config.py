@@ -119,6 +119,21 @@ class RuntimeConfigTests(unittest.TestCase):
         self.assertIn("scripts/runtime/configure-server.sh", text)
         self.assertIn("CONFIG_PLATFORM=WindowsServer", text)
 
+    def test_wine_entrypoint_uses_shared_secrets_and_atomic_mod_installer(self) -> None:
+        text = ENTRYPOINT.read_text(encoding="utf-8")
+        self.assertIn("scripts/runtime/secrets.sh", text)
+        self.assertIn("resolve_server_secrets", text)
+        self.assertIn("scripts/runtime/install-mods.sh", text)
+        self.assertIn("install_mods_atomic", text)
+        self.assertNotIn(": > \"$modlist_file\"", text)
+
+    def test_native_entrypoint_uses_shared_secrets_and_atomic_mod_installer(self) -> None:
+        text = (ROOT / "scripts" / "native" / "entrypoint.sh").read_text(encoding="utf-8")
+        self.assertIn("scripts/runtime/secrets.sh", text)
+        self.assertIn("resolve_server_secrets", text)
+        self.assertIn("scripts/runtime/install-mods.sh", text)
+        self.assertIn("install_mods_atomic", text)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

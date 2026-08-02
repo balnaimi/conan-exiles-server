@@ -1,0 +1,54 @@
+FROM debian:bookworm-slim@sha256:63a496b5d3b99214b39f5ed70eb71a61e590a77979c79cbee4faf991f8c0783e
+
+LABEL org.opencontainers.image.title="Conan Exiles Enhanced Dedicated Server — Native Linux"
+LABEL org.opencontainers.image.description="Experimental Native Linux variant; Wine remains the stable default image"
+LABEL org.opencontainers.image.source="https://github.com/balnaimi/conan-exiles-server"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL com.balnaimi.conan.runtime="native-linux-experimental"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    GAME_DIR=/data/server \
+    STEAM_DATA_DIR=/data/steam \
+    BACKUP_DIR=/data/backups \
+    STEAMCMD_BIN=/data/steam/steamcmd/steamcmd.sh \
+    HOME=/data/steam
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        file \
+        gzip \
+        lib32gcc-s1 \
+        libgcc-s1 \
+        libstdc++6 \
+        procps \
+        python3 \
+        sqlite3 \
+        tar \
+        tini \
+        tzdata \
+        util-linux \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --gid 1000 conan \
+    && useradd --uid 1000 --gid 1000 --create-home --home-dir /home/conan --shell /bin/bash conan \
+    && mkdir -p /opt/steamcmd-bootstrap /data/server /data/steam /data/backups /scripts/native /scripts/runtime \
+    && curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+       | tar -xz -C /opt/steamcmd-bootstrap \
+    && chown -R conan:conan /data /home/conan
+
+COPY scripts/native/ /scripts/native/
+COPY scripts/runtime/ /scripts/runtime/
+RUN chmod 0755 /scripts/native/*.sh /scripts/native/*.py 2>/dev/null || true \
+    && chmod 0755 /scripts/runtime/*.sh
+
+EXPOSE 7777/udp 7778/udp 27015/udp 25575/tcp
+VOLUME ["/data/server", "/data/steam", "/data/backups"]
+
+USER conan:conan
+WORKDIR /data/server
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 CMD ["/scripts/native/healthcheck.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/scripts/native/entrypoint.sh"]
