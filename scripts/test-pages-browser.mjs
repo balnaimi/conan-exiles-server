@@ -128,6 +128,23 @@ async function evaluate(cdp, expression) {
   return result.result.value;
 }
 
+async function eventuallyEvaluate(cdp, expression, predicate, description, attempts = 80) {
+  let lastValue;
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      lastValue = await evaluate(cdp, expression);
+      if (predicate(lastValue)) return lastValue;
+    } catch (error) {
+      if (!/Execution context was destroyed|Cannot find context/i.test(error.message)) throw error;
+      lastError = error;
+    }
+    await new Promise(resolveWait => setTimeout(resolveWait, 100));
+  }
+  const detail = lastValue === undefined ? lastError?.message : JSON.stringify(lastValue);
+  throw new Error(`Timed out waiting for ${description}: ${detail}`);
+}
+
 let staticServer;
 let chrome;
 let profile;
@@ -300,11 +317,12 @@ try {
   await cdp.send('Page.navigate', {
     url: `http://127.0.0.1:${pagePort}/index.html?direct-native=1#native-quick-start`,
   });
-  await new Promise(resolveWait => setTimeout(resolveWait, 900));
-  const directNative = await evaluate(cdp, `(() => {
+  const directNative = await eventuallyEvaluate(cdp, `(() => {
     const target = document.getElementById('native-quick-start');
+    const tabBar = document.querySelector('.tab-bar');
+    if (!target || !tabBar) return null;
     const rect = target.getBoundingClientRect();
-    const tabBottom = document.querySelector('.tab-bar').getBoundingClientRect().bottom;
+    const tabBottom = tabBar.getBoundingClientRect().bottom;
     const style = getComputedStyle(target);
     return {
       ready: document.readyState,
@@ -316,7 +334,10 @@ try {
       focusOutlineWidth: parseFloat(style.outlineWidth),
       focusOutlineStyle: style.outlineStyle,
     };
-  })()`);
+  })()`, value => value?.ready === 'complete' && value.hash === '#native-quick-start' &&
+    value.active === 'quick-start' && value.focused === 'native-quick-start' &&
+    value.top >= value.tabBottom && value.top <= value.tabBottom + 32,
+  'stable Native deep link');
   assert(
     directNative.ready === 'complete' && directNative.hash === '#native-quick-start' &&
       directNative.active === 'quick-start' && directNative.focused === 'native-quick-start' &&
@@ -328,11 +349,12 @@ try {
   await cdp.send('Page.navigate', {
     url: `http://127.0.0.1:${pagePort}/index.html?direct-cpu=1#cpu-compatibility`,
   });
-  await new Promise(resolveWait => setTimeout(resolveWait, 900));
-  const directCpu = await evaluate(cdp, `(() => {
+  const directCpu = await eventuallyEvaluate(cdp, `(() => {
     const target = document.getElementById('cpu-compatibility');
+    const tabBar = document.querySelector('.tab-bar');
+    if (!target || !tabBar) return null;
     const rect = target.getBoundingClientRect();
-    const tabBottom = document.querySelector('.tab-bar').getBoundingClientRect().bottom;
+    const tabBottom = tabBar.getBoundingClientRect().bottom;
     return {
       ready: document.readyState,
       hash: location.hash,
@@ -347,7 +369,10 @@ try {
       visible: rect.bottom > tabBottom && rect.top < innerHeight,
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     };
-  })()`);
+  })()`, value => value?.ready === 'complete' && value.hash === '#cpu-compatibility' &&
+    value.active === 'quick-start' && value.visible && !value.overflow &&
+    value.top >= value.tabBottom && value.top <= value.tabBottom + 160,
+  'stable CPU deep link');
   assert(
     directCpu.ready === 'complete' && directCpu.hash === '#cpu-compatibility' &&
       directCpu.active === 'quick-start' && directCpu.visible && !directCpu.overflow &&
