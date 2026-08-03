@@ -145,6 +145,16 @@ async function eventuallyEvaluate(cdp, expression, predicate, description, attem
   throw new Error(`Timed out waiting for ${description}: ${detail}`);
 }
 
+async function navigate(cdp, url) {
+  try {
+    await cdp.send('Page.navigate', { url });
+  } catch (error) {
+    if (!/Execution context was destroyed|Cannot find context/i.test(error.message)) throw error;
+    // Navigation may destroy the old context before CDP acknowledges the command.
+    // The following eventuallyEvaluate call verifies the destination page state.
+  }
+}
+
 let staticServer;
 let chrome;
 let profile;
@@ -314,9 +324,7 @@ try {
     `Forward did not restore the Native anchor/focus: ${JSON.stringify(nativeForward)}`,
   );
 
-  await cdp.send('Page.navigate', {
-    url: `http://127.0.0.1:${pagePort}/index.html?direct-native=1#native-quick-start`,
-  });
+  await navigate(cdp, `http://127.0.0.1:${pagePort}/index.html?direct-native=1#native-quick-start`);
   const directNative = await eventuallyEvaluate(cdp, `(() => {
     const target = document.getElementById('native-quick-start');
     const tabBar = document.querySelector('.tab-bar');
@@ -346,9 +354,7 @@ try {
     `Direct Native deep link is hidden or unfocused: ${JSON.stringify(directNative)}`,
   );
 
-  await cdp.send('Page.navigate', {
-    url: `http://127.0.0.1:${pagePort}/index.html?direct-cpu=1#cpu-compatibility`,
-  });
+  await navigate(cdp, `http://127.0.0.1:${pagePort}/index.html?direct-cpu=1#cpu-compatibility`);
   const directCpu = await eventuallyEvaluate(cdp, `(() => {
     const target = document.getElementById('cpu-compatibility');
     const tabBar = document.querySelector('.tab-bar');
