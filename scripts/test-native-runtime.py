@@ -9,7 +9,6 @@ import hashlib
 import fcntl
 import json
 import os
-import shutil
 import socket
 import sqlite3
 import struct
