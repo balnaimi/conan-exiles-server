@@ -155,6 +155,32 @@ async function navigate(cdp, url) {
   }
 }
 
+function waitForChildExit(child, timeoutMs) {
+  return new Promise(resolveWait => {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      resolveWait(true);
+      return;
+    }
+    const onExit = () => {
+      clearTimeout(timer);
+      resolveWait(true);
+    };
+    const timer = setTimeout(() => {
+      child.off('exit', onExit);
+      resolveWait(false);
+    }, timeoutMs);
+    child.once('exit', onExit);
+  });
+}
+
+async function stopChild(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  child.kill('SIGTERM');
+  if (await waitForChildExit(child, 5000)) return;
+  child.kill('SIGKILL');
+  await waitForChildExit(child, 2000);
+}
+
 let staticServer;
 let chrome;
 let profile;
@@ -494,7 +520,7 @@ try {
   console.log('Pages browser checks OK: tab/Native/CPU deep links, Native CTA, keyboard tabs/focus, 390x844 overflow, Back, numeric/duration guards, secret-file override, clipboard cleanup');
 } finally {
   cdp?.close();
-  if (chrome && chrome.exitCode === null) chrome.kill('SIGTERM');
+  await stopChild(chrome);
   if (staticServer) await new Promise(resolveClose => staticServer.close(resolveClose));
-  if (profile) rmSync(profile, { recursive: true, force: true });
+  if (profile) rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
