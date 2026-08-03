@@ -93,9 +93,11 @@ These are project planning recommendations, not official hard limits:
 
 | Profile | CPU | RAM | Disk |
 |---|---|---|---|
-| Test / very small | 4 fast x86-64 cores | 16 GB | 70 GB minimum |
-| Small private server | 4+ fast x86-64 cores | 16 GB recommended | 100 GB recommended |
+| Test / very small | 4 fast x86-64 cores | 16 GB | 35–40 GB starting allocation |
+| Small private server | 4+ fast x86-64 cores | 16 GB recommended | 70 GB recommended |
 | Growing or modded | 6+ fast x86-64 cores | 24 GB or more | 100 GB or more |
+
+Storage sizing assumes one runtime—Wine or Native, not both. 35–40 GB is a practical starting allocation for one runtime, not the game download size or an official hard minimum; keep free space for updates. 70 GB is recommended, not required, for comfortable update, backup, and maintenance headroom. 100 GB is a safer recommendation for modded servers, multiple backups, or long-term growth.
 
 ## CPU compatibility check
 

@@ -67,8 +67,10 @@ Practical Enhanced planning guidance:
 
 | Profile | CPU | RAM | Disk |
 |---|---|---|---|
-| Small/test | 4 fast x86-64 cores | **16 GB** | **70 GB minimum** |
+| Small/test | 4 fast x86-64 cores | **16 GB** | **35–40 GB starting allocation** |
 | Growing/modded | 6+ fast x86-64 cores | **24 GB or more** | **100 GB recommended** |
+
+Storage sizing assumes one runtime—Wine or Native, not both. 35–40 GB is a practical starting allocation for one runtime, not the game download size or an official hard minimum; keep free space for updates. 70 GB is recommended, not required, for comfortable update, backup, and maintenance headroom. 100 GB is a safer recommendation for modded servers, multiple backups, or long-term growth.
 
 CPU flags must be visible inside the host or VM guest. Native preflight enforces SSE4.2 and reports AVX/AVX2. AVX2 is an important compatibility check, but Funcom has not officially confirmed AVX2 as a hard requirement. See the [CPU compatibility check](docs/guides/operations.md#cpu-compatibility-check).
 

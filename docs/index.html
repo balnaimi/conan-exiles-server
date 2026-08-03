@@ -1012,13 +1012,13 @@ docker compose up -d</pre>
               <td><strong>Test / very small</strong></td>
               <td>4 fast x86-64 cores</td>
               <td><strong>16 GB</strong></td>
-              <td><strong>70 GB minimum</strong></td>
+              <td><strong>35–40 GB starting allocation</strong></td>
             </tr>
             <tr>
               <td><strong>Small private server</strong> (up to 10 players)</td>
               <td>4+ fast x86-64 cores</td>
               <td><strong>16 GB recommended</strong></td>
-              <td><strong>100 GB recommended</strong></td>
+              <td><strong>70 GB recommended</strong></td>
             </tr>
             <tr>
               <td><strong>Growing or modded server</strong></td>
@@ -1059,9 +1059,10 @@ lscpu</pre>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">
         <strong style="color:var(--text);">Storage guidance:</strong>
         <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
-          <li>Allow space for Docker layers, SteamCMD staging, extracted server files, databases, backups, logs, mods, and update temporary files</li>
-          <li><strong>35–40 GB total storage is not sufficient</strong> for reliable Enhanced updates</li>
-          <li>Allocate at least <strong>70 GB</strong>; <strong>100 GB</strong> is recommended for comfortable maintenance</li>
+          <li>Storage sizing assumes one runtime—Wine or Native, not both.</li>
+          <li>35–40 GB is a practical starting allocation for one runtime, not the game download size or an official hard minimum; keep free space for updates.</li>
+          <li>70 GB is recommended, not required, for comfortable update, backup, and maintenance headroom.</li>
+          <li>100 GB is a safer recommendation for modded servers, multiple backups, or long-term growth.</li>
         </ul>
       </div>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">

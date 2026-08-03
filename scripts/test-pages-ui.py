@@ -117,6 +117,32 @@ def test_cpu_requirements_are_explicit_and_careful() -> None:
     assert 'id="cpu-compatibility" style="scroll-margin-top:' in HTML
 
 
+def test_storage_guidance_distinguishes_capacity_from_safe_headroom() -> None:
+    user_facing = {
+        "README": README,
+        "Page": HTML,
+        "Operations": OPERATIONS,
+        "Native guide": NATIVE_GUIDE,
+    }
+    required_guidance = (
+        "35–40 GB is a practical starting allocation for one runtime",
+        "70 GB is recommended, not required",
+        "100 GB is a safer recommendation",
+    )
+    forbidden_claims = (
+        "70 GB minimum",
+        "Allocate at least 70 GB",
+        "Allocate at least <strong>70 GB</strong>",
+        "35–40 GB total storage is not sufficient",
+    )
+
+    for name, text in user_facing.items():
+        for guidance in required_guidance:
+            assert guidance in text, f"{name} is missing storage guidance: {guidance}"
+        for claim in forbidden_claims:
+            assert claim not in text, f"{name} still overstates storage as a hard minimum: {claim}"
+
+
 def extract_js_function(name: str) -> str:
     match = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", HTML)
     assert match, f"Missing JavaScript function: {name}"

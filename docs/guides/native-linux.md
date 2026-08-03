@@ -34,7 +34,8 @@ Never attach the same live data volume to Wine and Native. Existing Wine servers
 - Guest-visible SSE4.2 is required by the current UE5 x64 baseline and enforced by preflight.
 - AVX and AVX2 are reported as diagnostics; Funcom has not officially confirmed AVX2 as a hard requirement.
 - Use at least 16 GB RAM for a small current Enhanced server; modded or growing worlds may need more.
-- Allocate at least 70 GB, with 100 GB recommended for updates, caches, backups, and mods.
+- Storage sizing assumes one runtime—Wine or Native, not both. 35–40 GB is a practical starting allocation for one runtime, not the game download size or an official hard minimum; keep free space for updates.
+- 70 GB is recommended, not required, for comfortable update, backup, and maintenance headroom. 100 GB is a safer recommendation for modded servers, multiple backups, or long-term growth.
 
 Check exactly what Linux can see:
 
