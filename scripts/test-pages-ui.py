@@ -125,15 +125,22 @@ def test_storage_guidance_distinguishes_capacity_from_safe_headroom() -> None:
         "Native guide": NATIVE_GUIDE,
     }
     required_guidance = (
-        "35–40 GB is a practical starting allocation for one runtime",
-        "70 GB is recommended, not required",
+        "20 GB is a practical starting allocation for one runtime",
+        "25–35 GB is recommended for updates, world growth, and a simple backup",
+        "35–40 GB is a comfortable allocation, not a minimum",
+        "The measured clean Wine-to-Native coexistence used about 14 GB on the host",
+        "25 GB is a practical migration floor for that scenario",
+        "35 GB is recommended for safer migration headroom",
+        "70 GB is comfortable, not required",
         "100 GB is a safer recommendation",
+        "These are project planning recommendations, not official Funcom requirements or hard limits",
     )
     forbidden_claims = (
         "70 GB minimum",
         "Allocate at least 70 GB",
         "Allocate at least <strong>70 GB</strong>",
         "35–40 GB total storage is not sufficient",
+        "35–40 GB is a practical starting allocation",
     )
 
     for name, text in user_facing.items():

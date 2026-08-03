@@ -48,9 +48,19 @@ if [ "${NATIVE_PREFLIGHT_SKIP_RESOURCES:-0}" != "1" ]; then
         if [ "$key" = "MemTotal:" ]; then memory_kib="$value"; break; fi
     done < /proc/meminfo
     memory_gib=$((memory_kib / 1024 / 1024))
-    disk_kib="$(df -Pk "${GAME_DIR:-/data/server}" 2>/dev/null | while read -r filesystem blocks used available capacity mountpoint; do [ "$filesystem" = Filesystem ] || value="$available"; done; printf '%s' "${value:-0}")"
+    disk_kib=0
+    while read -r filesystem blocks used available capacity mountpoint; do
+        [ "$filesystem" = Filesystem ] && continue
+        disk_kib="$available"
+        break
+    done < <(df -Pk "${GAME_DIR:-/data/server}" 2>/dev/null)
+    case "$disk_kib" in ''|*[!0-9]*) disk_kib=0 ;; esac
     disk_gib=$((disk_kib / 1024 / 1024))
     log "resources memory_gib=$memory_gib disk_available_gib=$disk_gib"
     [ "$memory_gib" -ge 16 ] || warn "Less than 16 GiB RAM is visible; measured Enhanced tests found 8 GiB insufficient."
-    [ "$disk_gib" -ge 70 ] || warn "Less than 70 GiB free is visible; updates, backups, and mods may require more space."
+    if [ "$disk_gib" -lt 10 ]; then
+        warn "Less than 10 GiB free is visible; a Native installation or update may not fit once staging and existing data are included."
+    elif [ "$disk_gib" -lt 20 ]; then
+        warn "Less than 20 GiB free is visible; the measured basic runtime may fit, but update, backup, and migration headroom is limited."
+    fi
 fi

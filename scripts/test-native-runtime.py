@@ -9,6 +9,7 @@ import hashlib
 import fcntl
 import json
 import os
+import shutil
 import socket
 import sqlite3
 import struct
@@ -102,6 +103,55 @@ class CpuPreflightTests(unittest.TestCase):
         self.assertIn("sse4_2=yes", result.stdout)
         self.assertIn("avx2=no", result.stdout)
         self.assertIn("not a universal UE5 requirement", result.stderr)
+
+    def run_with_disk_available(self, available_gib: int) -> subprocess.CompletedProcess[str]:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        fake_bin = root / "bin"
+        fake_bin.mkdir()
+        fake_df = fake_bin / "df"
+        available_kib = available_gib * 1024 * 1024
+        fake_df.write_text(
+            "#!/bin/sh\n"
+            "printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n'\n"
+            f"printf '/dev/test 104857600 0 {available_kib} 0%% /data\\n'\n",
+            encoding="utf-8",
+        )
+        fake_df.chmod(0o755)
+        return run_script(
+            PREFLIGHT,
+            {
+                "CPU_FLAGS_FILE": str(CPU_FIXTURES / "modern.flags"),
+                "GAME_DIR": str(root),
+                "NATIVE_PREFLIGHT_SKIP_RESOURCES": "0",
+                "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            },
+        )
+
+    def test_preflight_reports_df_available_column(self) -> None:
+        result = self.run_with_disk_available(42)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("disk_available_gib=42", result.stdout)
+
+    def test_less_than_ten_gib_warns_that_free_space_is_very_limited(self) -> None:
+        result = self.run_with_disk_available(9)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Less than 10 GiB free", result.stderr)
+        self.assertIn("installation or update", result.stderr)
+        self.assertNotIn("70 GiB", result.stderr)
+
+    def test_less_than_twenty_gib_warns_about_limited_headroom(self) -> None:
+        result = self.run_with_disk_available(15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Less than 20 GiB free", result.stderr)
+        self.assertIn("headroom is limited", result.stderr)
+        self.assertNotIn("70 GiB", result.stderr)
+
+    def test_twenty_gib_free_has_no_storage_warning(self) -> None:
+        result = self.run_with_disk_available(20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("GiB free", result.stderr)
 
 
 class NativeInstallTests(unittest.TestCase):

@@ -1012,24 +1012,24 @@ docker compose up -d</pre>
               <td><strong>Test / very small</strong></td>
               <td>4 fast x86-64 cores</td>
               <td><strong>16 GB</strong></td>
-              <td><strong>35–40 GB starting allocation</strong></td>
+              <td><strong>20 GB practical start</strong></td>
             </tr>
             <tr>
               <td><strong>Small private server</strong> (up to 10 players)</td>
               <td>4+ fast x86-64 cores</td>
               <td><strong>16 GB recommended</strong></td>
-              <td><strong>70 GB recommended</strong></td>
+              <td><strong>25–35 GB recommended</strong></td>
             </tr>
             <tr>
               <td><strong>Growing or modded server</strong></td>
               <td>6+ fast x86-64 cores</td>
               <td><strong>24 GB or more</strong></td>
-              <td><strong>100 GB or more</strong></td>
+              <td><strong>70 GB comfortable; 100 GB heavy</strong></td>
             </tr>
           </tbody>
         </table>
       </div>
-      <p style="color:var(--text-dim);font-size:0.85rem;margin-top:0.75rem;">These are practical planning recommendations for the Enhanced Windows server running through Wine—not official hard limits. Actual usage depends on the map, database, buildings, players, mods, and game updates.</p>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-top:0.75rem;">These are project planning recommendations, not official Funcom requirements or hard limits. Actual usage depends on the runtime, map, database, buildings, players, mods, backups, and game updates.</p>
 
       <h3 id="cpu-compatibility" style="scroll-margin-top:7rem;color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">CPU Compatibility</h3>
       <div class="info-note">
@@ -1059,10 +1059,11 @@ lscpu</pre>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">
         <strong style="color:var(--text);">Storage guidance:</strong>
         <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
-          <li>Storage sizing assumes one runtime—Wine or Native, not both.</li>
-          <li>35–40 GB is a practical starting allocation for one runtime, not the game download size or an official hard minimum; keep free space for updates.</li>
-          <li>70 GB is recommended, not required, for comfortable update, backup, and maintenance headroom.</li>
-          <li>100 GB is a safer recommendation for modded servers, multiple backups, or long-term growth.</li>
+          <li>Storage sizing assumes one runtime—Wine or Native, not both. 20 GB is a practical starting allocation for one runtime.</li>
+          <li>25–35 GB is recommended for updates, world growth, and a simple backup. 35–40 GB is a comfortable allocation, not a minimum.</li>
+          <li>The measured clean Wine-to-Native coexistence used about 14 GB on the host; 25 GB is a practical migration floor for that scenario, while 35 GB is recommended for safer migration headroom.</li>
+          <li>70 GB is comfortable, not required, for mods, multiple backups, long-term growth, or repeated maintenance. 100 GB is a safer recommendation for heavily modded servers or long backup retention.</li>
+          <li>Table values are total disk allocations in decimal GB; Native preflight reports currently free binary GiB after existing host and Docker usage.</li>
         </ul>
       </div>
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
