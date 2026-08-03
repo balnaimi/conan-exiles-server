@@ -41,6 +41,41 @@ def assert_contains(*needles: str) -> None:
         assert needle in HTML, f"Missing expected Pages UI marker: {needle}"
 
 
+def test_readme_stays_short_and_guides_are_reachable() -> None:
+    readme_lines = README.splitlines()
+    assert len(readme_lines) <= 180, f"README grew beyond the concise 180-line contract: {len(readme_lines)}"
+    assert len(README.encode("utf-8")) <= 8_000, "README grew beyond the concise 8 KB contract"
+    assert "## 📝 Release Notes" not in README
+    assert "## Release Notes" not in README
+
+    guide_dir = ROOT / "docs" / "guides"
+    required_guides = {
+        "compatibility.md",
+        "configuration.md",
+        "development.md",
+        "mods.md",
+        "native-linux.md",
+        "operations.md",
+    }
+    available_guides = {path.name for path in guide_dir.glob("*.md")}
+    assert required_guides <= available_guides, f"Missing focused guides: {sorted(required_guides - available_guides)}"
+
+    managed_docs = [ROOT / "README.md", ROOT / "docs" / "README.md"]
+    managed_docs.extend(sorted(guide_dir.glob("*.md")))
+
+    link_pattern = re.compile(r"(?<!!)\[[^]]+\]\(([^)]+)\)")
+    for source in managed_docs:
+        assert source.is_file(), f"Missing documentation file: {source.relative_to(ROOT)}"
+        text = source.read_text(encoding="utf-8")
+        for raw_target in link_pattern.findall(text):
+            target = raw_target.strip().split("#", 1)[0].split("?", 1)[0]
+            if not target or target.startswith(("http://", "https://", "mailto:")):
+                continue
+            resolved = (source.parent / target).resolve()
+            assert resolved.is_relative_to(ROOT), f"Documentation link escapes repository: {source} -> {raw_target}"
+            assert resolved.exists(), f"Broken documentation link: {source.relative_to(ROOT)} -> {raw_target}"
+
+
 def extract_js_function(name: str) -> str:
     match = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", HTML)
     assert match, f"Missing JavaScript function: {name}"
