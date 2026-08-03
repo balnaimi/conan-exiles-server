@@ -93,9 +93,31 @@ These are project planning recommendations, not official hard limits:
 
 | Profile | CPU | RAM | Disk |
 |---|---|---|---|
-| Test / very small | 4 modern cores | 16 GB | 70 GB minimum |
-| Small private server | 4+ fast cores | 16 GB recommended | 100 GB recommended |
-| Growing or modded | 6+ fast cores | 24 GB or more | 100 GB or more |
+| Test / very small | 4 fast x86-64 cores | 16 GB | 70 GB minimum |
+| Small private server | 4+ fast x86-64 cores | 16 GB recommended | 100 GB recommended |
+| Growing or modded | 6+ fast x86-64 cores | 24 GB or more | 100 GB or more |
+
+## CPU compatibility check
+
+[Epic's UE 5.2 release notes](https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes?application_version=5.2) document SSE4.2 as the general UE5 x64 minimum CPU specification. An individual game build may choose a higher minimum. AVX and AVX2 are therefore important Conan Exiles Enhanced compatibility diagnostics, but Funcom has not officially confirmed AVX2 as a hard requirement.
+
+Check the flags visible to Linux:
+
+```bash
+for flag in sse4_2 avx avx2; do
+  grep -qw "$flag" /proc/cpuinfo \
+    && echo "$flag=yes" \
+    || echo "$flag=no"
+done
+```
+
+Also inspect the guest-visible model:
+
+```bash
+lscpu
+```
+
+On VPS/QEMU and other virtual machines, the guest-visible flags matter—not only the physical host CPU. Select a current CPU model or `host-passthrough` when the platform supports it. A host change that exposes several previously missing flags can prove a CPU compatibility problem, but it does not isolate AVX2 alone.
 
 A clean Enhanced/Wine test on Steam build `24383534` repeatedly OOM-restarted on 8 GB and stabilized near 9.1 GB idle after increasing the host to 16 GB. Actual use varies with players, buildings, world size, and mods. Keep free space for Docker layers, SteamCMD staging, game files, databases, backups, and updates.
 

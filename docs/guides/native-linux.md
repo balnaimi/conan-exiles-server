@@ -9,7 +9,7 @@ Native Linux runs the upstream Linux Shipping server without Wine. It is **exper
 | Channel | Image | Compose |
 |---|---|---|
 | Rolling | `ghcr.io/balnaimi/conan-exiles-server:native` | `docker-compose.native.yml` |
-| Versioned | `ghcr.io/balnaimi/conan-exiles-server:2.7.1-native` | `docker-compose.native.yml` |
+| Versioned | `ghcr.io/balnaimi/conan-exiles-server:2.7.2-native` | `docker-compose.native.yml` |
 
 The image runs as non-root UID/GID `1000:1000`.
 
@@ -32,9 +32,22 @@ Never attach the same live data volume to Wine and Native. Existing Wine servers
 ## CPU and resources
 
 - Guest-visible SSE4.2 is required by the current UE5 x64 baseline and enforced by preflight.
-- AVX and AVX2 are reported as diagnostics; this project does not claim Conan officially requires AVX2.
+- AVX and AVX2 are reported as diagnostics; Funcom has not officially confirmed AVX2 as a hard requirement.
 - Use at least 16 GB RAM for a small current Enhanced server; modded or growing worlds may need more.
 - Allocate at least 70 GB, with 100 GB recommended for updates, caches, backups, and mods.
+
+Check exactly what Linux can see:
+
+```bash
+for flag in sse4_2 avx avx2; do
+  grep -qw "$flag" /proc/cpuinfo \
+    && echo "$flag=yes" \
+    || echo "$flag=no"
+done
+lscpu
+```
+
+On VPS/QEMU hosts, select a current virtual CPU model or `host-passthrough` when available. The guest-visible flags are what the server can use. Funcom has not officially confirmed AVX2 as a hard requirement; see the detailed [CPU compatibility check](operations.md#cpu-compatibility-check).
 
 A dated acceptance run on Steam build `24383534` used about 8.70 GiB idle on a 16 GiB host and mounted StayBloody and Better Thralls. Treat that as a test observation, not a fixed sizing promise.
 

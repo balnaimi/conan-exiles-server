@@ -918,7 +918,7 @@ curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/dock
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
 nano .env
 docker compose -f docker-compose.native.yml up -d</pre>
-        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.1-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.2-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
         <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
       </div>
 
@@ -1010,19 +1010,19 @@ docker compose up -d</pre>
           <tbody>
             <tr>
               <td><strong>Test / very small</strong></td>
-              <td>4 modern cores</td>
+              <td>4 fast x86-64 cores</td>
               <td><strong>16 GB</strong></td>
               <td><strong>70 GB minimum</strong></td>
             </tr>
             <tr>
               <td><strong>Small private server</strong> (up to 10 players)</td>
-              <td>4+ fast cores</td>
+              <td>4+ fast x86-64 cores</td>
               <td><strong>16 GB recommended</strong></td>
               <td><strong>100 GB recommended</strong></td>
             </tr>
             <tr>
               <td><strong>Growing or modded server</strong></td>
-              <td>6+ fast cores</td>
+              <td>6+ fast x86-64 cores</td>
               <td><strong>24 GB or more</strong></td>
               <td><strong>100 GB or more</strong></td>
             </tr>
@@ -1030,6 +1030,20 @@ docker compose up -d</pre>
         </table>
       </div>
       <p style="color:var(--text-dim);font-size:0.85rem;margin-top:0.75rem;">These are practical planning recommendations for the Enhanced Windows server running through Wine—not official hard limits. Actual usage depends on the map, database, buildings, players, mods, and game updates.</p>
+
+      <h3 id="cpu-compatibility" style="scroll-margin-top:7rem;color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">CPU Compatibility</h3>
+      <div class="info-note">
+        <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes?application_version=5.2" target="_blank" rel="noopener">Epic documents <strong>SSE4.2</strong></a> as the general UE5 x64 minimum CPU specification. An individual game build may choose a higher minimum. <strong>AVX</strong> and <strong>AVX2</strong> are important Conan Exiles Enhanced compatibility diagnostics, but Funcom has not officially confirmed AVX2 as a hard requirement.
+      </div>
+      <pre class="code-block">for flag in sse4_2 avx avx2; do
+  grep -qw "$flag" /proc/cpuinfo \
+    &amp;&amp; echo "$flag=yes" \
+    || echo "$flag=no"
+done
+lscpu</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">
+        <strong>VPS / QEMU:</strong> The flags visible inside the guest are what the server can use. Select a current virtual CPU model or <code>host-passthrough</code> when available. A host change that exposes several flags can confirm a CPU compatibility problem, but it does not isolate AVX2 alone.
+      </div>
 
       <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">Verified Runtime Observation</h3>
       <div class="info-note">
@@ -1529,7 +1543,10 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
-        <strong>v2.7.1 — Native Health Documentation Hotfix:</strong> Clarifies that Docker health uses A2S readiness by default and that RCON is an internal, explicit diagnostic—not a required liveness signal. Wine remains <code>latest</code>/<code>2.7.1</code>; Native remains experimental at <code>native</code>/<code>2.7.1-native</code>.
+        <strong>v2.7.2 — CPU Compatibility Guidance:</strong> Replaces the vague “modern CPU” wording with explicit SSE4.2, AVX, and AVX2 checks; adds copyable Linux diagnostics and VPS/QEMU guest CPU guidance. Wine remains <code>latest</code>/<code>2.7.2</code>; Native remains experimental at <code>native</code>/<code>2.7.2-native</code>.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.7.1 — Native Health Documentation Hotfix:</strong> Clarifies that Docker health uses A2S readiness by default and that RCON is an internal, explicit diagnostic—not a required liveness signal.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.7.0 — Native Linux Experimental:</strong> <strong>Runtime stability contract:</strong> <code>latest</code> and <code>2.7.0</code> remain Wine Stable. Native is opt-in through <code>native</code>, <code>2.7.0-native</code>, and <code>docker-compose.native.yml</code>; no existing server is automatically migrated or switched. Adds isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S health with optional RCON diagnostics, verified backup/restore, migration guards, and separate registry channels.
@@ -1629,6 +1646,18 @@ docker build -t conan-exiles-server .
 // ============================================
 const TAB_NAMES = ['quick-start', 'mods', 'config-generator', 'server-management', 'about'];
 
+function scrollWindowTo(top, smooth = true) {
+  if (smooth) {
+    window.scrollTo({ top, behavior: 'smooth' });
+    return;
+  }
+  const root = document.documentElement;
+  const previous = root.style.scrollBehavior;
+  root.style.scrollBehavior = 'auto';
+  window.scrollTo({ top, behavior: 'auto' });
+  root.style.scrollBehavior = previous;
+}
+
 function activateTab(tabName, button = null, updateHash = true, shouldScroll = true, smooth = true) {
   if (!TAB_NAMES.includes(tabName)) tabName = 'quick-start';
   const selectedButton = button || document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
@@ -1674,6 +1703,19 @@ function openNativeQuickStart(event = null, updateHash = true, smooth = true) {
   target.focus({ preventScroll: true });
 }
 
+function openCpuCompatibility(updateHash = true, smooth = true) {
+  const quickStartButton = document.getElementById('tab-button-quick-start');
+  activateTab('quick-start', quickStartButton, false, false, smooth);
+  if (updateHash && location.hash !== '#cpu-compatibility') {
+    history.pushState({ tab: 'quick-start', anchor: 'cpu-compatibility' }, '', '#cpu-compatibility');
+  }
+  const target = document.getElementById('cpu-compatibility');
+  const tabBar = document.querySelector('.tab-bar');
+  if (!target || !tabBar) return;
+  const top = target.getBoundingClientRect().top + window.scrollY - tabBar.offsetHeight - 16;
+  scrollWindowTo(top, smooth);
+}
+
 function handleTabKeydown(event) {
   const tabs = [...document.querySelectorAll('.tab-btn')];
   const current = tabs.indexOf(event.currentTarget);
@@ -1690,6 +1732,7 @@ function handleTabKeydown(event) {
 window.addEventListener('hashchange', () => {
   const anchor = location.hash.slice(1);
   if (anchor === 'native-quick-start') openNativeQuickStart(null, false);
+  else if (anchor === 'cpu-compatibility') openCpuCompatibility(false);
   else activateTab(anchor, null, false);
 });
 
@@ -2209,6 +2252,16 @@ function init() {
   if (hashTab === 'native-quick-start') {
     openNativeQuickStart(null, false, false);
     setTimeout(() => openNativeQuickStart(null, false, false), 100);
+    return;
+  }
+  if (hashTab === 'cpu-compatibility') {
+    openCpuCompatibility(false, false);
+    const settleCpuAnchor = () => setTimeout(() => requestAnimationFrame(() => {
+      if (location.hash === '#cpu-compatibility') openCpuCompatibility(false, false);
+    }), 0);
+    if (document.readyState === 'complete') settleCpuAnchor();
+    else window.addEventListener('load', settleCpuAnchor, { once: true });
+    document.fonts?.ready.then(settleCpuAnchor);
     return;
   }
   const hasDeepLink = TAB_NAMES.includes(hashTab);

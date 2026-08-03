@@ -325,6 +325,36 @@ try {
     `Direct Native deep link is hidden or unfocused: ${JSON.stringify(directNative)}`,
   );
 
+  await cdp.send('Page.navigate', {
+    url: `http://127.0.0.1:${pagePort}/index.html?direct-cpu=1#cpu-compatibility`,
+  });
+  await new Promise(resolveWait => setTimeout(resolveWait, 900));
+  const directCpu = await evaluate(cdp, `(() => {
+    const target = document.getElementById('cpu-compatibility');
+    const rect = target.getBoundingClientRect();
+    const tabBottom = document.querySelector('.tab-bar').getBoundingClientRect().bottom;
+    return {
+      ready: document.readyState,
+      hash: location.hash,
+      active: document.querySelector('.tab-btn.active')?.dataset.tab,
+      top: rect.top,
+      bottom: rect.bottom,
+      tabBottom,
+      innerHeight,
+      scrollY,
+      maxScroll: document.documentElement.scrollHeight - innerHeight,
+      display: getComputedStyle(target).display,
+      visible: rect.bottom > tabBottom && rect.top < innerHeight,
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  })()`);
+  assert(
+    directCpu.ready === 'complete' && directCpu.hash === '#cpu-compatibility' &&
+      directCpu.active === 'quick-start' && directCpu.visible && !directCpu.overflow &&
+      directCpu.top >= directCpu.tabBottom && directCpu.top <= directCpu.tabBottom + 160,
+    `Direct CPU deep link is hidden or clipped: ${JSON.stringify(directCpu)}`,
+  );
+
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 390,
     height: 844,
@@ -430,7 +460,7 @@ try {
     `Clipboard fallback leaked a textarea: ${JSON.stringify(clipboardCleanup)}`,
   );
 
-  console.log('Pages browser checks OK: deep links, Native CTA, keyboard tabs/focus, 390x844 overflow, Back, numeric/duration guards, secret-file override, clipboard cleanup');
+  console.log('Pages browser checks OK: tab/Native/CPU deep links, Native CTA, keyboard tabs/focus, 390x844 overflow, Back, numeric/duration guards, secret-file override, clipboard cleanup');
 } finally {
   cdp?.close();
   if (chrome && chrome.exitCode === null) chrome.kill('SIGTERM');

@@ -13,8 +13,8 @@ A community Docker Compose setup for hosting **Conan Exiles Enhanced** with auto
 
 | Runtime | Status | Rolling image | Versioned image | Compose file |
 |---|---|---|---|---|
-| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.7.1` | `docker-compose.yml` |
-| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.7.1-native` | `docker-compose.native.yml` |
+| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.7.2` | `docker-compose.yml` |
+| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.7.2-native` | `docker-compose.native.yml` |
 
 See [GitHub Releases](https://github.com/balnaimi/conan-exiles-server/releases) for changelogs.
 
@@ -67,10 +67,10 @@ Practical Enhanced planning guidance:
 
 | Profile | CPU | RAM | Disk |
 |---|---|---|---|
-| Small/test | 4 modern cores | **16 GB** | **70 GB minimum** |
-| Growing/modded | 6+ fast cores | **24 GB or more** | **100 GB recommended** |
+| Small/test | 4 fast x86-64 cores | **16 GB** | **70 GB minimum** |
+| Growing/modded | 6+ fast x86-64 cores | **24 GB or more** | **100 GB recommended** |
 
-Native preflight requires guest-visible SSE4.2. AVX/AVX2 are diagnostics; this project does not claim Conan officially requires AVX2.
+CPU flags must be visible inside the host or VM guest. Native preflight enforces SSE4.2 and reports AVX/AVX2. AVX2 is an important compatibility check, but Funcom has not officially confirmed AVX2 as a hard requirement. See the [CPU compatibility check](docs/guides/operations.md#cpu-compatibility-check).
 
 ## 🔌 Ports
 

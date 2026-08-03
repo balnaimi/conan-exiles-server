@@ -12,9 +12,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML_PATH = ROOT / "docs" / "index.html"
+README_PATH = ROOT / "README.md"
+OPERATIONS_PATH = ROOT / "docs" / "guides" / "operations.md"
+NATIVE_GUIDE_PATH = ROOT / "docs" / "guides" / "native-linux.md"
 HTML = HTML_PATH.read_text(encoding="utf-8")
-README = (ROOT / "README.md").read_text(encoding="utf-8")
-
+README = README_PATH.read_text(encoding="utf-8")
+OPERATIONS = OPERATIONS_PATH.read_text(encoding="utf-8")
+NATIVE_GUIDE = NATIVE_GUIDE_PATH.read_text(encoding="utf-8")
 
 class PageParser(HTMLParser):
     def __init__(self) -> None:
@@ -74,6 +78,43 @@ def test_readme_stays_short_and_guides_are_reachable() -> None:
             resolved = (source.parent / target).resolve()
             assert resolved.is_relative_to(ROOT), f"Documentation link escapes repository: {source} -> {raw_target}"
             assert resolved.exists(), f"Broken documentation link: {source.relative_to(ROOT)} -> {raw_target}"
+
+
+def test_cpu_requirements_are_explicit_and_careful() -> None:
+    user_facing = {
+        "README": README,
+        "Page": HTML,
+        "Operations": OPERATIONS,
+        "Native guide": NATIVE_GUIDE,
+    }
+    for name, text in user_facing.items():
+        assert "modern cores" not in text.lower(), f"{name} still uses the undefined 'modern cores' wording"
+        for marker in ("SSE4.2", "AVX", "AVX2"):
+            assert marker in text, f"{name} does not spell out the {marker} compatibility guidance"
+        assert "Funcom has not officially confirmed AVX2" in text, f"{name} is missing the AVX2 disclaimer"
+
+    for name, text in {"Page": HTML, "Operations": OPERATIONS, "Native guide": NATIVE_GUIDE}.items():
+        assert "for flag in sse4_2 avx avx2; do" in text, f"{name} is missing the copyable Linux CPU check"
+        assert "grep -qw" in text, f"{name} is missing the per-flag CPU probe"
+        assert "lscpu" in text, f"{name} is missing guest-visible CPU model guidance"
+        assert "host-passthrough" in text, f"{name} is missing VPS/QEMU host-passthrough guidance"
+
+    markdown_rows = re.findall(r"\|[^\n]+\|[^\n]+\|[^\n]+\|[^\n]+\|", README + "\n" + OPERATIONS)
+    html_sizing = HTML.split("System Requirements", 1)[1].split("CPU Compatibility", 1)[0]
+    sizing_tables = "\n".join(markdown_rows) + "\n" + html_sizing
+    assert "SSE4.2 visible" not in sizing_tables
+    assert "verify AVX/AVX2" not in sizing_tables
+
+    combined = "\n".join(user_facing.values())
+    for claim in (
+        r"\bAVX2\s+(?:is\s+)?(?:required|mandatory)\b",
+        r"\brequires\s+AVX2\b",
+        r"\bmust\s+support\s+AVX2\b",
+    ):
+        assert re.search(claim, combined, re.IGNORECASE) is None, f"Unsupported AVX2 claim matched: {claim}"
+
+    assert "https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes" in HTML
+    assert 'id="cpu-compatibility" style="scroll-margin-top:' in HTML
 
 
 def extract_js_function(name: str) -> str:
@@ -345,7 +386,7 @@ def test_native_linux_is_prominent_and_unambiguous() -> None:
         "Wine Stable",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
-        "ghcr.io/balnaimi/conan-exiles-server:2.7.1-native",
+        "ghcr.io/balnaimi/conan-exiles-server:2.7.2-native",
         "Updating the default Compose deployment never switches it to Native",
         "Fresh Native deployment only",
     ):
@@ -355,7 +396,7 @@ def test_native_linux_is_prominent_and_unambiguous() -> None:
         "Wine Stable",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
-        ":2.7.1-native",
+        ":2.7.2-native",
         "Native Linux Experimental — Opt-in Quick Start",
         'href="#native-quick-start"',
         'id="native-quick-start"',
@@ -369,6 +410,8 @@ def test_native_linux_is_prominent_and_unambiguous() -> None:
         "8.70 GiB",
         "StayBloody",
         "Better Thralls",
+        "CPU Compatibility",
+        "host-passthrough",
     )
 
 
@@ -380,6 +423,7 @@ def test_polish_features_exist() -> None:
         "@media (max-width: 480px)",
         "Finding Workshop IDs",
         "View all releases on GitHub",
+        "v2.7.2 — CPU Compatibility Guidance",
         "v2.7.1 — Native Health Documentation Hotfix",
         "v2.7.0 — Native Linux Experimental",
         "v2.6.1 — Duration and Clipboard Reliability Hotfix",
