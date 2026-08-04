@@ -13,8 +13,8 @@ A community Docker Compose setup for hosting **Conan Exiles Enhanced** with auto
 
 | Runtime | Status | Rolling image | Versioned image | Compose file |
 |---|---|---|---|---|
-| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.7.2` | `docker-compose.yml` |
-| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.7.2-native` | `docker-compose.native.yml` |
+| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.8.0` | `docker-compose.yml` |
+| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.8.0-native` | `docker-compose.native.yml` |
 
 See [GitHub Releases](https://github.com/balnaimi/conan-exiles-server/releases) for changelogs.
 
@@ -112,6 +112,21 @@ docker compose logs -f
 ```
 
 Docker volumes preserve game data during normal image updates. Back up and verify your world before migrations, major game updates, restores, or destructive commands.
+
+### Portable backup and diagnostics
+
+From a complete repository checkout:
+
+```bash
+./scripts/conan-backup.sh create
+./scripts/conan-backup.sh list --verify
+./scripts/conan-backup.sh restore BACKUP.tar.gz              # dry-run
+./scripts/conan-backup.sh restore BACKUP.tar.gz --apply      # guarded apply
+./scripts/conan-backup.sh recover                            # interrupted operation only
+./scripts/conan-doctor.sh --format json
+```
+
+Backup/restore supports Wine and Native, serializes mutations with a host lock, uses a digest-pinned networkless helper, preserves volume ownership and safety, and provides verified pre-restore rollback plus explicit crash recovery. Doctor omits secrets, logs, process arguments, and world data. See [Operations and Troubleshooting](docs/guides/operations.md#portable-backup-verification-and-restore).
 
 ## 🙌 Contributing and Support
 

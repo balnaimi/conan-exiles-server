@@ -9,7 +9,7 @@ Native Linux runs the upstream Linux Shipping server without Wine. It is **exper
 | Channel | Image | Compose |
 |---|---|---|
 | Rolling | `ghcr.io/balnaimi/conan-exiles-server:native` | `docker-compose.native.yml` |
-| Versioned | `ghcr.io/balnaimi/conan-exiles-server:2.7.2-native` | `docker-compose.native.yml` |
+| Versioned | `ghcr.io/balnaimi/conan-exiles-server:2.8.0-native` | `docker-compose.native.yml` |
 
 The image runs as non-root UID/GID `1000:1000`.
 

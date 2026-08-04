@@ -172,28 +172,43 @@ done
 </tbody>
 </table>
 <p>Conan Exiles Enhanced Direct Connect requires an IP address rather than a hostname.</p>
-<h2 id="wine-backup-and-restore">Wine backup and restore</h2>
-<p>Stop Wine before a simple volume archive:</p>
-<pre><code class="language-bash">docker compose down
-docker run --rm \
-  -v conan-server_config-data:/data \
-  -v &quot;$(pwd):/backup&quot; \
-  alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
-docker compose up -d
+<h2 id="portable-backup-verification-and-restore">Portable backup, verification, and restore</h2>
+<p>Run the unified tool from a complete project checkout. It discovers the labelled Wine or Native service and the exact Compose named volume; it never deletes a volume.</p>
+<p>Create a portable world backup:</p>
+<pre><code class="language-bash">./scripts/conan-backup.sh create
 </code></pre>
-<p>Volume names depend on the Compose project/folder name; check <code>docker volume ls</code>.</p>
-<p>Restoring replaces current data. Verify the archive and keep another copy before deleting anything:</p>
-<pre><code class="language-bash">docker compose down
-docker run --rm -v conan-server_config-data:/data \
-  alpine sh -c 'rm -rf /data/*'
-docker run --rm \
-  -v conan-server_config-data:/data \
-  -v &quot;$(pwd):/backup&quot; \
-  alpine tar xzf /backup/conan-saves-YYYY-MM-DD.tar.gz -C /
-docker compose up -d
+<p><code>create</code> requires exactly one running runtime when <code>--runtime auto</code> is used. It stops that service, proves the save volume has no running users, takes a consistent SQLite snapshot, then restores the service's prior running state. If neither runtime is running, select one explicitly before the command:</p>
+<pre><code class="language-bash">./scripts/conan-backup.sh --runtime wine create
+./scripts/conan-backup.sh --runtime native create
 </code></pre>
-<p>Enhanced's default world is <code>ConanSandbox/Saved/game_0.db</code>; verify older scripts that still target <code>game.db</code>.</p>
-<p>For consistent live Native snapshots and safe restore validation, use <a href="../native-linux/#backup-and-restore">Native Linux backup and restore</a>.</p>
+<p>Archives are written to <code>.conan-backups/</code> with directory mode <code>0700</code> and archive mode <code>0600</code>. They contain the world database, bounded metadata, and checksums. WAL/SHM sidecars are never mixed into the snapshot. This portable format intentionally does not copy <code>.env</code> or plaintext passwords; keep your <code>.env</code> separately in a secret manager or protected host backup.</p>
+<p>List and verify backups without Docker:</p>
+<pre><code class="language-bash">./scripts/conan-backup.sh list --verify
+./scripts/conan-backup.sh verify .conan-backups/conan-wine-...-world.tar.gz
+</code></pre>
+<p>Restore is a non-mutating dry-run by default:</p>
+<pre><code class="language-bash">./scripts/conan-backup.sh restore .conan-backups/conan-wine-...-world.tar.gz
+</code></pre>
+<p>Apply only after reviewing the plan:</p>
+<pre><code class="language-bash">./scripts/conan-backup.sh restore .conan-backups/conan-wine-...-world.tar.gz --apply
+</code></pre>
+<p>Apply verifies the archive, its outer SHA-256 identity, and runtime; streams and validates every normalized archive header under strict member/size bounds before extracting any payload; refuses missing, aliased, foreign/unlabelled, or unexpectedly used volumes; and uses the resolved Compose project/volume labels to prove target ownership. For a non-matching world it stops and proves the target quiescent, creates and re-verifies a pre-restore archive, checkpoints old WAL state, replaces <code>game_0.db</code> atomically while preserving UID/GID, and restores the prior running state. If readiness fails, it automatically restores the pre-restore archive. A host <code>flock</code> serializes create/apply operations. The helper image is pinned by digest and runs without networking, with a read-only root filesystem, a disposable work volume, and minimal capabilities.</p>
+<p><code>.conan-backups/restore-state.json</code> records durable operation state before a running service is stopped. An unresolved state blocks another create or apply so its rollback pointer cannot be overwritten. Host-side verification creates its private workspace on the archive filesystem and checks available expansion space before extracting. After a host reboot, forced termination, or <code>recovery-required</code> result, run:</p>
+<pre><code class="language-bash">./scripts/conan-backup.sh recover
+</code></pre>
+<p>For an interrupted backup/stopping phase this restores the prior running state. For a prepared or partially applied restore it verifies and applies the pre-restore archive, then restores the prior running state. Reapplying an already-matching archive is idempotent. Its digest-bound, WAL-aware equality decision happens only after quiescence so a concurrent world commit cannot race the restore decision; the prior running state is then restored.</p>
+<p>Enhanced's default world is <code>ConanSandbox/Saved/game_0.db</code>; archives or scripts that target only <code>game.db</code> are obsolete.</p>
+<p>Native's existing scheduled/full backup tooling remains available for Native-only configuration and mod-state archives. The unified portable command is the common Wine/Native world recovery path.</p>
+<h2 id="privacy-safe-diagnostics">Privacy-safe diagnostics</h2>
+<p>Generate a concise report without reading <code>.env</code>, Docker environment values, process arguments, logs, or world data:</p>
+<pre><code class="language-bash">./scripts/conan-doctor.sh
+./scripts/conan-doctor.sh --format json
+./scripts/conan-doctor.sh --output conan-doctor-$(date +%F).json
+</code></pre>
+<p>The output contains host CPU capability flags, memory/disk totals, whitelisted Docker/Compose versions, labelled runtime state, health/OOM/restarts, bounded resource stats, published port numbers, privacy-minimized A2S reachability/player counts, process IDs with executable basenames only, and backup count/age without archive names. A2S server names and map names are intentionally omitted. Output files use mode <code>0600</code>.</p>
+<p>Use offline mode when Docker is unavailable or should not be contacted:</p>
+<pre><code class="language-bash">./scripts/conan-doctor.sh --offline --format json
+</code></pre>
 <h2 id="full-reset">Full reset</h2>
 <blockquote>
 <p><strong>Danger:</strong> <code>down -v</code> permanently deletes the world, players, buildings, configuration, and all Compose volumes. Back up and verify first.</p>

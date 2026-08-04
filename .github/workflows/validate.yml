@@ -7,24 +7,33 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Validate release tag against VERSION
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: test "${GITHUB_REF_NAME}" = "v$(cat VERSION)"
 
       - name: Set up Node.js for Pages tests
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
 
@@ -38,15 +47,20 @@ jobs:
 
       - name: Validate shell scripts
         run: |
-          bash -n entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh scripts/migrate-compose-wine-to-native.sh
-          shellcheck --severity=error -x entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh scripts/migrate-compose-wine-to-native.sh
+          bash -n entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh scripts/migrate-compose-wine-to-native.sh scripts/conan-backup.sh scripts/conan-doctor.sh
+          shellcheck --severity=error -x entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh scripts/migrate-compose-wine-to-native.sh scripts/conan-backup.sh scripts/conan-doctor.sh
 
       - name: Validate Python tooling syntax
         run: |
           python3 -m py_compile \
             scripts/build-pages-docs.py \
+            scripts/conan_backup.py \
+            scripts/conan_doctor.py \
             scripts/migrate_compose_wine_to_native.py \
-            scripts/test-compose-migration-docker.py
+            scripts/sync-project-version.py \
+            scripts/test-backup-docker.py \
+            scripts/test-compose-migration-docker.py \
+            scripts/test-operations-tools.py
 
       - name: Test shared and Native runtime behavior
         run: |
@@ -54,6 +68,10 @@ jobs:
           python3 scripts/test-native-runtime.py
           python3 scripts/test-native-image.py
           python3 scripts/test-compose-config.py
+          python3 scripts/test-operations-tools.py
+
+      - name: Validate release version synchronization
+        run: python3 scripts/sync-project-version.py --check
 
       - name: Validate configuration consistency
         run: python3 scripts/validate-config-consistency.py
@@ -77,13 +95,8 @@ jobs:
           docker compose -f docker-compose.native.yml config -q
           docker compose -f docker-compose.native.build.yml config -q
 
-      - name: Build Native Linux image
-        run: docker build -f Dockerfile.native -t conan-native:ci .
-
-      - name: Verify Native image contract
-        run: |
-          test "$(docker image inspect conan-native:ci --format '{{.Config.User}}')" = "conan:conan"
-          docker run --rm --entrypoint sh conan-native:ci -c 'id -u | grep -qx 1000; command -v sqlite3; command -v python3; ! command -v wine'
+      - name: Test portable backup and restore with isolated Docker volumes
+        run: python3 scripts/test-backup-docker.py
 
       - name: Check required files
         run: |
@@ -102,6 +115,14 @@ jobs:
           test -f scripts/migrate-compose-wine-to-native.sh
           test -f scripts/migrate_compose_wine_to_native.py
           test -f scripts/test-compose-migration-docker.py
+          test -f scripts/conan-backup.sh
+          test -f scripts/conan_backup.py
+          test -f scripts/conan-doctor.sh
+          test -f scripts/conan_doctor.py
+          test -f scripts/test-operations-tools.py
+          test -f scripts/test-backup-docker.py
+          test -f scripts/sync-project-version.py
+          test -f VERSION
           test -f scripts/build-pages-docs.py
           test -f scripts/test-pages-ui.py
           test -f scripts/test-pages-browser.mjs

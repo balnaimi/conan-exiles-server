@@ -24,7 +24,7 @@ def read_cstring(payload: bytes, offset: int) -> tuple[str, int]:
     return payload[offset:end].decode("utf-8", errors="replace"), end + 1
 
 
-def query(host: str, port: int, timeout: float) -> dict[str, Any]:
+def _request(host: str, port: int, timeout: float) -> tuple[bytes, tuple[str, int]]:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.settimeout(timeout)
         sock.sendto(QUERY, (host, port))
@@ -37,6 +37,26 @@ def query(host: str, port: int, timeout: float) -> dict[str, Any]:
 
     if payload[:5] != b"\xff\xff\xff\xffI":
         raise A2SError(f"unexpected A2S response header {payload[:5].hex()}")
+    return payload, source
+
+
+def query_counts(host: str, port: int, timeout: float) -> dict[str, int]:
+    """Return only player counts without decoding server identity strings."""
+    payload, _source = _request(host, port, timeout)
+    offset = 6
+    for _ in range(4):
+        end = payload.find(b"\x00", offset)
+        if end < 0:
+            raise A2SError("unterminated string in A2S response")
+        offset = end + 1
+    if len(payload) < offset + 5:
+        raise A2SError("truncated A2S numeric fields")
+    players, max_players, bots = payload[offset + 2 : offset + 5]
+    return {"players": players, "max_players": max_players, "bots": bots}
+
+
+def query(host: str, port: int, timeout: float) -> dict[str, Any]:
+    payload, source = _request(host, port, timeout)
 
     offset = 5
     if len(payload) <= offset:

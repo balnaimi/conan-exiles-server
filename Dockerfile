@@ -45,12 +45,14 @@ RUN dpkg --add-architecture i386 && \
 ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
-# Install Wine from WineHQ
+# Install Wine from WineHQ. Wine's scanner recommendations pull ipp-usb;
+# purge that unused headless print/USB daemon after installation.
 RUN mkdir -pm755 /etc/apt/keyrings && \
     wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
     wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources && \
     apt-get update && \
     apt-get install -y --install-recommends winehq-staging && \
+    apt-get purge -y ipp-usb && \
     rm -rf /var/lib/apt/lists/*
 
 # Install vc_redist vcrun2022 needed for UE5 

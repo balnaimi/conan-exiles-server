@@ -1,0 +1,62 @@
+name: Bug report
+description: Report a reproducible server, image, migration, backup, or documentation problem
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. Remove all passwords, tokens, private keys, world databases, backup archives, and unredacted process arguments before submitting.
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime
+      options:
+        - Wine Stable
+        - Native Linux Experimental
+        - Migration / host-side tooling
+        - GitHub Pages / Config Generator
+    validations:
+      required: true
+  - type: input
+    id: image
+    attributes:
+      label: Image tag and digest
+      placeholder: ghcr.io/...:tag @ sha256:...
+  - type: input
+    id: game-build
+    attributes:
+      label: Game build
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Docker/Compose versions, CPU flags visible to the guest, RAM/cgroup limit, free disk, and mods.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and redacted diagnostics
+      description: Include health, restart count, OOMKilled, A2S result, and redacted logs. Never paste `.env`.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed credentials, private data, world databases, and backup archives.
+          required: true

@@ -923,7 +923,7 @@ curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/dock
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
 nano .env
 docker compose -f docker-compose.native.yml up -d</pre>
-        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.2-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.8.0-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
         <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
       </div>
 
@@ -1553,6 +1553,9 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
+        <strong>v2.8.0 — Safe Operations &amp; Supply-Chain Hardening:</strong> Adds portable verified Wine/Native world backup and guarded restore, privacy-safe <code>conan-doctor</code> diagnostics, selective image builds, pinned GitHub Actions, Dependabot, Trivy scanning, security policy, and contributor templates. Wine remains <code>latest</code>/<code>2.8.0</code>; Native remains experimental at <code>native</code>/<code>2.8.0-native</code>.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.7.2 — CPU Compatibility Guidance:</strong> Replaces the vague “modern CPU” wording with explicit SSE4.2, AVX, and AVX2 checks; adds copyable Linux diagnostics and VPS/QEMU guest CPU guidance. Wine remains <code>latest</code>/<code>2.7.2</code>; Native remains experimental at <code>native</code>/<code>2.7.2-native</code>.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">

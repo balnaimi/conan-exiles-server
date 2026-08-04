@@ -14,5 +14,9 @@ research/runtime-configs/2026-*-windowsserver/
 research/runtime-configs/2026-*-analysis.md
 research/runtime-configs/analyze-runtime-configs.py
 
-# Compose migration state may contain rollback archives with server INIs/secrets.
+# Compose migration/backup state may contain rollback archives, world data, or server metadata.
 .conan-migration/
+.conan-backups/
+
+# Generated diagnostic reports are private-by-default operational artifacts.
+conan-doctor-*.json

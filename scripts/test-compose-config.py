@@ -100,6 +100,78 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("com.balnaimi.conan.support-tier=${{ matrix.support_tier }}", text)
         self.assertIn("file: ${{ matrix.dockerfile }}", text)
 
+    def test_publish_filters_runtime_changes_but_tags_build_both(self) -> None:
+        text = self.PUBLISH.read_text(encoding="utf-8")
+        self.assertIn("wine:", text)
+        self.assertIn("native:", text)
+        self.assertIn("Dockerfile", text)
+        self.assertIn("Dockerfile.native", text)
+        self.assertIn("scripts/runtime/**", text)
+        self.assertIn("scripts/native/**", text)
+        self.assertIn("startsWith(github.ref, 'refs/tags/v')", text)
+        self.assertRegex(text, r"needs\.changes\.outputs\[matrix\.change_filter\]")
+
+    def test_workflows_bound_runtime_and_scan_published_images(self) -> None:
+        publish = self.PUBLISH.read_text(encoding="utf-8")
+        validate = self.VALIDATE.read_text(encoding="utf-8")
+        self.assertIn("concurrency:", publish)
+        self.assertIn("cancel-in-progress: true", publish)
+        self.assertRegex(publish, r"timeout-minutes:\s*\d+")
+        self.assertIn("aquasecurity/trivy-action", publish)
+        self.assertIn("CRITICAL,HIGH", publish)
+        self.assertIn("ignore-unfixed: true", publish)
+        self.assertIn("push-by-digest=true", publish)
+        self.assertIn("steps.build-scan.outputs.digest", publish)
+        self.assertLess(
+            publish.index("Scan exact image artifact for fixed high-impact vulnerabilities"),
+            publish.index("Promote scanned digest to release and channel tags"),
+        )
+        self.assertEqual(publish.count("docker/build-push-action@"), 1)
+        self.assertIn("pull-requests: read", publish)
+        self.assertIn("Validate release tag against VERSION", publish)
+        self.assertIn("concurrency:", validate)
+        self.assertRegex(validate, r"timeout-minutes:\s*\d+")
+
+    def test_dependency_automation_and_community_files_exist(self) -> None:
+        dependabot = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+        for ecosystem in ("github-actions", "docker", "pip"):
+            self.assertIn(f'package-ecosystem: "{ecosystem}"', dependabot)
+        for relative in (
+            "SECURITY.md",
+            "CONTRIBUTING.md",
+            ".github/ISSUE_TEMPLATE/bug-report.yml",
+            ".github/ISSUE_TEMPLATE/feature-request.yml",
+            ".github/PULL_REQUEST_TEMPLATE.md",
+        ):
+            self.assertTrue((ROOT / relative).is_file(), relative)
+
+    def test_release_version_has_one_checked_source(self) -> None:
+        version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        self.assertRegex(version, r"^[0-9]+\.[0-9]+\.[0-9]+$")
+        checker = ROOT / "scripts" / "sync-project-version.py"
+        self.assertTrue(checker.is_file())
+        result = subprocess.run(
+            ["python3", str(checker), "--check"],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        publish = (ROOT / ".github" / "workflows" / "docker-publish.yml").read_text(encoding="utf-8")
+        self.assertNotIn("tr -d '[:space:]'", publish)
+        self.assertIn("^${version_pattern}$", publish)
+        self.assertIn('version="$(cat VERSION)"', publish)
+        version_gate = publish.split("- name: Validate release tag against VERSION", 1)[1].split("\n      - name:", 1)[0]
+        self.assertNotIn("\n        if:", version_gate)
+
+
+class WineImageSecurityTests(unittest.TestCase):
+    def test_wine_image_removes_unused_vulnerable_usb_print_daemon(self) -> None:
+        dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+        self.assertIn("apt-get purge -y ipp-usb", dockerfile)
+
 
 class MigrationTests(unittest.TestCase):
     def setUp(self) -> None:

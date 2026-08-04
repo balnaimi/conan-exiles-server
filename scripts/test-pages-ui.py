@@ -564,7 +564,7 @@ def test_runtime_choice_is_prominent_without_prematurely_switching_the_default()
         "Wine Stable",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
-        "ghcr.io/balnaimi/conan-exiles-server:2.7.2-native",
+        "ghcr.io/balnaimi/conan-exiles-server:2.8.0-native",
         "Updating the default Compose deployment never switches it to Native",
         "Fresh Native deployment only",
     ):
@@ -643,6 +643,7 @@ def test_polish_features_exist() -> None:
         "@media (max-width: 480px)",
         "Finding Workshop IDs",
         "View all releases on GitHub",
+        "v2.8.0 — Safe Operations &amp; Supply-Chain Hardening",
         "v2.7.2 — CPU Compatibility Guidance",
         "v2.7.1 — Native Health Documentation Hotfix",
         "v2.7.0 — Native Linux Experimental",
