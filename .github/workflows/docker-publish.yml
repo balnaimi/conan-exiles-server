@@ -149,7 +149,7 @@ jobs:
           platforms: linux/amd64
           load: ${{ github.event_name == 'pull_request' }}
           outputs: ${{ github.event_name != 'pull_request' && format('type=image,name={0}/{1},push-by-digest=true,name-canonical=true,push=true', env.REGISTRY, env.IMAGE_NAME) || '' }}
-          tags: conan-ci:${{ matrix.variant }}
+          tags: ${{ github.event_name == 'pull_request' && format('conan-ci:{0}', matrix.variant) || '' }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.variant }}
           cache-to: type=gha,mode=max,scope=${{ matrix.variant }}

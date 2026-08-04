@@ -121,6 +121,11 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("CRITICAL,HIGH", publish)
         self.assertIn("ignore-unfixed: true", publish)
         self.assertIn("push-by-digest=true", publish)
+        self.assertIn(
+            "tags: ${{ github.event_name == 'pull_request' && format('conan-ci:{0}', matrix.variant) || '' }}",
+            publish,
+        )
+        self.assertNotIn("tags: conan-ci:${{ matrix.variant }}", publish)
         self.assertIn("steps.build-scan.outputs.digest", publish)
         self.assertLess(
             publish.index("Scan exact image artifact for fixed high-impact vulnerabilities"),
