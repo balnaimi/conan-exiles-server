@@ -150,6 +150,42 @@ def test_storage_guidance_distinguishes_capacity_from_safe_headroom() -> None:
             assert claim not in text, f"{name} still overstates storage as a hard minimum: {claim}"
 
 
+def test_memory_guidance_distinguishes_practical_start_from_recommended_headroom() -> None:
+    user_facing = {
+        "README": README,
+        "Page": HTML,
+        "Operations": OPERATIONS,
+        "Native guide": NATIVE_GUIDE,
+    }
+    required_guidance = (
+        "12 GB is a practical starting allocation for a small vanilla server",
+        "16 GB is recommended for typical use, not a hard minimum",
+        "hard 10 GiB container cap with no extra swap budget",
+        "Wine peaked at 9.19 GiB",
+        "Native peaked at 8.69 GiB",
+        "The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS",
+        "players, larger worlds, and mods can require more memory",
+    )
+    forbidden_claims = (
+        "Use at least 16 GB",
+        "16 GB minimum",
+        "12 GB minimum",
+    )
+
+    for name, text in user_facing.items():
+        for guidance in required_guidance:
+            assert guidance in text, f"{name} is missing RAM guidance: {guidance}"
+        for claim in forbidden_claims:
+            assert claim not in text, f"{name} still overstates RAM as a hard minimum: {claim}"
+
+    cgroup_diagnostic = (
+        "Native preflight prefers a finite cgroup memory limit when one is exposed; "
+        "otherwise it falls back to /proc/meminfo"
+    )
+    for name, text in {"Operations": OPERATIONS, "Native guide": NATIVE_GUIDE}.items():
+        assert cgroup_diagnostic in text, f"{name} is missing cgroup-aware memory diagnostics"
+
+
 def extract_js_function(name: str) -> str:
     match = re.search(rf"function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{", HTML)
     assert match, f"Missing JavaScript function: {name}"

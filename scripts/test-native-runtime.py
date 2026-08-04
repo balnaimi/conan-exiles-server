@@ -128,6 +128,111 @@ class CpuPreflightTests(unittest.TestCase):
             },
         )
 
+    def run_with_memory_limit(
+        self,
+        host_memory_gib: int | str,
+        cgroup_limit: str,
+        cgroup_v1_limit: str | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        fake_bin = root / "bin"
+        fake_bin.mkdir()
+        fake_df = fake_bin / "df"
+        fake_df.write_text(
+            "#!/bin/sh\n"
+            "printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\\n'\n"
+            "printf '/dev/test 104857600 0 44040192 0%% /data\\n'\n",
+            encoding="utf-8",
+        )
+        fake_df.chmod(0o755)
+        meminfo = root / "meminfo"
+        memtotal_kib = (
+            host_memory_gib * 1024 * 1024
+            if isinstance(host_memory_gib, int)
+            else host_memory_gib
+        )
+        meminfo.write_text(
+            f"MemTotal:       {memtotal_kib} kB\n",
+            encoding="utf-8",
+        )
+        cgroup_v2 = root / "memory.max"
+        cgroup_v2.write_text(f"{cgroup_limit}\n", encoding="utf-8")
+        cgroup_v1 = root / "memory.limit_in_bytes"
+        if cgroup_v1_limit is not None:
+            cgroup_v1.write_text(f"{cgroup_v1_limit}\n", encoding="utf-8")
+        return run_script(
+            PREFLIGHT,
+            {
+                "CPU_FLAGS_FILE": str(CPU_FIXTURES / "modern.flags"),
+                "GAME_DIR": str(root),
+                "NATIVE_PREFLIGHT_SKIP_RESOURCES": "0",
+                "MEMINFO_FILE": str(meminfo),
+                "CGROUP_MEMORY_MAX_FILE": str(cgroup_v2),
+                "CGROUP_MEMORY_LIMIT_FILE": str(cgroup_v1),
+                "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            },
+        )
+
+    def test_preflight_prefers_finite_cgroup_limit_over_host_memtotal(self) -> None:
+        result = self.run_with_memory_limit(62, str(10 * 1024**3))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=10", result.stdout)
+        self.assertIn("memory_source=cgroup", result.stdout)
+        self.assertIn("headroom is limited", result.stderr)
+        self.assertIn("16 GiB is recommended", result.stderr)
+
+    def test_preflight_falls_back_to_memtotal_when_cgroup_v2_is_unlimited(self) -> None:
+        result = self.run_with_memory_limit(16, "max")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=16", result.stdout)
+        self.assertIn("memory_source=meminfo", result.stdout)
+        self.assertNotIn("GiB RAM is visible", result.stderr)
+
+    def test_preflight_uses_finite_cgroup_v1_limit_when_v2_is_unlimited(self) -> None:
+        result = self.run_with_memory_limit(62, "max", str(12 * 1024**3))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=12", result.stdout)
+        self.assertIn("memory_source=cgroup", result.stdout)
+        self.assertIn("headroom is limited", result.stderr)
+
+    def test_preflight_rejects_malformed_memtotal_before_arithmetic(self) -> None:
+        result = self.run_with_memory_limit("malformed-value", str(10 * 1024**3))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=10", result.stdout)
+        self.assertIn("memory_source=cgroup", result.stdout)
+
+    def test_preflight_ignores_v1_unlimited_sentinel_when_memtotal_is_malformed(self) -> None:
+        result = self.run_with_memory_limit(
+            "malformed-value",
+            "max",
+            "9223372036854771712",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=0", result.stdout)
+        self.assertIn("memory_source=meminfo", result.stdout)
+        self.assertIn("Less than 10 GiB RAM is visible", result.stderr)
+
+    def test_preflight_parses_leading_zero_memtotal_as_decimal(self) -> None:
+        result = self.run_with_memory_limit("08", "max")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=0", result.stdout)
+        self.assertIn("memory_source=meminfo", result.stdout)
+
+    def test_preflight_ignores_oversized_memtotal_before_arithmetic(self) -> None:
+        result = self.run_with_memory_limit("9999999999999999999", "max")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=0", result.stdout)
+        self.assertIn("memory_source=meminfo", result.stdout)
+        self.assertIn("Less than 10 GiB RAM is visible", result.stderr)
+
+    def test_preflight_parses_leading_zero_cgroup_limit_as_decimal(self) -> None:
+        result = self.run_with_memory_limit(62, f"000{10 * 1024**3}")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("memory_gib=10", result.stdout)
+        self.assertIn("memory_source=cgroup", result.stdout)
+
     def test_preflight_reports_df_available_column(self) -> None:
         result = self.run_with_disk_available(42)
         self.assertEqual(result.returncode, 0, result.stderr)

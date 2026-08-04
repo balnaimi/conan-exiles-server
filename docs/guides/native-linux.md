@@ -33,13 +33,17 @@ Never attach the same live data volume to Wine and Native. Existing Wine servers
 
 - Guest-visible SSE4.2 is required by the current UE5 x64 baseline and enforced by preflight.
 - AVX and AVX2 are reported as diagnostics; Funcom has not officially confirmed AVX2 as a hard requirement.
-- Use at least 16 GB RAM for a small current Enhanced server; modded or growing worlds may need more.
+- Use 12 GB as a practical starting allocation for a small vanilla server; 16 GB remains recommended for typical use and more headroom.
 - Storage sizing assumes one runtime—Wine or Native, not both. 20 GB is a practical starting allocation for one runtime.
 - 25–35 GB is recommended for updates, world growth, and a simple backup. 35–40 GB is a comfortable allocation, not a minimum.
 - A safe Wine-to-Native trial keeps both runtimes and their isolated data temporarily. The measured clean Wine-to-Native coexistence used about 14 GB on the host; 25 GB is a practical migration floor for that scenario, while 35 GB is recommended for safer migration headroom.
 - 70 GB is comfortable, not required, for mods, multiple backups, long-term growth, or repeated maintenance. 100 GB is a safer recommendation for heavily modded servers or long backup retention.
 - These are project planning recommendations, not official Funcom requirements or hard limits.
 - These allocations are total disk sizes in decimal GB; preflight reports currently free binary GiB after existing host and Docker usage.
+
+RAM sizing uses total host/VPS allocation. 12 GB is a practical starting allocation for a small vanilla server. In measured no-player tests under a hard 10 GiB container cap with no extra swap budget, Wine peaked at 9.19 GiB and Native peaked at 8.69 GiB; both remained A2S-ready through 20-minute observation windows without cgroup pressure or OOM events, and Native completed multiple save cycles. 16 GB is recommended for typical use, not a hard minimum. The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS. The measured worlds were small and unmodded; players, larger worlds, and mods can require more memory.
+
+Native preflight prefers a finite cgroup memory limit when one is exposed; otherwise it falls back to /proc/meminfo. This prevents a constrained Docker container from reporting the physical host's larger RAM total as its own usable budget.
 
 Check exactly what Linux can see:
 

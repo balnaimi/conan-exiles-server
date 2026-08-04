@@ -93,9 +93,13 @@ These are project planning recommendations, not official hard limits:
 
 | Profile | CPU | RAM | Disk |
 |---|---|---|---|
-| Test / very small | 4 fast x86-64 cores | 16 GB | 20 GB practical start |
+| Test / very small | 4 fast x86-64 cores | 12 GB practical start | 20 GB practical start |
 | Small private server | 4+ fast x86-64 cores | 16 GB recommended | 25–35 GB recommended |
 | Growing or modded | 6+ fast x86-64 cores | 24 GB or more | 70 GB comfortable; 100 GB heavy |
+
+RAM sizing uses total host/VPS allocation. 12 GB is a practical starting allocation for a small vanilla server. In measured no-player tests under a hard 10 GiB container cap with no extra swap budget, Wine peaked at 9.19 GiB and Native peaked at 8.69 GiB; both remained A2S-ready through 20-minute observation windows without cgroup pressure or OOM events, and Native completed multiple save cycles. 16 GB is recommended for typical use, not a hard minimum. The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS. The measured worlds were small and unmodded; players, larger worlds, and mods can require more memory.
+
+Native preflight prefers a finite cgroup memory limit when one is exposed; otherwise it falls back to /proc/meminfo. This prevents a constrained Docker container from reporting the physical host's larger RAM total as its own usable budget.
 
 Storage sizing assumes one runtime—Wine or Native, not both. 20 GB is a practical starting allocation for one runtime. 25–35 GB is recommended for updates, world growth, and a simple backup. 35–40 GB is a comfortable allocation, not a minimum. The measured clean Wine-to-Native coexistence used about 14 GB on the host; 25 GB is a practical migration floor for that scenario, while 35 GB is recommended for safer migration headroom. 70 GB is comfortable, not required, for mods, multiple backups, long-term growth, or repeated maintenance. 100 GB is a safer recommendation for heavily modded servers or long backup retention. These are project planning recommendations, not official Funcom requirements or hard limits.
 
@@ -123,7 +127,7 @@ lscpu
 
 On VPS/QEMU and other virtual machines, the guest-visible flags matter—not only the physical host CPU. Select a current CPU model or `host-passthrough` when the platform supports it. A host change that exposes several previously missing flags can prove a CPU compatibility problem, but it does not isolate AVX2 alone.
 
-A clean Enhanced/Wine test on Steam build `24383534` repeatedly OOM-restarted on 8 GB and stabilized near 9.1 GB idle after increasing the host to 16 GB. Actual use varies with players, buildings, world size, and mods. Keep free space for Docker layers, SteamCMD staging, game files, databases, backups, and updates.
+A clean Enhanced/Wine test on Steam build `24383534` repeatedly OOM-restarted on 8 GB and stabilized near 9.1 GB idle after increasing the host to 16 GB. A later constrained test established the 12 GB practical-start guidance above. Actual use varies with players, buildings, world size, and mods. Keep free space for Docker layers, SteamCMD staging, game files, databases, backups, and updates.
 
 Additional planning notes:
 

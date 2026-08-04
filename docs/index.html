@@ -1011,7 +1011,7 @@ docker compose up -d</pre>
             <tr>
               <td><strong>Test / very small</strong></td>
               <td>4 fast x86-64 cores</td>
-              <td><strong>16 GB</strong></td>
+              <td><strong>12 GB practical start</strong></td>
               <td><strong>20 GB practical start</strong></td>
             </tr>
             <tr>
@@ -1030,6 +1030,9 @@ docker compose up -d</pre>
         </table>
       </div>
       <p style="color:var(--text-dim);font-size:0.85rem;margin-top:0.75rem;">These are project planning recommendations, not official Funcom requirements or hard limits. Actual usage depends on the runtime, map, database, buildings, players, mods, backups, and game updates.</p>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>Measured RAM guidance:</strong> RAM sizing uses total host/VPS allocation. 12 GB is a practical starting allocation for a small vanilla server. In measured no-player tests under a hard 10 GiB container cap with no extra swap budget, Wine peaked at 9.19 GiB and Native peaked at 8.69 GiB; both remained A2S-ready through 20-minute observation windows without cgroup pressure or OOM events, and Native completed multiple save cycles. 16 GB is recommended for typical use, not a hard minimum. The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS. The measured worlds were small and unmodded; players, larger worlds, and mods can require more memory.
+      </div>
 
       <h3 id="cpu-compatibility" style="scroll-margin-top:7rem;color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">CPU Compatibility</h3>
       <div class="info-note">
@@ -1053,7 +1056,7 @@ lscpu</pre>
         <strong>🐧 Native Linux Experimental observation:</strong> On the same 16 GiB test CT and Steam build <code>24383534</code>, the native Shipping binary reached A2S/RCON readiness and stabilized near <strong>8.70 GiB</strong> unmodded. Enhanced-tagged <strong>StayBloody</strong> and <strong>Better Thralls</strong> mounted in order at roughly 8.42–8.57 GiB. The guest exposed <strong>SSE4.2</strong>, AVX, and AVX2. UE5's general x64 baseline is SSE4.2; these tests do not prove AVX2 alone is a Conan requirement.
       </div>
       <div class="info-warning" style="margin-top:0.75rem;">
-        <strong>8 GB RAM should be considered insufficient for the current Enhanced server.</strong> Use at least 16 GB unless you have verified your own workload under stricter limits.
+        <strong>8 GB RAM should be considered insufficient for the current Enhanced server.</strong> The measured 12 GB practical-start profile is intended for small vanilla workloads with limited headroom; choose 16 GB or more as the workload grows.
       </div>
 
       <div style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">
