@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Development guide for the Conan Exiles Enhanced Docker server.">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <title>Development — Conan Exiles Enhanced Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../../">Quick Start</a><a href="../../config/">Config Generator</a><a href="../../migrate/">Migrate</a><a aria-current="page" href="../">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Documentation sections">
+      <strong><a href="../">Documentation</a></strong>
+      <a href="../configuration/">Configuration</a>
+      <a href="../mods/">Steam Workshop Mods</a>
+      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../operations/">Operations and Troubleshooting</a>
+      <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
+      <a aria-current="page" href="../development/">Development</a>
+    </aside>
+    <article class="docs-content">
+<h1 id="development">Development</h1>
+<p><a href="../">← Documentation index</a></p>
+<h2 id="build-locally">Build locally</h2>
+<p>Wine Stable:</p>
+<pre><code class="language-bash">git clone https://github.com/balnaimi/conan-exiles-server.git
+cd conan-exiles-server
+cp .env.example .env
+nano .env
+docker compose -f docker-compose.build.yml up -d
+</code></pre>
+<p>Native Linux:</p>
+<pre><code class="language-bash">cp .env.example .env
+nano .env
+docker compose -f docker-compose.native.build.yml up -d
+</code></pre>
+<h2 id="repository-layout">Repository layout</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Dockerfile</code></td>
+<td>Wine Stable image</td>
+</tr>
+<tr>
+<td><code>Dockerfile.native</code></td>
+<td>Non-root Native Linux Experimental image</td>
+</tr>
+<tr>
+<td><code>entrypoint.sh</code></td>
+<td>Wine startup</td>
+</tr>
+<tr>
+<td><code>scripts/runtime/</code></td>
+<td>Shared config, secret, and atomic Workshop helpers</td>
+</tr>
+<tr>
+<td><code>scripts/native/</code></td>
+<td>Native install, preflight, lifecycle, health, backup, and restore</td>
+</tr>
+<tr>
+<td><code>docker-compose.yml</code></td>
+<td>Published Wine deployment</td>
+</tr>
+<tr>
+<td><code>docker-compose.native.yml</code></td>
+<td>Published Native deployment</td>
+</tr>
+<tr>
+<td><code>docker-compose.build.yml</code></td>
+<td>Local Wine build</td>
+</tr>
+<tr>
+<td><code>docker-compose.native.build.yml</code></td>
+<td>Local Native build</td>
+</tr>
+<tr>
+<td><code>.env.minimal</code></td>
+<td>Small quick-start configuration</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td>Full configuration template</td>
+</tr>
+<tr>
+<td><code>docs/index.html</code></td>
+<td>Interactive documentation and Config Generator</td>
+</tr>
+<tr>
+<td><code>docs/guides/</code></td>
+<td>Focused operator documentation</td>
+</tr>
+</tbody>
+</table>
+<h2 id="stack">Stack</h2>
+<ul>
+<li>Debian Bookworm slim bases pinned separately for Wine and Native.</li>
+<li>WineHQ Staging, VC++ 2022, Xvfb, Vulkan/EGL/Mesa for the stable Windows runtime.</li>
+<li>Upstream Linux Shipping binary under a non-root user for Native Experimental.</li>
+<li>SteamCMD with persistent writable cache.</li>
+<li>Python standard-library A2S/RCON and SQLite-safe backup/restore tooling.</li>
+<li>Separate GHCR channels with OCI runtime/support labels.</li>
+</ul>
+<h2 id="validation">Validation</h2>
+<p>Before proposing a change, run the relevant project checks. The complete validation workflow covers:</p>
+<ul>
+<li>Runtime configuration rendering.</li>
+<li>Native security/lifecycle/backup/restore behavior.</li>
+<li>Image contracts.</li>
+<li>Compose and migration fixtures.</li>
+<li>Configuration consistency.</li>
+<li>Pages static and headless-browser behavior.</li>
+<li>Bash syntax, ShellCheck, Python compile, HTML validation, and <code>git diff --check</code>.</li>
+</ul>
+<p>Changes to a runtime require real disposable-host acceptance in addition to mocks when they affect SteamCMD paths, CPU preflight, RCON framing, lifecycle, data, mods, backup, or restore.</p>
+<h2 id="contributing">Contributing</h2>
+<p>Open an issue with the environment, image tag/digest, game build, logs with secrets removed, and clear reproduction steps. Pull requests should keep Wine Stable backward-compatible and Native Experimental opt-in with separate volumes and tags.</p>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Generated from <code>docs/guides/development.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/development.md">Edit this guide</a></footer>
+</body>
+</html>

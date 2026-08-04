@@ -10,7 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENV_EXAMPLE = ROOT / ".env.example"
-INDEX_HTML = ROOT / "docs" / "index.html"
+QUICK_HTML = ROOT / "docs" / "index.html"
+GENERATOR_HTML = ROOT / "docs" / "config" / "index.html"
 README = ROOT / "README.md"
 EXPECTED_SETTINGS = 250
 
@@ -25,7 +26,7 @@ def env_keys() -> list[str]:
 
 
 def generator_keys() -> list[str]:
-    html = INDEX_HTML.read_text(encoding="utf-8")
+    html = GENERATOR_HTML.read_text(encoding="utf-8")
     return re.findall(r"key:\s*['\"]([A-Z0-9_]+)['\"]", html)
 
 
@@ -41,7 +42,7 @@ def main() -> int:
     if duplicates:
         errors.append(f".env.example duplicate keys: {', '.join(duplicates)}")
     if gen_duplicates:
-        errors.append(f"docs/index.html duplicate generator keys: {', '.join(gen_duplicates)}")
+        errors.append(f"docs/config/index.html duplicate generator keys: {', '.join(gen_duplicates)}")
     if len(env) != EXPECTED_SETTINGS:
         errors.append(f".env.example has {len(env)} settings, expected {EXPECTED_SETTINGS}")
     if len(gen) != EXPECTED_SETTINGS:
@@ -54,7 +55,7 @@ def main() -> int:
         if missing_in_generator:
             errors.append("keys missing from generator: " + ", ".join(missing_in_generator))
 
-    for path in (README, INDEX_HTML):
+    for path in (README, QUICK_HTML, GENERATOR_HTML):
         text = path.read_text(encoding="utf-8")
         for stale_count in ("236", "237", "239"):
             if f"{stale_count} settings" in text or f"{stale_count} configurable settings" in text:

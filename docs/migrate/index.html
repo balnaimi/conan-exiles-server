@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Plan a safe Wine to Native migration without deleting the original Conan Exiles world.">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../assets/site.css">
+  <title>Wine to Native Migration — Conan Exiles Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../">Quick Start</a><a href="../config/">Config Generator</a><a aria-current="page" href="./">Migrate</a><a href="../docs/">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Migration sections">
+      <strong>Wine to Native</strong>
+      <a href="#safety">Safety rules</a>
+      <a href="#dry-run">Dry-run</a>
+      <a href="#apply">Apply</a>
+      <a href="#verify">Verify</a>
+      <a href="#rollback">Rollback</a>
+    </aside>
+    <article class="docs-content">
+      <p class="eyebrow">Existing server</p>
+      <h1>Wine to Native migration</h1>
+      <p>Move the world through a verified SQLite snapshot while keeping the original Wine data unchanged for rollback.</p>
+
+      <section id="safety">
+        <h2>Safety rules</h2>
+        <blockquote><strong>Never point Native at Wine's live volumes.</strong> Never use <code>docker compose down -v</code> on the Wine project.</blockquote>
+        <ul>
+          <li>The migration helper defaults to a dry-run.</li>
+          <li>Run the wrapper from a complete project checkout containing both Compose files and the <code>scripts/</code> directory.</li>
+          <li>Apply stops Wine itself and proves no running container still uses the source volume.</li>
+          <li>The helper never deletes the source.</li>
+          <li>Apply creates a mode-0600 Wine rollback archive.</li>
+          <li>Native uses separate, initially empty volumes.</li>
+        </ul>
+      </section>
+
+      <section id="dry-run">
+        <h2>1. Review the dry-run</h2>
+        <p>Run this from the existing Wine project directory while Wine is still running:</p>
+        <div class="code-block"><button class="copy-button" type="button" data-copy-target="dry-command">Copy</button><pre id="dry-command"><code>./scripts/migrate-compose-wine-to-native.sh plan</code></pre></div>
+        <p>The wrapper reads both Compose files, discovers the project-scoped save volumes, validates <code>game_0.db</code>, and prints the source hash. It does not create the Native volume or stop Wine during the plan.</p>
+      </section>
+
+      <section id="apply">
+        <h2>2. Apply the cutover</h2>
+        <blockquote><strong>Do not stop Wine manually first.</strong> The wrapper must own the stop and prove that no running container still uses the source volume.</blockquote>
+        <div class="code-block"><button class="copy-button" type="button" data-copy-target="apply-command">Copy</button><pre id="apply-command"><code>./scripts/migrate-compose-wine-to-native.sh apply</code></pre></div>
+        <p>Apply rechecks the source hash, creates isolated Native volumes, writes a protected rollback archive under <code>.conan-migration/</code>, snapshots SQLite, starts Native, and waits for Docker health. A failed health check automatically stops Native and restarts Wine.</p>
+        <p>If the original project used a custom Compose name, add <code>--project-name NAME</code> to every command.</p>
+      </section>
+
+      <section id="verify">
+        <h2>3. Start and verify Native</h2>
+        <ul>
+          <li>Database integrity is <code>ok</code>.</li>
+          <li>A2S returns the expected server name and map.</li>
+          <li>RCON works when enabled.</li>
+          <li>The exact Workshop dependency set is active.</li>
+          <li>Players see their characters, clans, buildings, and inventories.</li>
+          <li>At least one save cycle completes before cleanup is considered.</li>
+        </ul>
+      </section>
+
+      <section id="rollback">
+        <h2>Rollback</h2>
+        <p>If Native validation fails—or whenever you want to return before acceptance—run the explicit rollback. It stops Native and restarts Wine against the unchanged original volume. The Native volume and archive stay available for diagnosis.</p>
+        <div class="code-block"><button class="copy-button" type="button" data-copy-target="rollback-command">Copy</button><pre id="rollback-command"><code>./scripts/migrate-compose-wine-to-native.sh rollback</code></pre></div>
+      </section>
+
+      <p><a class="button secondary" href="../docs/native-linux/">Read the full Native guide</a></p>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Migration must remain explicit and reversible.</span><a href="https://github.com/balnaimi/conan-exiles-server/issues">Get help</a></footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="../assets/site.js"></script>
+</body>
+</html>

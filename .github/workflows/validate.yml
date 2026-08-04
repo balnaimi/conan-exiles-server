@@ -23,6 +23,14 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install documentation build dependency
+        run: python3 -m pip install --disable-pip-version-check -r requirements-docs.txt
+
       - name: Install ShellCheck
         run: |
           sudo apt-get update
@@ -30,8 +38,15 @@ jobs:
 
       - name: Validate shell scripts
         run: |
-          bash -n entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh
-          shellcheck --severity=error -x entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh
+          bash -n entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh scripts/migrate-compose-wine-to-native.sh
+          shellcheck --severity=error -x entrypoint.sh scripts/runtime/*.sh scripts/native/*.sh scripts/migrate-wine-to-native.sh scripts/migrate-compose-wine-to-native.sh
+
+      - name: Validate Python tooling syntax
+        run: |
+          python3 -m py_compile \
+            scripts/build-pages-docs.py \
+            scripts/migrate_compose_wine_to_native.py \
+            scripts/test-compose-migration-docker.py
 
       - name: Test shared and Native runtime behavior
         run: |
@@ -44,7 +59,12 @@ jobs:
         run: python3 scripts/validate-config-consistency.py
 
       - name: Test GitHub Pages UI
-        run: python3 scripts/test-pages-ui.py
+        run: |
+          python3 scripts/build-pages-docs.py --check
+          python3 scripts/test-pages-ui.py
+
+      - name: Validate all GitHub Pages HTML
+        run: npx --yes html-validate@10.9.0 "docs/**/*.html"
 
       - name: Test GitHub Pages in Chromium
         run: node scripts/test-pages-browser.mjs
@@ -79,8 +99,15 @@ jobs:
           test -f scripts/test-native-runtime.py
           test -f scripts/test-native-image.py
           test -f scripts/test-compose-config.py
+          test -f scripts/migrate-compose-wine-to-native.sh
+          test -f scripts/migrate_compose_wine_to_native.py
+          test -f scripts/test-compose-migration-docker.py
+          test -f scripts/build-pages-docs.py
           test -f scripts/test-pages-ui.py
           test -f scripts/test-pages-browser.mjs
+          test -f docs/config/index.html
+          test -f docs/docs/index.html
+          test -f docs/migrate/index.html
           test -f docs/assets/favicon.svg
 
       - name: Check whitespace

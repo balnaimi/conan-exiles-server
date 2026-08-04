@@ -1,0 +1,2741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Generate a complete Docker Compose .env for Conan Exiles Enhanced with searchable settings and safe password handling.">
+<meta property="og:title" content="Configuration Generator — Conan Exiles Enhanced Server">
+<meta property="og:description" content="Generate a complete Docker Compose .env for Conan Exiles Enhanced without editing every setting by hand.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://balnaimi.github.io/conan-exiles-server/config/">
+<meta property="og:image" content="https://balnaimi.github.io/conan-exiles-server/assets/hero-bg.jpg">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<title>Configuration Generator — Conan Exiles Enhanced Server</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --card: #12121a;
+  --card-hover: #1a1a25;
+  --border: #2a2a3a;
+  --accent: #c8a84e;
+  --accent-dim: #8a7235;
+  --accent-glow: rgba(200,168,78,0.15);
+  --text: #e0ddd5;
+  --text-dim: #8a8780;
+  --text-bright: #fff;
+  --danger: #ff6b6b;
+  --success: #69c269;
+  --changed: #c8a84e;
+  --section-bg: #0e0e16;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.hero {
+  position: relative;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d0d15 0%, #1a1520 100%);
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../assets/hero-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3;
+  filter: blur(2px);
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,10,15,0.7) 0%, rgba(10,10,15,0.95) 100%);
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  padding: 2rem;
+}
+.hero-logo {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 40px var(--accent-glow), 0 4px 10px rgba(0,0,0,0.8);
+  margin-bottom: 0.5rem;
+  letter-spacing: 2px;
+}
+.hero-subtitle {
+  font-size: 1.5rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  font-weight: 300;
+}
+.hero-tagline {
+  font-size: 1.1rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.native-hero-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(200, 168, 78, 0.14);
+  box-shadow: 0 0 24px rgba(200, 168, 78, 0.18);
+  font-weight: 700;
+  text-decoration: none;
+}
+.native-hero-banner:hover { background: rgba(200, 168, 78, 0.24); }
+.runtime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 2rem;
+}
+.runtime-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem;
+  background: var(--card);
+}
+.runtime-card strong { color: var(--accent); }
+.runtime-card.experimental { border-color: var(--accent); }
+
+/* ============================================
+   TAB BAR
+   ============================================ */
+.tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--card);
+  border-bottom: 2px solid var(--border);
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tab-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+.tab-btn.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+#native-quick-start:focus,
+.native-hero-banner:focus-visible,
+.tab-btn:focus-visible,
+.section-header:focus-visible,
+.btn:focus-visible,
+.toolbar-btn:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   TAB CONTENT
+   ============================================ */
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+
+/* ============================================
+   FEATURES SECTION (for About tab)
+   ============================================ */
+.features {
+  padding: 5rem 2rem;
+  background: var(--section-bg);
+}
+.features-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+.feature-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.75rem;
+  transition: all 0.3s;
+}
+.feature-card:hover {
+  background: var(--card-hover);
+  border-color: var(--accent-dim);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.feature-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+.feature-desc {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ============================================
+   QUICK START SECTION
+   ============================================ */
+.quick-start {
+  padding: 5rem 2rem;
+  background: var(--bg);
+}
+.qs-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.qs-title {
+  font-size: 2.5rem;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 3rem;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+.qs-option {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.qs-option-title {
+  font-size: 1.3rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+.qs-option-desc {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+.code-block {
+  background: #0a0a0f;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.7;
+  margin-top: 1rem;
+}
+.code-block .comment {
+  color: var(--text-dim);
+}
+.code-wrap {
+  position: relative;
+  margin-top: 1rem;
+}
+.code-wrap .code-block { margin-top: 0; padding-top: 2.8rem; }
+.copy-code-btn {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.copy-code-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================
+   PORTS / CONNECTING / COMMANDS
+   ============================================ */
+.info-section {
+  padding: 4rem 2rem;
+  background: var(--section-bg);
+}
+.info-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.info-title {
+  font-size: 2rem;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.ports-table {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.ports-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ports-table th {
+  background: var(--bg);
+  color: var(--accent);
+  padding: 0.9rem;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.ports-table td {
+  padding: 0.9rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--text);
+}
+.ports-table tr:last-child td {
+  border-bottom: none;
+}
+.info-note {
+  background: var(--card);
+  border-left: 4px solid var(--accent);
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-top: 1rem;
+}
+.info-warning {
+  background: var(--card);
+  border-left: 4px solid var(--danger);
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-top: 1rem;
+}
+.info-warning strong {
+  color: var(--danger);
+}
+
+/* ============================================
+   CONFIG GENERATOR (wrapper)
+   ============================================ */
+.config-generator {
+  padding: 5rem 2rem;
+  background: var(--bg);
+}
+.config-title {
+  font-size: 2.5rem;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+.config-subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 1rem;
+  margin-bottom: 3rem;
+}
+
+/* Header (original, but modified for consistency) */
+.header {
+  background: linear-gradient(135deg, #0d0d15 0%, #1a1520 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 2rem;
+  text-align: center;
+  display: none; /* Hidden since we have hero now */
+}
+.header h1 {
+  font-size: 2rem;
+  color: var(--accent);
+  text-shadow: 0 0 30px var(--accent-glow);
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+.header p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+/* Layout */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Sections */
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.section-header {
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  transition: background 0.2s;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+}
+.section-header:hover { background: var(--card-hover); }
+.section-header .section-heading {
+  font-size: 1.05rem;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+.section-header .arrow {
+  color: var(--text-dim);
+  transition: transform 0.3s;
+  font-size: 0.8rem;
+}
+.section.open .arrow { transform: rotate(180deg); }
+.section-header .changed-count {
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 700;
+  display: none;
+}
+.section-body {
+  display: none;
+  padding: 0.5rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.section.open .section-body { display: block; }
+
+/* Fields */
+.field {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 0.75rem;
+  align-items: center;
+}
+.field:last-child { border-bottom: none; }
+.field-info { }
+.field-label {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.field-label .env-name {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  margin-left: 0.5rem;
+}
+.field-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.field.changed .field-label { color: var(--changed); }
+
+/* Inputs */
+.field-input input[type="text"],
+.field-input input[type="number"],
+.field-input input[type="password"] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field-input input:focus { border-color: var(--accent); }
+.field.changed .field-input input { border-color: var(--accent-dim); }
+
+.field-input select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text);
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+.field-input select:focus { border-color: var(--accent); }
+.password-wrap { display: flex; gap: 0.4rem; }
+.password-wrap input { min-width: 0; }
+.password-toggle {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+}
+.password-toggle:hover { border-color: var(--accent); }
+
+/* Toggle */
+.toggle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+.toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.toggle input:focus-visible + .toggle-slider {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #333;
+  border-radius: 12px;
+  transition: background 0.3s;
+}
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: var(--text);
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s;
+}
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::after { transform: translateX(20px); }
+.toggle-label { font-size: 0.8rem; color: var(--text-dim); }
+
+/* Range slider */
+.range-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.range-wrap input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.range-val {
+  min-width: 45px;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-family: monospace;
+}
+.range-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  text-align: right;
+  font-style: italic;
+}
+
+/* Output */
+.output-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+}
+.output-section h2 {
+  color: var(--accent);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.output-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #d4b45a; }
+.btn-reset {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-reset:hover { background: rgba(204,68,68,0.1); }
+
+.output-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.75rem;
+}
+.output-toggle button {
+  padding: 0.4rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.output-toggle button:first-child { border-radius: 6px 0 0 6px; }
+.output-toggle button:last-child { border-radius: 0 6px 6px 0; }
+.output-toggle button.active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+#output {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+#output .comment { color: var(--text-dim); }
+#output .changed-line { color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 100;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* Stats bar */
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--section-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.stat {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.stat strong { color: var(--accent); }
+
+/* Generator productivity toolbar */
+.generator-toolbar {
+  position: sticky;
+  top: 74px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) repeat(4, auto);
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: rgba(18,18,26,0.97);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+.search-wrap { position: relative; }
+.search-wrap input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.6rem 0.75rem 0.6rem 2rem;
+}
+.search-wrap::before { content: '🔍'; position: absolute; left: 0.55rem; top: 0.45rem; }
+.toolbar-btn,
+.toolbar-check {
+  min-height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toolbar-btn:hover { border-color: var(--accent); color: var(--accent); }
+.toolbar-check { display: flex; align-items: center; gap: 0.45rem; }
+.toolbar-check input { accent-color: var(--accent); }
+.filter-summary { color: var(--text-dim); font-size: 0.8rem; margin: -0.35rem 0 1rem; }
+.field.filtered-out,
+.section.filtered-out { display: none; }
+.security-warning { margin-bottom: 1rem; }
+.security-warning[hidden] { display: none; }
+.view-output-count { color: var(--accent); font-weight: 700; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  background: var(--section-bg);
+  border-top: 1px solid var(--border);
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .field { grid-template-columns: 1fr; }
+  .hero-logo { font-size: 2.5rem; }
+  .hero-subtitle { font-size: 1.2rem; }
+  .output-actions { flex-direction: column; }
+  .features-grid { grid-template-columns: 1fr; }
+  .tab-bar { justify-content: flex-start; flex-wrap: nowrap; }
+  .generator-toolbar { grid-template-columns: 1fr 1fr; top: 65px; }
+  .search-wrap { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .hero { min-height: auto; }
+  .hero-content { padding: 2.5rem 1rem 2rem; }
+  .hero-logo { font-size: 1.85rem; line-height: 1.2; letter-spacing: 0; }
+  .hero-subtitle { font-size: 1rem; }
+  .hero-tagline { font-size: 0.9rem; }
+  .tab-bar { padding: 0.45rem; scroll-snap-type: x proximity; }
+  .tab-btn { padding: 0.65rem 0.9rem; font-size: 0.85rem; scroll-snap-align: start; }
+  .quick-start, .info-section, .config-generator, .features { padding: 2.5rem 1rem; }
+  .qs-title, .config-title { font-size: 1.8rem; margin-bottom: 1.5rem; }
+  .qs-option { padding: 1.1rem; }
+  .container { padding: 0; }
+  .generator-toolbar { position: static; grid-template-columns: 1fr 1fr; }
+  .toolbar-btn, .toolbar-check { justify-content: center; white-space: normal; }
+  .ports-table { overflow-x: auto; }
+  .ports-table table { min-width: 580px; }
+  .output-actions .btn { width: 100%; justify-content: center; }
+}
+
+/* This route keeps the proven generator code while presenting only its panel. */
+.generator-page .tab-bar { justify-content: center; }
+.generator-page .tab-btn:not([data-tab="config-generator"]),
+.generator-page .tab-content:not(#tab-config-generator) { display: none !important; }
+</style>
+</head>
+<body class="generator-page">
+
+<!-- ============================================
+     HERO SECTION
+     ============================================ -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <h1 class="hero-logo">⚔️ Conan Exiles Enhanced<br>Dedicated Server</h1>
+    <div class="hero-subtitle">Configuration Generator</div>
+    <div class="hero-tagline">Build a complete Docker Compose <code>.env</code> without editing every setting by hand</div>
+    <a class="native-hero-banner" href="../">← Back to Quick Start</a>
+    <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
+      Don't know the game? Check out the <a href="https://www.conanexiles.com/" target="_blank" rel="noopener" style="color:var(--accent);">official Conan Exiles Enhanced website</a>
+      or find it on <a href="https://store.steampowered.com/app/440900/Conan_Exiles/" target="_blank" rel="noopener" style="color:var(--accent);">Steam</a>
+    </div>
+    <div style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);">
+      ✅ Compatible with <strong>Conan Exiles Enhanced</strong>. Legacy Conan Exiles names may remain in Steam app IDs, image names, repository URLs, and internal ConanSandbox paths because they are upstream identifiers.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     TAB BAR
+     ============================================ -->
+<div class="tab-bar" role="tablist" aria-label="Page sections">
+  <button type="button" class="tab-btn active" id="tab-button-quick-start" role="tab" aria-selected="true" aria-controls="tab-quick-start" tabindex="0" data-tab="quick-start" onclick="activateTab('quick-start', this)" onkeydown="handleTabKeydown(event)">🚀 Quick Start</button>
+  <button type="button" class="tab-btn" id="tab-button-mods" role="tab" aria-selected="false" aria-controls="tab-mods" tabindex="-1" data-tab="mods" onclick="activateTab('mods', this)" onkeydown="handleTabKeydown(event)">🧩 Mods</button>
+  <button type="button" class="tab-btn" id="tab-button-config-generator" role="tab" aria-selected="false" aria-controls="tab-config-generator" tabindex="-1" data-tab="config-generator" onclick="activateTab('config-generator', this)" onkeydown="handleTabKeydown(event)">⚙️ Config Generator</button>
+  <button type="button" class="tab-btn" id="tab-button-server-management" role="tab" aria-selected="false" aria-controls="tab-server-management" tabindex="-1" data-tab="server-management" onclick="activateTab('server-management', this)" onkeydown="handleTabKeydown(event)">🛠️ Server Management</button>
+  <button type="button" class="tab-btn" id="tab-button-about" role="tab" aria-selected="false" aria-controls="tab-about" tabindex="-1" data-tab="about" onclick="activateTab('about', this)" onkeydown="handleTabKeydown(event)">📖 About</button>
+</div>
+
+<!-- ============================================
+     TAB 1: QUICK START
+     ============================================ -->
+<div id="tab-quick-start" class="tab-content active" role="tabpanel" aria-labelledby="tab-button-quick-start">
+  <section class="quick-start">
+    <div class="qs-container">
+      <h2 class="qs-title">Quick Start</h2>
+
+      <div class="runtime-grid" role="group" aria-label="Choose a server runtime">
+        <div class="runtime-card">
+          <strong>🍷 Wine Stable</strong>
+          <p class="qs-option-desc">Default and backward-compatible. Uses <code>ghcr.io/balnaimi/conan-exiles-server:latest</code> with <code>docker-compose.yml</code>.</p>
+        </div>
+        <div class="runtime-card experimental">
+          <strong>🐧 Native Linux Experimental</strong>
+          <p class="qs-option-desc">Runs the upstream Linux server without Wine. Uses <code>ghcr.io/balnaimi/conan-exiles-server:native</code> with isolated Native volumes.</p>
+        </div>
+      </div>
+      <div class="info-note"><strong>Stable</strong> describes this project's recommended support tier; the image currently installs the upstream WineHQ Staging package. Updating <code>docker-compose.yml</code> never switches it to Native.</div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">🍷 Wine Stable — Fast Start</div>
+        <div class="qs-option-desc">Use a small .env file with only the basic settings. Good for testing or getting a simple server online quickly.</div>
+        <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose up -d</pre>
+        <div class="info-note">First-run and update duration depends on storage, memory, CPU, network speed, and cache state. The minimal .env uses mostly default server settings.</div>
+      </div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">🍷 Wine Stable — Full Configuration</div>
+        <div class="qs-option-desc">Use the full .env.example template if you want every documented setting available for editing.</div>
+        <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
+cp .env.example .env
+nano .env
+docker compose up -d</pre>
+      </div>
+
+      <div class="qs-option" id="native-quick-start" tabindex="-1">
+        <div class="qs-option-title">🐧 Native Linux Experimental — Opt-in Quick Start</div>
+        <div class="qs-option-desc"><strong>Fresh Native deployment only.</strong> Do not point Native at Wine volumes. Existing servers must stop Wine, verify a backup, run the runtime migration dry-run, and use new Native volumes while keeping the original Wine volumes unchanged.</div>
+        <pre class="code-block">mkdir conan-native &amp;&amp; cd conan-native
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose -f docker-compose.native.yml up -d</pre>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.7.2-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
+        <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
+      </div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">Use Config Generator</div>
+        <div class="qs-option-desc">Use the visual config generator (⚙️ Config Generator tab), save the generated output as .env in the same folder as docker-compose.yml, then start the server.</div>
+        <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
+<span class="comment"># Save the generated config as .env in this folder</span>
+docker compose up -d</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTS SECTION -->
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Network Ports</h2>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Port</th>
+              <th>Protocol</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>7777</strong></td>
+              <td>UDP</td>
+              <td>Game port</td>
+            </tr>
+            <tr>
+              <td><strong>7778</strong></td>
+              <td>UDP</td>
+              <td>Game port (required for correct ping in server list)</td>
+            </tr>
+            <tr>
+              <td><strong>27015</strong></td>
+              <td>UDP</td>
+              <td>Steam query</td>
+            </tr>
+            <tr>
+              <td><strong>25575</strong></td>
+              <td>TCP</td>
+              <td>RCON (if enabled)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-note">Make sure these ports are open in your firewall.</div>
+    </div>
+  </section>
+
+  <!-- CONNECTING SECTION -->
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Connecting to Your Server</h2>
+      <div class="info-note">
+        <strong>How to connect:</strong><br>
+        Use <strong>Direct Connect</strong> in Conan Exiles Enhanced → Enter your server IP and port 7777 (IP only, no hostname)
+      </div>
+      <div class="info-warning">
+        <strong>⚠️ Important:</strong> Conan Exiles Enhanced does not support hostnames — you must use an IP address.
+      </div>
+      <div class="info-note" style="margin-top: 1.5rem;">
+        <strong>CG-NAT / Tunnels:</strong> If your server is behind CG-NAT, a tunnel, a VPS port forward, or a host with multiple network interfaces, set <code>MULTIHOME</code> to the public or forwarded IP address that players should use. The container will also use that value for <code>MULTIHOMEHTTP</code> so server-browser registration comes from the same IP. Leave both empty for normal hosting.
+      </div>
+      <div class="info-note" style="margin-top: 1.5rem;">
+        <strong>⏱️ First Run and Updates:</strong> SteamCMD downloads and verifies the Enhanced server, while major game updates may download several gigabytes and require temporary disk space. Startup time depends on storage, memory, CPU, and cache state—verify the readiness markers instead of relying on container uptime alone.
+      </div>
+
+      <!-- System Requirements -->
+      <h2 class="info-title" style="margin-top:2.5rem;">💻 System Requirements</h2>
+      <div class="info-warning" style="margin-bottom:1rem;">
+        <strong>Enhanced / UE5 guidance:</strong> Conan Exiles Enhanced requires substantially more memory and storage than the previous UE4 dedicated server. Older Conan Exiles hardware recommendations are not reliable sizing guidance for the current Enhanced server running through Wine.
+      </div>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Server Profile</th>
+              <th>CPU</th>
+              <th>RAM</th>
+              <th>Disk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Test / very small</strong></td>
+              <td>4 fast x86-64 cores</td>
+              <td><strong>12 GB practical start</strong></td>
+              <td><strong>20 GB practical start</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Small private server</strong> (up to 10 players)</td>
+              <td>4+ fast x86-64 cores</td>
+              <td><strong>16 GB recommended</strong></td>
+              <td><strong>25–35 GB recommended</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Growing or modded server</strong></td>
+              <td>6+ fast x86-64 cores</td>
+              <td><strong>24 GB or more</strong></td>
+              <td><strong>70 GB comfortable; 100 GB heavy</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--text-dim);font-size:0.85rem;margin-top:0.75rem;">These are project planning recommendations, not official Funcom requirements or hard limits. Actual usage depends on the runtime, map, database, buildings, players, mods, backups, and game updates.</p>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>Measured RAM guidance:</strong> RAM sizing uses total host/VPS allocation. 12 GB is a practical starting allocation for a small vanilla server. In measured no-player tests under a hard 10 GiB container cap with no extra swap budget, Wine peaked at 9.19 GiB and Native peaked at 8.69 GiB; both remained A2S-ready through 20-minute observation windows without cgroup pressure or OOM events, and Native completed multiple save cycles. 16 GB is recommended for typical use, not a hard minimum. The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS. The measured worlds were small and unmodded; players, larger worlds, and mods can require more memory.
+      </div>
+
+      <h3 id="cpu-compatibility" style="scroll-margin-top:7rem;color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">CPU Compatibility</h3>
+      <div class="info-note">
+        <a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes?application_version=5.2" target="_blank" rel="noopener">Epic documents <strong>SSE4.2</strong></a> as the general UE5 x64 minimum CPU specification. An individual game build may choose a higher minimum. <strong>AVX</strong> and <strong>AVX2</strong> are important Conan Exiles Enhanced compatibility diagnostics, but Funcom has not officially confirmed AVX2 as a hard requirement.
+      </div>
+      <pre class="code-block">for flag in sse4_2 avx avx2; do
+  grep -qw "$flag" /proc/cpuinfo \
+    &amp;&amp; echo "$flag=yes" \
+    || echo "$flag=no"
+done
+lscpu</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">
+        <strong>VPS / QEMU:</strong> The flags visible inside the guest are what the server can use. Select a current virtual CPU model or <code>host-passthrough</code> when available. A host change that exposes several flags can confirm a CPU compatibility problem, but it does not isolate AVX2 alone.
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.1rem;">Verified Runtime Observation</h3>
+      <div class="info-note">
+        A clean, unmodded server using Steam build <code>24383534</code> and Wine Staging <code>11.10</code> repeatedly entered an OOM restart loop on an <strong>8 GB</strong> host. With <strong>16 GB</strong>, the same server reached <code>InProgress</code>, responded to Source/A2S queries on UDP <code>27015</code>, and stabilized at approximately <strong>9.1 GB</strong> idle memory.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>🐧 Native Linux Experimental observation:</strong> On the same 16 GiB test CT and Steam build <code>24383534</code>, the native Shipping binary reached A2S/RCON readiness and stabilized near <strong>8.70 GiB</strong> unmodded. Enhanced-tagged <strong>StayBloody</strong> and <strong>Better Thralls</strong> mounted in order at roughly 8.42–8.57 GiB. The guest exposed <strong>SSE4.2</strong>, AVX, and AVX2. UE5's general x64 baseline is SSE4.2; these tests do not prove AVX2 alone is a Conan requirement.
+      </div>
+      <div class="info-warning" style="margin-top:0.75rem;">
+        <strong>8 GB RAM should be considered insufficient for the current Enhanced server.</strong> The measured 12 GB practical-start profile is intended for small vanilla workloads with limited headroom; choose 16 GB or more as the workload grows.
+      </div>
+
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:1rem;">
+        <strong style="color:var(--text);">Storage guidance:</strong>
+        <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
+          <li>Storage sizing assumes one runtime—Wine or Native, not both. 20 GB is a practical starting allocation for one runtime.</li>
+          <li>25–35 GB is recommended for updates, world growth, and a simple backup. 35–40 GB is a comfortable allocation, not a minimum.</li>
+          <li>The measured clean Wine-to-Native coexistence used about 14 GB on the host; 25 GB is a practical migration floor for that scenario, while 35 GB is recommended for safer migration headroom.</li>
+          <li>70 GB is comfortable, not required, for mods, multiple backups, long-term growth, or repeated maintenance. 100 GB is a safer recommendation for heavily modded servers or long backup retention.</li>
+          <li>Table values are total disk allocations in decimal GB; Native preflight reports currently free binary GiB after existing host and Docker usage.</li>
+        </ul>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
+        <strong style="color:var(--text);">Network:</strong>
+        <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
+          <li>Stable internet with at least <strong>10 Mbps upload</strong> recommended</li>
+          <li>Lower upload speeds may cause rubber-banding and lag</li>
+          <li>Each connected player uses roughly <strong>30-60 KB/s</strong> of bandwidth</li>
+        </ul>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-top:0.75rem;">
+        <strong style="color:var(--text);">Good to know:</strong>
+        <ul style="margin:0.5rem 0 0 1.5rem;line-height:2;">
+          <li>Wine adds CPU and memory overhead compared with native Windows</li>
+          <li>Game logic benefits heavily from fast single-core performance</li>
+          <li>RAM usage grows as players build and explore — monitor with <code>docker stats</code></li>
+          <li>Mods may substantially increase startup time, memory use, and storage</li>
+          <li><strong>No physical GPU required</strong> — the dedicated server is headless</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================
+     TAB 2: MODS
+     ============================================ -->
+<div id="tab-mods" class="tab-content" role="tabpanel" aria-labelledby="tab-button-mods" hidden>
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Mods</h2>
+      <div class="info-note">
+        <strong>What you do:</strong><br>
+        Add the Steam Workshop mod IDs you want to <strong>SERVER_MOD_LIST</strong> in your <strong>.env</strong> file or in the Config Generator. Use commas between IDs and keep them in the required load order.
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Finding Workshop IDs</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;">Open the <a href="https://steamcommunity.com/app/440900/workshop/" target="_blank" rel="noopener" style="color:var(--accent);">Conan Exiles Steam Workshop</a>. A mod page URL normally ends with <code>?id=1234567890</code>; copy only that numeric ID.</p>
+      <pre class="code-block">https://steamcommunity.com/sharedfiles/filedetails/?id=3719513784
+# Workshop ID: 3719513784</pre>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Setting the Load Order</h3>
+      <pre class="code-block">SERVER_MOD_LIST=3719513784,3720904511,3361295718</pre>
+      <div class="info-warning" style="margin-top:1rem;">
+        <strong>Load order matters:</strong> Keep dependencies before the mods that depend on them, and follow each mod author's instructions. Changing the order can affect an existing world.
+      </div>
+      <div class="info-note" style="margin-top:1rem;">
+        <strong>What the container does automatically:</strong><br>
+        On startup, it validates and stages the complete ordered set, downloads each Workshop item, and atomically replaces <strong>ConanSandbox/Mods/modlist.txt</strong> only after every item succeeds. <strong>Native Experimental</strong> strictly requires one non-empty usable top-level <strong>.pak</strong> per item and rejects malformed lists, duplicate package names, and ambiguous multi-PAK items. <strong>Wine Stable</strong> preserves v2.6 legacy behavior for comma gaps, deterministic multi-PAK selection, duplicate names, and zero-byte PAKs with warnings. A bad ID or failed download preserves the last-known-good list and world.
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Apply, Update, or Remove Mods</h3>
+      <pre class="code-block"># After changing SERVER_MOD_LIST
+docker compose down
+docker compose up -d
+docker compose logs -f</pre>
+      <ul style="color:var(--text-dim);font-size:0.9rem;line-height:2;margin:0.75rem 0 0 1.5rem;">
+        <li>To update mods, restart the container; configured Workshop items are checked during startup.</li>
+        <li>To remove a mod, delete its ID from <code>SERVER_MOD_LIST</code>, restart, and verify the generated <code>modlist.txt</code>.</li>
+        <li>Back up your world before removing gameplay/content mods from an existing server.</li>
+        <li>After an Enhanced game update, confirm that every mod supports the current build before opening the server to players.</li>
+      </ul>
+      <div class="info-warning" style="margin-top:1rem;">
+        <strong>If startup stops:</strong> Check <code>docker compose logs</code>. An invalid ID, missing Workshop download, ambiguous/missing <code>.pak</code>, or incompatible mod stops startup while preserving the previous active list.
+      </div>
+      <div class="info-note" style="margin-top:1rem;">
+        <strong>Verified Native Enhanced test:</strong> StayBloody (<code>3722881816</code>) and Better Thralls (<code>3720904511</code>) mounted in configured order. Conan extracted each top-level Workshop package's embedded <code>-LinuxServer.pak</code>, <code>.utoc</code>, and <code>.ucas</code> payload automatically.
+      </div>
+      <div class="info-note" style="margin-top:1rem;">Leave <strong>SERVER_MOD_LIST</strong> empty to run an unmodded server.</div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================
+     TAB 3: CONFIG GENERATOR
+     ============================================ -->
+<div id="tab-config-generator" class="tab-content" role="tabpanel" aria-labelledby="tab-button-config-generator" hidden>
+  <section class="config-generator">
+    <h2 class="config-title">⚙️ Configuration Generator</h2>
+    <p class="config-subtitle">Configure all 250 settings and generate a ready-to-use .env file</p>
+
+    <div class="container">
+      <div class="info-bar" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1.25rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
+        💡 <strong style="color:var(--accent)">Multiplier values:</strong> Most settings use multipliers — <code>1.0×</code> = normal, <code>2.0×</code> = double, <code>0.5×</code> = half. The hint below each slider shows what the value means.<br>
+        ⚠️ <strong style="color:var(--accent)">Startup-time config:</strong> Docker <code>.env</code> values generate Conan <code>.ini</code> files when the container starts. Restart/recreate after edits; they are not live in-game settings.
+      </div>
+      <div class="info-warning security-warning" id="securityWarning" role="alert" hidden></div>
+      <div class="generator-toolbar" role="group" aria-label="Configuration tools">
+        <label class="search-wrap">
+          <span class="sr-only">Search settings</span>
+          <input type="search" id="settingSearch" placeholder="Search label, key, or description…" oninput="filterSettings()" autocomplete="off">
+        </label>
+        <label class="toolbar-check">
+          <input type="checkbox" id="changedOnlyFilter" onchange="filterSettings()"> Changed only
+        </label>
+        <button type="button" class="toolbar-btn" onclick="setAllSections(true)">Expand all</button>
+        <button type="button" class="toolbar-btn" onclick="setAllSections(false)">Collapse all</button>
+        <button type="button" class="toolbar-btn" id="viewOutputButton" onclick="scrollToOutput()">View output <span class="view-output-count">(0)</span></button>
+      </div>
+      <div class="filter-summary" id="filterSummary" aria-live="polite">Showing all 250 settings</div>
+      <div class="stats">
+        <div class="stat">Total settings: <strong id="totalCount">0</strong></div>
+        <div class="stat">Changed: <strong id="changedCount">0</strong></div>
+        <div class="stat">Sections: <strong id="sectionCount">0</strong></div>
+      </div>
+
+      <div id="sections"></div>
+
+      <div class="output-section" id="generated-output" tabindex="-1">
+        <h2>📄 Generated .env</h2>
+        <div class="output-actions">
+          <button type="button" class="btn btn-primary" onclick="copyOutput()">📋 Copy to Clipboard</button>
+          <button type="button" class="btn" onclick="downloadEnv()">⬇️ Download .env</button>
+          <button type="button" class="btn" onclick="downloadEnvExample()">📝 Download .env.example</button>
+          <button type="button" class="btn btn-reset" onclick="resetAll()">🔄 Reset All</button>
+        </div>
+        <div class="output-toggle">
+          <button type="button" class="active" onclick="setOutputMode('changed', this)">Changed Only</button>
+          <button type="button" onclick="setOutputMode('all', this)">All Settings</button>
+        </div>
+        <div id="output"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================
+     TAB 4: SERVER MANAGEMENT
+     ============================================ -->
+<div id="tab-server-management" class="tab-content" role="tabpanel" aria-labelledby="tab-button-server-management" hidden>
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Server Management</h2>
+
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.2rem;">Basic Commands</h3>
+      <pre class="code-block">docker compose up -d      <span class="comment"># Start server</span>
+docker compose down       <span class="comment"># Stop server</span>
+docker compose restart    <span class="comment"># Restart server</span>
+docker compose logs -f    <span class="comment"># View logs (live)</span>
+docker compose logs --tail 50  <span class="comment"># Last 50 log lines</span></pre>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Updating</h3>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Game Auto-Update</h4>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">The game files (Conan Exiles Enhanced server) are automatically updated via SteamCMD on every server restart. No manual action needed!</p>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Docker Image Update</h4>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">When a new version of the Docker image is released (new Wine, scripts, or settings), update with:</p>
+      <pre class="code-block">docker compose pull          <span class="comment"># Download latest image</span>
+docker compose down          <span class="comment"># Stop current server</span>
+docker compose up -d         <span class="comment"># Start with new image</span></pre>
+      <div class="info-note" style="margin-top:0.75rem;">Your game data and saves are stored in Docker volumes — they are preserved during image updates.</div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">Startup Troubleshooting</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">On some VPS or headless hosts, Wine/Conan may log Vulkan or EGL runtime messages during startup.</p>
+      <pre class="code-block">Failed to load libvulkan.so.1
+Failed to load libEGL.so.1</pre>
+      <div class="info-note" style="margin-top:0.75rem;">Use the latest image first. It includes Vulkan, EGL, OpenGL, and Mesa runtime libraries needed by Wine and Conan Exiles Enhanced on headless hosts.</div>
+      <pre class="code-block">docker compose pull
+docker compose down
+docker compose up -d</pre>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">The Log Stops at pakchunk0</h4>
+      <pre class="code-block">Mounted Pak file '../../../ConanSandbox/Content/Paks/pakchunk0-WindowsServer.pak'</pre>
+      <div class="info-note">This line means <code>pakchunk0</code> mounted successfully. It does <strong>not</strong> mean the server is still downloading or unpacking that file. A healthy test system progressed from this mount to <code>InProgress</code> within a few seconds.</div>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin:0.75rem 0;">Normal readiness evidence includes:</p>
+      <pre class="code-block">Success! App '443030' fully installed.
+Match State Changed from WaitingToStart to InProgress
+Engine is initialized. Leaving FEngineLoop::Init()
+Started SourceServerQueries on port 27015</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">Do not rely on container uptime or the final stdout line alone. Query UDP port <code>27015</code>, inspect the actual process tree, and check memory limits, Docker OOM events, CPU virtualization, and the host kernel.</div>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Runtime Diagnostics</h4>
+      <pre class="code-block">docker compose ps
+docker stats --no-stream
+docker inspect conan-exiles-enhanced \
+  --format 'status={{.State.Status}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
+docker events --since 30m \
+  --filter container=conan-exiles-enhanced
+docker top conan-exiles-enhanced \
+  -eo pid,ppid,stat,pcpu,pmem,wchan:32,comm,args</pre>
+      <div class="info-note" style="margin-top:0.75rem;">Wine wrapper processes may normally wait in <code>pipe_read</code> or <code>anon_pipe_read</code>. Verify the actual <code>ConanSandboxServer-Win64-Shipping.exe</code> process and its <code>GameThread</code> before concluding that Wine is hung.</div>
+      <pre class="code-block">free -h
+grep -E 'CommitLimit|Committed_AS' /proc/meminfo
+sysctl vm.overcommit_memory</pre>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">RAM Increased but Docker Still Shows the Old Limit</h4>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">After resizing a VM or container, restart Docker and verify that Docker and the host report the same total memory:</p>
+      <pre class="code-block">sudo systemctl restart docker
+docker info --format '{{.MemTotal}}'
+free -b</pre>
+
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Exit Code 137</h4>
+      <div class="info-note">Exit code <code>137</code> means the process received <code>SIGKILL</code>, but it does not prove OOM. <code>OOMKilled=true</code> or an explicit Docker <code>oom</code> event confirms memory exhaustion; <code>OOMKilled=false</code> may mean Docker killed Wine after the stop timeout.</div>
+      <pre class="code-block">docker inspect conan-exiles-enhanced \
+  --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
+docker events --since 30m \
+  --filter container=conan-exiles-enhanced</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">If clients cannot connect after a UE4 → UE5 migration, inspect <code>Engine.ini</code> and remove stale <code>bUseBuildIdOverride</code> / <code>BuildIdOverride</code> lines.</div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Backup and Restore</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Native backups use SQLite's snapshot API, verify <code>game_0.db</code>, write SHA-256 checksums, and never mix a snapshot with separately copied live WAL/SHM files. Password values in backed-up INIs are replaced with <code>[REDACTED]</code>; startup renders current values again from the environment or <code>_FILE</code> sources. Archives use owner-only permissions.</p>
+      <pre class="code-block"># Light backup (world, LinuxServer INIs, mod IDs/list)
+docker compose -f docker-compose.native.yml exec conan-native \
+  /scripts/native/backup.sh --reason manual
+
+# Verify a backup using a one-off container
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --verify-only
+
+# Apply only while Native is stopped
+docker compose -f docker-compose.native.yml stop conan-native
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --target /data/server --apply
+docker compose -f docker-compose.native.yml up -d conan-native</pre>
+      <div class="info-note">Set <code>NATIVE_BACKUP_MODE=full</code> to include active managed PAKs. Light and full restores record the exact required Workshop IDs; the next startup re-downloads and verifies those dependencies before opening the world, and conflicting <code>SERVER_MOD_LIST</code> values fail closed. Scheduled backups and retention are optional and disabled by default.</div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Wine-to-Native Runtime Migration</h3>
+      <div class="info-warning"><strong>Do not point Native at Wine volumes.</strong> Stop Wine, verify a backup, run the helper without <code>--apply</code> first, and use a new destination. The helper snapshots <code>game_0.db</code> with SQLite and does not activate WindowsServer INIs as LinuxServer configuration; Native renders the reviewed <code>.env</code> on first start.</div>
+      <pre class="code-block">./scripts/migrate-wine-to-native.sh \
+  --source /path/to/wine-data \
+  --destination /path/to/new-native-data
+<span class="comment"># Review the dry-run, stop Wine, then repeat with --source-stopped --apply</span></pre>
+      <div class="info-note">The source is never deleted. The protected rollback archive intentionally contains the original Wine INIs and may therefore contain credentials; it is created mode 0600. Keep Wine data unchanged until Native passes database, A2S, RCON, mod, and player-connect checks.</div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Wine Stable Backup</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
+      <pre class="code-block">docker compose down
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
+docker compose up -d</pre>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>⚠️ Volume Name:</strong> The volume name depends on your folder name. If your folder is named <code>my-server</code>, the volume will be <code>my-server_config-data</code>.<br>
+        Use <code>docker volume ls</code> to see your actual volume names.<br>
+        Conan Exiles Enhanced uses <code>ConanSandbox/Saved/game_0.db</code> as the default world database; older UE4 scripts that target <code>game.db</code> should be updated or verified.
+      </div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">♻️ Restore From Backup</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">To restore from a previous backup (replace <code>YYYY-MM-DD</code> with your backup date):</p>
+      <pre class="code-block">docker compose down
+docker run --rm \
+  -v conan-server_config-data:/data \
+  alpine sh -c "rm -rf /data/*"
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v $(pwd):/backup \
+  alpine tar xzf /backup/conan-saves-YYYY-MM-DD.tar.gz -C /
+docker compose up -d</pre>
+      <div class="info-warning" style="margin-top:0.75rem;">
+        <strong>⚠️ Warning:</strong> This <strong>deletes all current data</strong> in the volume before restoring. Make sure you have the correct backup file!
+      </div>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🗑️ Full Reset (Start Fresh)</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Want to wipe everything and start from scratch? This removes all game files, databases, and player data:</p>
+      <pre class="code-block">docker compose down -v       <span class="comment"># Stop + delete ALL volumes</span>
+docker compose up -d         <span class="comment"># Fresh start (re-downloads the full server)</span></pre>
+      <div class="info-warning" style="margin-top:0.75rem;border-color:var(--danger);color:var(--danger);">
+        <strong>⚠️ DANGER:</strong> The <code>-v</code> flag permanently deletes <strong>all game data, player saves, and buildings</strong>. There is no undo. Back up your data first if needed!
+      </div>
+    </div>
+        <!-- Enhanced Settings Status -->
+      <h2 class="info-title" style="margin-top:2.5rem;">⚠️ Enhanced Setting Status / Legacy Compatibility Notes</h2>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:1rem;">
+        The official <a href="https://exiles-enhanced.inflexion.io/servers/settings/" target="_blank" rel="noopener" style="color:var(--accent);">Conan Exiles Enhanced server settings reference</a>
+        is the first source to check, but it is non-exhaustive. Absence from that list does not prove a setting is broken; it means the key still needs runtime verification on Enhanced before this project describes it as reliable.
+      </p>
+
+      <h3 style="color:var(--accent);margin:1.25rem 0 0.75rem;">Officially documented in Enhanced</h3>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CraftingCostMultiplier</code></td>
+              <td style="color:var(--success);">✅ Official Enhanced key</td>
+              <td>Official Enhanced docs list this key, default <code>1.0f</code>, Requires Restart: No. Runtime gameplay testing is still welcome.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaRegenSpeedScale</code></td>
+              <td style="color:var(--success);">✅ Official Enhanced key</td>
+              <td>Official Enhanced docs list this key, Requires Restart: No. Keep Admin Panel/database caveats in mind if a running world appears to ignore changes.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.25rem 0 0.75rem;">Prefer Enhanced key / legacy alias uncertain</h3>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>StaminaCostMultiplier</code></td>
+              <td style="color:var(--success);">✅ Preferred Enhanced key</td>
+              <td>Preferred/current key in the official Enhanced docs for stamina cost per action.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaCostMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Legacy alias uncertain</td>
+              <td>Older hosting docs mention it, but Enhanced docs prefer <code>StaminaCostMultiplier</code>. Do not prefer this unless runtime testing confirms a specific need.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerStaminaCostSprintMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Legacy key</td>
+              <td>Not found in the official Enhanced settings reference; needs Enhanced runtime verification.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:var(--accent);margin:1.25rem 0 0.75rem;">Not found in official Enhanced docs / runtime test needed</h3>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PlayerEncumbranceMultiplier</code></td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Legacy reports say it had no effect. Not found in the official Enhanced settings reference; needs runtime testing on Enhanced.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerSprintSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Present in older references and hosting docs, but not found in the official Enhanced settings reference.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerMovementSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Historically inconsistent and not found in the official Enhanced settings reference. Enhanced docs list <code>PlayerMovementAccelerationMultiplier (BP)</code> instead.</td>
+            </tr>
+            <tr>
+              <td><code>PlayerHealthRegenSpeedScale</code></td>
+              <td style="color:#e67e22;">⚠️ Needs runtime test</td>
+              <td>Present in older/hosting references, but not found in the official Enhanced settings reference; may require Admin Panel or database-aware testing.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-note" style="margin-top:1rem;">
+        <strong>💡 Workaround:</strong> For unreliable settings, log into your server as Admin (ESC → Settings → Server Settings → Make Me Admin),
+        then change the values from the <strong>in-game Admin Panel</strong>. Settings changed in-game are saved to the game database and take priority over the .ini file.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>⚠️ Important:</strong> This Docker image rewrites <code>ServerSettings.ini</code> on every restart from your <code>.env</code> file.
+        If you change settings via Admin Panel, they are stored in the game database and may take priority — but the .ini file will still show your .env values.
+        If a legacy setting appears to do nothing, <strong>remove it from your .env</strong> to avoid confusion.
+      </div>
+  </section>
+</div>
+
+<!-- ============================================
+     TAB 5: ABOUT
+     ============================================ -->
+<div id="tab-about" class="tab-content" role="tabpanel" aria-labelledby="tab-button-about" hidden>
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">About This Project</h2>
+      <div class="info-note">
+        This is a community Docker wrapper for hosting a <strong>Conan Exiles Enhanced dedicated server</strong>. It is built for people who want a practical Docker Compose setup with automatic game downloads, environment-based configuration, Steam Workshop mod support, and a web-based .env generator.
+      </div>
+      <div class="info-warning" style="margin-top:1rem;">
+        This project is not affiliated with, endorsed by, or connected to Funcom or Valve Corporation. Conan Exiles and Conan Exiles Enhanced are trademarks of Funcom. Steam is a trademark of Valve Corporation.
+      </div>
+    </div>
+  </section>
+
+  <section class="features" style="background:var(--bg);">
+    <h2 style="font-size:2.2rem;color:var(--accent);text-align:center;margin-bottom:2rem;text-shadow:0 0 20px var(--accent-glow);">What It Includes</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-title">Auto-Download</div>
+        <div class="feature-desc">Downloads the dedicated server files through SteamCMD on first startup.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Auto-Update</div>
+        <div class="feature-desc">Checks and updates the game server files whenever the container starts.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">Config Generator</div>
+        <div class="feature-desc">Generates a ready-to-use .env file from the website without manually editing every option.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧩</div>
+        <div class="feature-title">Mod Support</div>
+        <div class="feature-desc">Downloads Steam Workshop mods from SERVER_MOD_LIST and writes modlist.txt automatically.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <div class="feature-title">RCON Ready</div>
+        <div class="feature-desc">Optional remote console support for admins who want external server management.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <div class="feature-title">Game Modes</div>
+        <div class="feature-desc">Supports PvE, PvP, and PvE-C settings, including PvP and building damage schedules.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🍷</div>
+        <div class="feature-title">Wine Runtime</div>
+        <div class="feature-desc">Runs the Windows dedicated server through Wine with VC++ 2022 and headless runtime libraries.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <div class="feature-title">Pre-built Image</div>
+        <div class="feature-desc">Published to GitHub Container Registry for Docker Compose users.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Runtime Stack</h2>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Technology</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Base Image</strong></td>
+              <td>Debian Bookworm (slim)</td>
+            </tr>
+            <tr>
+              <td><strong>Wine</strong></td>
+              <td>WineHQ Staging</td>
+            </tr>
+            <tr>
+              <td><strong>Windows Runtime</strong></td>
+              <td>Microsoft Visual C++ 2022 Redistributable</td>
+            </tr>
+            <tr>
+              <td><strong>Headless Runtime</strong></td>
+              <td>Xvfb, Vulkan, EGL, OpenGL, and Mesa runtime libraries</td>
+            </tr>
+            <tr>
+              <td><strong>Game Updater</strong></td>
+              <td>SteamCMD</td>
+            </tr>
+            <tr>
+              <td><strong>Container Runtime</strong></td>
+              <td>Docker / Docker Compose</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section" style="background:var(--bg);">
+    <div class="info-container">
+      <h2 class="info-title">Recent Releases</h2>
+      <div class="info-note">
+        <strong>v2.7.2 — CPU Compatibility Guidance:</strong> Replaces the vague “modern CPU” wording with explicit SSE4.2, AVX, and AVX2 checks; adds copyable Linux diagnostics and VPS/QEMU guest CPU guidance. Wine remains <code>latest</code>/<code>2.7.2</code>; Native remains experimental at <code>native</code>/<code>2.7.2-native</code>.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.7.1 — Native Health Documentation Hotfix:</strong> Clarifies that Docker health uses A2S readiness by default and that RCON is an internal, explicit diagnostic—not a required liveness signal.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.7.0 — Native Linux Experimental:</strong> <strong>Runtime stability contract:</strong> <code>latest</code> and <code>2.7.0</code> remain Wine Stable. Native is opt-in through <code>native</code>, <code>2.7.0-native</code>, and <code>docker-compose.native.yml</code>; no existing server is automatically migrated or switched. Adds isolated Native Compose, non-root hardening, CPU diagnostics, atomic Enhanced mods, A2S health with optional RCON diagnostics, verified backup/restore, migration guards, and separate registry channels.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.6.1 — Duration and Clipboard Reliability Hotfix:</strong> Normalizes rounded duration hints across minute/hour/day boundaries, preserves fractional-hour precision, rejects negative durations, fixes singular labels, and guarantees temporary clipboard fallback elements are removed on both success and failure.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.6.0 — Pages UX and Accessibility Upgrade:</strong> Adds deep-linked accessible tabs, searchable and keyboard-friendly settings, safe Compose-verified dotenv output, masked password controls and warnings, invalid-number protection, generator productivity tools, command-copy buttons, improved mobile/SEO presentation, and headless-Chromium CI checks.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.5.5 — Enhanced Runtime Requirements and Diagnostics:</strong> Replaces outdated sizing guidance, documents verified 8 GB OOM and stable 16 GB runtime results, and adds Enhanced startup diagnostics.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.5.4 — Enhanced Settings Status Clarification:</strong> Separates officially documented Enhanced settings from legacy keys that still need runtime verification.
+      </div>
+      <p style="text-align:center;margin-top:1.25rem;"><a href="https://github.com/balnaimi/conan-exiles-server/releases" target="_blank" rel="noopener" class="btn" style="display:inline-flex;text-decoration:none;">View all releases on GitHub →</a></p>
+      <div class="info-note" style="margin-top:1.25rem;">
+        <strong>Community thanks:</strong> Thanks to @xxirss, @SummertimeSadnesss, @pvillaverde, @UnoYakshi, and everyone sharing logs and testing the image on real servers.
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section">
+    <div class="info-container">
+      <h2 class="info-title">Project Files</h2>
+      <div class="ports-table">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>docker-compose.yml</strong></td>
+              <td>Production Docker Compose file for the pre-built image</td>
+            </tr>
+            <tr>
+              <td><strong>.env</strong></td>
+              <td>Your local server settings</td>
+            </tr>
+            <tr>
+              <td><strong>.env.minimal</strong></td>
+              <td>Small quick-start template with only basic settings</td>
+            </tr>
+            <tr>
+              <td><strong>.env.example</strong></td>
+              <td>Template with all 250 shared and Native operation settings documented</td>
+            </tr>
+            <tr>
+              <td><strong>entrypoint.sh</strong></td>
+              <td>Container startup script for game downloads, config generation, mods, and server launch</td>
+            </tr>
+            <tr>
+              <td><strong>docs/index.html</strong></td>
+              <td>Website and Config Generator</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section" style="background:var(--bg);">
+    <div class="info-container">
+      <h2 class="info-title">Links &amp; Source</h2>
+      <div class="info-note">
+        <strong>GitHub Repository:</strong><br>
+        <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:1rem;">
+          https://github.com/balnaimi/conan-exiles-server
+        </a>
+      </div>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin:1.5rem 0 0.75rem;">If you prefer to build the Docker image yourself instead of using the pre-built image:</p>
+      <pre class="code-block">git clone https://github.com/balnaimi/conan-exiles-server.git
+cd conan-exiles-server
+docker build -t conan-exiles-server .
+<span class="comment"># Then update docker-compose.yml to use your local image</span></pre>
+    </div>
+  </section>
+</div>
+
+<!-- ============================================
+     FOOTER
+     ============================================ -->
+<footer class="footer">
+  <p>Made with ⚔️ for the Conan community — <a href="https://github.com/balnaimi/conan-exiles-server" target="_blank" rel="noopener">GitHub</a> — Licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a></p>
+  <p style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-dim);">This is a community Docker wrapper — not affiliated with <a href="https://www.funcom.com/" target="_blank" rel="noopener">Funcom</a> or <a href="https://www.valvesoftware.com/" target="_blank" rel="noopener">Valve</a>. Conan Exiles / Conan Exiles Enhanced is a trademark of Funcom. Steam is a trademark of Valve Corporation.</p>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ============================================
+// ACCESSIBLE, DEEP-LINKED TAB SWITCHING
+// ============================================
+const TAB_NAMES = ['quick-start', 'mods', 'config-generator', 'server-management', 'about'];
+const DEFAULT_TAB = 'config-generator';
+
+function scrollWindowTo(top, smooth = true) {
+  if (smooth) {
+    window.scrollTo({ top, behavior: 'smooth' });
+    return;
+  }
+  const root = document.documentElement;
+  const previous = root.style.scrollBehavior;
+  root.style.scrollBehavior = 'auto';
+  window.scrollTo({ top, behavior: 'auto' });
+  root.style.scrollBehavior = previous;
+}
+
+function activateTab(tabName, button = null, updateHash = true, shouldScroll = true, smooth = true) {
+  if (!TAB_NAMES.includes(tabName)) tabName = DEFAULT_TAB;
+  const selectedButton = button || document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+
+  document.querySelectorAll('.tab-btn').forEach(tab => {
+    const selected = tab.dataset.tab === tabName;
+    tab.classList.toggle('active', selected);
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  document.querySelectorAll('.tab-content').forEach(panel => {
+    const selected = panel.id === `tab-${tabName}`;
+    panel.classList.toggle('active', selected);
+    panel.hidden = !selected;
+  });
+
+  if (updateHash && location.hash !== `#${tabName}`) {
+    history.pushState({ tab: tabName }, '', `#${tabName}`);
+  }
+  if (shouldScroll) {
+    const hero = document.querySelector('.hero');
+    const tabTop = hero.offsetTop + hero.offsetHeight;
+    window.scrollTo({ top: tabTop, behavior: smooth ? 'smooth' : 'auto' });
+    const tabBar = document.querySelector('.tab-bar');
+    const left = selectedButton ? selectedButton.offsetLeft - (tabBar.clientWidth - selectedButton.offsetWidth) / 2 : 0;
+    tabBar.scrollTo({ left, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  selectedButton?.focus({ preventScroll: true });
+}
+
+function openNativeQuickStart(event = null, updateHash = true, smooth = true) {
+  event?.preventDefault();
+  const quickStartButton = document.getElementById('tab-button-quick-start');
+  activateTab('quick-start', quickStartButton, false, false, smooth);
+  if (updateHash && location.hash !== '#native-quick-start') {
+    history.pushState({ tab: 'quick-start', anchor: 'native-quick-start' }, '', '#native-quick-start');
+  }
+  const target = document.getElementById('native-quick-start');
+  const tabBar = document.querySelector('.tab-bar');
+  if (!target || !tabBar) return;
+  const top = target.getBoundingClientRect().top + window.scrollY - tabBar.offsetHeight - 16;
+  window.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  target.focus({ preventScroll: true });
+}
+
+function openCpuCompatibility(updateHash = true, smooth = true) {
+  const quickStartButton = document.getElementById('tab-button-quick-start');
+  activateTab('quick-start', quickStartButton, false, false, smooth);
+  if (updateHash && location.hash !== '#cpu-compatibility') {
+    history.pushState({ tab: 'quick-start', anchor: 'cpu-compatibility' }, '', '#cpu-compatibility');
+  }
+  const target = document.getElementById('cpu-compatibility');
+  const tabBar = document.querySelector('.tab-bar');
+  if (!target || !tabBar) return;
+  const top = target.getBoundingClientRect().top + window.scrollY - tabBar.offsetHeight - 16;
+  scrollWindowTo(top, smooth);
+}
+
+function handleTabKeydown(event) {
+  const tabs = [...document.querySelectorAll('.tab-btn')];
+  const current = tabs.indexOf(event.currentTarget);
+  let next = current;
+  if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+  else if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+  else if (event.key === 'Home') next = 0;
+  else if (event.key === 'End') next = tabs.length - 1;
+  else return;
+  event.preventDefault();
+  activateTab(tabs[next].dataset.tab, tabs[next]);
+}
+
+window.addEventListener('hashchange', () => {
+  const anchor = location.hash.slice(1);
+  if (anchor === 'native-quick-start') openNativeQuickStart(null, false);
+  else if (anchor === 'cpu-compatibility') openCpuCompatibility(false);
+  else activateTab(anchor, null, false);
+});
+
+// ============================================
+// CONFIG DEFINITION
+// ============================================
+const CONFIG = [
+  {
+    id: 'server', icon: '🖥️', title: 'Server Info', open: true,
+    fields: [
+      { key: 'SERVER_NAME', label: 'Server Name', desc: 'Name shown in the server browser', type: 'text', default: 'My Conan Server' },
+      { key: 'SERVER_PASSWORD', label: 'Server Password', desc: 'Optional join password (empty = public)', type: 'password', default: '' },
+      { key: 'SERVER_TYPE', label: 'Server Type', desc: 'Game mode', type: 'select', default: 'pve', options: [
+        { value: 'pve', label: 'PvE — Peaceful (no player fighting)' },
+        { value: 'pvp', label: 'PvP — Player vs Player' },
+        { value: 'pve-c', label: 'PvE-C — Peaceful with scheduled PvP hours' }
+      ]},
+      { key: 'MAX_PLAYERS', label: 'Max Players', desc: 'Maximum players at the same time', type: 'number', default: 40, min: 1, max: 70 },
+      { key: 'SERVER_MOTD', label: 'Message of the Day', desc: 'Shown when players connect', type: 'text', default: '' },
+      { key: 'SERVER_REGION', label: 'Server Region', desc: 'Region shown in server browser', type: 'select', default: '0', options: [
+        { value: '0', label: '0 — EU (Europe, Middle East, Africa)' },
+        { value: '1', label: '1 — NA (North America)' },
+        { value: '2', label: '2 — Asia' },
+        { value: '3', label: '3 — Oceania (Australia, NZ)' },
+        { value: '4', label: '4 — SA (South America)' },
+        { value: '5', label: '5 — Japan' }
+      ]},
+      { key: 'SERVER_COMMUNITY', label: 'Community Type', desc: 'Server community category', type: 'select', default: '0', options: [
+        { value: '0', label: '0 — None' },
+        { value: '1', label: '1 — Purist' },
+        { value: '2', label: '2 — Relaxed' },
+        { value: '3', label: '3 — Hard Core' },
+        { value: '4', label: '4 — Role Playing' },
+        { value: '5', label: '5 — Experimental' }
+      ]},
+      { key: 'MAX_NUDITY', label: 'Nudity Level', desc: 'Maximum nudity allowed', type: 'select', default: '2', options: [
+        { value: '0', label: '0 — None' },
+        { value: '1', label: '1 — Partial' },
+        { value: '2', label: '2 — Full' }
+      ]},
+      { key: 'CREATIVE_MODE', label: 'Creative Mode', desc: 'Unlimited resources, instant crafting', type: 'select', default: '0', options: [
+        { value: '0', label: 'Off' },
+        { value: '1', label: 'On' }
+      ]},
+      { key: 'TZ', label: 'Timezone', desc: 'Server timezone (e.g. UTC, Asia/Qatar, America/New_York)', type: 'text', default: 'UTC' },
+    ]
+  },
+  {
+    id: 'admin', icon: '🔑', title: 'Admin & RCON',
+    fields: [
+      { key: 'ADMIN_PASSWORD', label: 'Admin Password', desc: 'Change the default before opening the server to players', type: 'password', default: 'changeme' },
+      { key: 'RCON_ENABLED', label: 'Enable RCON', desc: 'Remote console for server management', type: 'bool', default: false },
+      { key: 'RCON_PASSWORD', label: 'RCON Password', desc: 'Use a unique password when RCON is enabled', type: 'password', default: 'changeme' },
+      { key: 'RCON_PORT', label: 'RCON Port', desc: 'Port for RCON connections', type: 'number', default: 25575 },
+    ]
+  },
+  {
+    id: 'network', icon: '🌐', title: 'Network',
+    fields: [
+      { key: 'SERVER_PORT', label: 'Game Port', desc: 'Main game port (UDP)', type: 'number', default: 7777 },
+      { key: 'QUERY_PORT', label: 'Query Port', desc: 'Steam query port (UDP)', type: 'number', default: 27015 },
+      { key: 'MULTIHOME', label: 'MULTIHOME IP', desc: 'Optional public/forwarded IP for CG-NAT, tunnels, or multi-interface hosts', type: 'text', default: '' },
+      { key: 'MULTIHOMEHTTP', label: 'MULTIHOMEHTTP IP', desc: 'Optional HTTP source IP for server browser registration; defaults to MULTIHOME when empty', type: 'text', default: '' },
+      { key: 'KICK_AFK_TIME', label: 'AFK Kick Time', desc: 'Kick AFK players after this time (default: 2700 = 45 min)', type: 'number', default: 2700 },
+      { key: 'KICK_AFK_PERCENTAGE', label: 'AFK Kick Threshold', desc: 'Server must be this % full before AFK kick', type: 'number', default: 80, min: 0, max: 100 },
+      { key: 'MAX_ALLOWED_PING', label: 'Max Ping', desc: 'Max allowed ping (0 = no limit)', type: 'number', default: 0 },
+      { key: 'ENABLE_LOGIN_QUEUE', label: 'Login Queue', desc: 'Queue players when server is full', type: 'bool', default: true },
+      { key: 'DISCONNECTION_GRACE_TIME', label: 'Disconnect Grace', desc: 'Grace period before removing disconnected player (default: 180 = 3 min)', type: 'number', default: 180 },
+      { key: 'ALLOW_FAMILY_SHARE', label: 'Family Share', desc: 'Allow family shared Steam accounts', type: 'bool', default: true },
+      { key: 'BATTLEYE_ENABLED', label: 'BattlEye Anti-Cheat', desc: 'Enable BattlEye (may cause issues on Linux)', type: 'bool', default: false },
+      { key: 'PVP_BLITZ', label: 'PvP Blitz Mode', desc: 'Faster progression for quick PvP action', type: 'bool', default: false },
+    ]
+  },
+  {
+    id: 'survival', icon: '🥤', title: 'Survival (Hunger & Thirst)',
+    fields: [
+      { key: 'ACTIVE_THIRST', label: 'Active Thirst Rate', desc: 'How fast you get thirsty while active (0 = never)', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'IDLE_THIRST', label: 'Idle Thirst Rate', desc: 'How fast you get thirsty while idle', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'OFFLINE_THIRST', label: 'Offline Thirst Rate', desc: 'How fast you get thirsty while offline', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'ACTIVE_HUNGER', label: 'Active Hunger Rate', desc: 'How fast you get hungry while active (0 = never)', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'IDLE_HUNGER', label: 'Idle Hunger Rate', desc: 'How fast you get hungry while idle', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'OFFLINE_HUNGER', label: 'Offline Hunger Rate', desc: 'How fast you get hungry while offline', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'daynight', icon: '🌅', title: 'Day/Night Cycle',
+    fields: [
+      { key: 'DAY_CYCLE_SPEED', label: 'Cycle Speed', desc: 'Overall day/night cycle speed (higher = faster days)', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'DAYTIME_SPEED', label: 'Daytime Speed', desc: 'How fast daytime passes (lower = longer days)', type: 'range', default: 0.25, min: 0.01, max: 10.0, step: 0.01 },
+      { key: 'NIGHTTIME_SPEED', label: 'Nighttime Speed', desc: 'How fast nighttime passes (lower = longer nights)', type: 'range', default: 0.25, min: 0.01, max: 10.0, step: 0.01 },
+      { key: 'DAWN_DUSK_SPEED', label: 'Dawn/Dusk Speed', desc: 'How fast dawn and dusk transitions are', type: 'range', default: 0.25, min: 0.01, max: 10.0, step: 0.01 },
+      { key: 'USE_CATCHUP_TIME', label: 'Client Catch-Up', desc: 'Players catch up to server time when joining', type: 'bool', default: true },
+    ]
+  },
+  {
+    id: 'playerstats', icon: '❤️', title: 'Player Stats',
+    fields: [
+      { key: 'PLAYER_HEALTH', label: 'Player Health', desc: '2.0 = double max HP', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'PLAYER_STAMINA', label: 'Player Stamina Pool', desc: '2.0 = double max stamina', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'combat', icon: '⚔️', title: 'Combat & Damage',
+    fields: [
+      { key: 'PLAYER_DAMAGE', label: 'Player Damage Dealt', desc: '2.0 = deal double damage', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_DAMAGE_TAKEN', label: 'Player Damage Taken', desc: '0.5 = take half damage', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'NPC_DAMAGE', label: 'NPC Damage Dealt', desc: 'How hard NPC enemies hit you', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'NPC_DAMAGE_TAKEN', label: 'NPC Damage Taken', desc: '2.0 = enemies die faster', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'THRALL_DAMAGE_TO_PLAYERS', label: 'Thrall → Player Damage', desc: 'Thrall damage against players', type: 'range', default: 0.5, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'THRALL_DAMAGE_TO_NPCS', label: 'Thrall → NPC Damage', desc: 'Thrall damage against NPCs', type: 'range', default: 0.5, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'MINION_DAMAGE', label: 'Follower Damage', desc: 'How much damage your followers deal to enemies', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'MINION_DAMAGE_TAKEN', label: 'Follower Damage Taken', desc: 'How much damage your followers take from enemies', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'FRIENDLY_FIRE_DAMAGE', label: 'Friendly Fire', desc: 'Damage dealt to your own clan members (0 = no friendly fire)', type: 'range', default: 0.25, min: 0.0, max: 1.0, step: 0.05 },
+      { key: 'STRUCTURE_DAMAGE', label: 'Structure Damage', desc: 'How much damage player attacks deal to structures', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'STRUCTURE_HEALTH', label: 'Structure Health', desc: '2.0 = structures have double HP', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'BUILDING_DAMAGE', label: 'Building Damage', desc: 'How much damage buildings take from attacks', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'CAN_DAMAGE_OWN_STRUCTURES', label: 'Damage Own Buildings', desc: 'Can players damage their own structures', type: 'bool', default: false },
+      { key: 'DYNAMIC_BUILDING_DAMAGE', label: 'Dynamic Building Damage', desc: 'Buildings only take damage at certain times', type: 'bool', default: false },
+      { key: 'DYNAMIC_BUILDING_DAMAGE_PERIOD', label: 'Dynamic Damage Period', desc: 'Check interval for dynamic building damage (default: 1800 = 30 min)', type: 'number', default: 1800 },
+      { key: 'CLAMP_BUILDING_DAMAGE', label: 'Clamp Building Damage', desc: 'Limit building damage to resource cost', type: 'bool', default: true },
+      { key: 'PLAYER_KNOCKBACK', label: 'Player Knockback', desc: 'How far players get knocked back by hits', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'NPC_KNOCKBACK', label: 'NPC Knockback', desc: 'How far NPCs get knocked back by hits', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'CONSCIOUSNESS_DAMAGE', label: 'Knockout Damage', desc: 'Damage needed to knock someone unconscious', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PVP_MOUNT_ENDURANCE_DAMAGE', label: 'PvP Mount Damage', desc: 'Mount endurance damage in PvP', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'COMBAT_MODE_MODIFIER', label: 'Combat Mode', desc: 'Combat mode modifier (0 = default)', type: 'number', default: 0 },
+      { key: 'ENABLE_TARGET_LOCK', label: 'Target Lock', desc: 'Enable target lock in combat', type: 'bool', default: true },
+      { key: 'ENABLE_FATALITIES', label: 'Finishing Moves', desc: 'Enable fatality/finishing moves', type: 'bool', default: true },
+    ]
+  },
+  {
+    id: 'death', icon: '💀', title: 'Death & Looting',
+    fields: [
+      { key: 'DROP_EQUIPMENT_ON_DEATH', label: 'Drop Equipment on Death', desc: 'Drop equipped items when you die', type: 'bool', default: true },
+      { key: 'DROP_SHORTCUTBAR_ON_DEATH', label: 'Drop Quickbar on Death', desc: 'Drop quickbar/shortcut items when you die', type: 'bool', default: true },
+      { key: 'DROP_BACKPACK_ON_DEATH', label: 'Drop Backpack on Death', desc: 'Drop backpack contents when you die', type: 'bool', default: true },
+      { key: 'EVERYBODY_LOOT_CORPSE', label: 'Anyone Can Loot Corpses', desc: 'True = anyone can loot dead bodies', type: 'bool', default: true },
+      { key: 'CONTAINERS_IGNORE_OWNERSHIP', label: 'Open Any Container', desc: 'Anyone can open any chest/container', type: 'bool', default: true },
+      { key: 'LOGOUT_REMAIN', label: 'Body Stays on Logout', desc: 'Character stays in world after logout', type: 'bool', default: true },
+      { key: 'UNCONSCIOUS_TIME', label: 'Unconscious Time', desc: 'How long your unconscious body stays after logout (default: 1800 = 30 min)', type: 'number', default: 1800 },
+      { key: 'OFFLINE_BODY_HOURS', label: 'Offline Body Hours', desc: 'How long offline player bodies stay in the world (default: 168 = 7 days)', type: 'number', default: 168 },
+      { key: 'CORPSES_PER_PLAYER', label: 'Corpses Per Player', desc: 'Max corpses kept per player', type: 'number', default: 10 },
+      { key: 'PLAYER_CORPSE_LIFETIME', label: 'Player Corpse Time', desc: 'Time before player corpses disappear (default: 1800 = 30 min)', type: 'number', default: 1800 },
+      { key: 'NPC_CORPSE_LIFETIME', label: 'NPC Corpse Time', desc: 'Time before NPC corpses disappear (default: 600 = 10 min)', type: 'number', default: 600 },
+    ]
+  },
+  {
+    id: 'xp', icon: '📈', title: 'XP & Progression',
+    fields: [
+      { key: 'XP_RATE', label: 'XP Rate', desc: '2.0 = level up twice as fast', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_KILL', label: 'XP from Kills', desc: 'XP bonus from killing enemies', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_HARVEST', label: 'XP from Harvesting', desc: 'XP bonus from gathering resources', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_CRAFT', label: 'XP from Crafting', desc: 'XP bonus from crafting items', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'XP_TIME', label: 'Passive XP', desc: 'Passive XP earned just by being online', type: 'range', default: 1.0, min: 0.0, max: 10.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'harvest', icon: '⛏️', title: 'Harvesting & Crafting',
+    fields: [
+      { key: 'HARVEST_AMOUNT', label: 'Harvest Amount', desc: '2.0 = double resources', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'RESOURCE_RESPAWN', label: 'Resource Respawn', desc: 'Lower = faster respawn', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'ITEM_SPOIL_RATE', label: 'Food Spoil Rate', desc: '0.5 = food lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'CRAFTING_COST', label: '⚠️ Crafting Cost', desc: '⚠️ LEGACY WARNING — Historically unreliable; needs Enhanced verification.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'FUEL_BURN_TIME', label: 'Fuel Burn Time', desc: '2.0 = fuel lasts twice as long', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'ITEM_CONVERSION', label: 'Item Conversion Speed', desc: 'Speed of tanning, smelting, drying etc. in crafting stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'ITEM_REPAIR_MIN_DURABILITY', label: 'Min Repair Durability', desc: 'Minimum durability after repair (0.1 = 10%)', type: 'range', default: 0.1, min: 0.0, max: 1.0, step: 0.05 },
+      { key: 'ITEM_REPAIR_PENALTY_CHANCE', label: 'Repair Penalty Chance', desc: 'Chance of durability loss on repair (1.0 = always)', type: 'range', default: 1.0, min: 0.0, max: 1.0, step: 0.1 },
+      { key: 'ITEM_REPAIR_LOSS_BY_TIER', label: 'Repair Loss by Kit Tier', desc: 'Advanced tuple for durability loss by repair kit tier', type: 'text', default: '(0.200000,0.200000,0.150000,0.100000,0.050000,0.025000)' },
+    ]
+  },
+  {
+    id: 'stamina', icon: '🏃', title: 'Stamina & Movement',
+    fields: [
+      { key: 'STAMINA_COST', label: '⚠️ Stamina Cost', desc: '⚠️ LEGACY WARNING — Needs Enhanced verification; newer references may use StaminaCostMultiplier.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_SPRINT_COST', label: '⚠️ Sprint Stamina Cost', desc: '⚠️ LEGACY WARNING — Needs Enhanced verification.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_MOVE_SPEED', label: '⚠️ Walk Speed', desc: '⚠️ NEEDS VERIFICATION — Historically inconsistent behavior.', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
+      { key: 'PLAYER_SPRINT_SPEED', label: '⚠️ Sprint Speed', desc: '⚠️ NEEDS VERIFICATION — May require relog after server restart.', type: 'range', default: 1.0, min: 0.5, max: 3.0, step: 0.1 },
+      { key: 'HEALTH_REGEN_SPEED', label: '⚠️ Health Regen', desc: '⚠️ NEEDS VERIFICATION — May be overridden by game DB/Admin Panel values.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_REGEN_SPEED', label: '⚠️ Stamina Regen', desc: '⚠️ NEEDS VERIFICATION — May be overridden by game DB/Admin Panel values.', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_ENCUMBRANCE', label: '⚠️ Carry Weight', desc: '⚠️ LEGACY WARNING — Historically reported as no effect; needs Enhanced verification.', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'PLAYER_ENCUMBRANCE_PENALTY', label: 'Encumbrance Penalty', desc: 'Speed reduction when overloaded', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_REGEN_TIME', label: 'Stamina Regen Time', desc: 'Seconds to regenerate full stamina (default: 3.75)', type: 'number', default: 3.75 },
+      { key: 'STAMINA_EXHAUSTION_TIME', label: 'Exhaustion Recovery', desc: 'Seconds to recover from stamina exhaustion (default: 3.75)', type: 'number', default: 3.75 },
+      { key: 'STAMINA_STATIC_REGEN', label: 'Regen While Standing', desc: 'Stamina regen rate while standing still', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_MOVING_REGEN', label: 'Regen While Moving', desc: 'Stamina regen rate while moving', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'STAMINA_CONSUME_PAUSE', label: 'Regen Pause After Use', desc: 'Seconds before stamina starts regenerating after use (default: 1.3)', type: 'number', default: 1.3 },
+      { key: 'STAMINA_EXHAUSTION_PAUSE', label: 'Regen Pause After Exhaustion', desc: 'Seconds before regen after full exhaustion (default: 2.75)', type: 'number', default: 2.75 },
+    ]
+  },
+  {
+    id: 'thralls', icon: '👥', title: 'Thralls & Followers',
+    fields: [
+      { key: 'THRALL_CONVERSION', label: 'Conversion Speed', desc: '0.5 = convert twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'THRALL_SCOUTING_TIME', label: 'Scouting Time (min)', desc: 'How long a thrall scouts before returning (minutes)', type: 'number', default: 10 },
+      { key: 'USE_MINION_POP_LIMIT', label: 'Population Limit', desc: 'Limit total followers per clan', type: 'bool', default: false },
+      { key: 'MINION_POP_BASE', label: 'Base Pop Limit', desc: 'Base follower limit for your clan (only if Population Limit is on)', type: 'number', default: 50 },
+      { key: 'MINION_POP_PER_PLAYER', label: 'Pop Per Player', desc: 'Extra followers allowed per clan member (added to base)', type: 'number', default: 5 },
+      { key: 'ENABLE_FOLLOWER_DBNO', label: 'Follower Down-But-Not-Out', desc: 'Followers get knocked down instead of killed', type: 'bool', default: true },
+      { key: 'ENABLE_FOLLOWER_RESCUE', label: 'Follower Rescue', desc: 'Can rescue stuck followers on your land', type: 'bool', default: true },
+      { key: 'FOLLOWER_RESCUE_COOLDOWN', label: 'Rescue Cooldown', desc: 'Wait time between follower rescues (default: 3600 = 1 hour)', type: 'number', default: 3600 },
+      { key: 'FOLLOWER_RESCUE_EXCLUSION', label: 'Rescue in Exclusion Zones', desc: 'Can rescue followers in build exclusion zones', type: 'bool', default: false },
+      { key: 'DAMAGE_COOLDOWN_RESCUE', label: 'Combat Cooldown for Rescue', desc: 'Must be out of combat this long before rescue (default: 600 = 10 min)', type: 'number', default: 600 },
+      { key: 'THRALL_EXCLUSION_RADIUS', label: 'Thrall Placement Radius', desc: 'Min distance between placed thralls (game units)', type: 'number', default: 100 },
+      { key: 'THRALL_MIN_DISTANCE', label: 'Thrall Wander Distance', desc: 'Max distance thralls wander from home (game units)', type: 'number', default: 5000 },
+      { key: 'THRALL_TELEPORT_COOLDOWN', label: 'Thrall Teleport Cooldown', desc: 'Seconds before thrall can teleport to you again', type: 'number', default: 10 },
+      { key: 'MINION_OVERPOP_CLEANUP', label: 'Overpopulation Cleanup', desc: 'Minutes before excess followers are removed', type: 'number', default: 60 },
+      { key: 'MINION_OVERPOP_ALLOWED', label: 'Overpopulation Buffer', desc: 'How many followers over the limit are tolerated', type: 'number', default: 10 },
+      { key: 'THRALL_CORRUPTION_REMOVAL', label: 'Thrall Corruption Removal', desc: 'Speed of removing corruption from thralls', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_CORRUPTION_SORCERY', label: 'Sorcery Corruption', desc: 'Corruption gain from using sorcery', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'ANIMAL_PEN_CRAFT_TIME', label: 'Animal Taming Speed', desc: '0.5 = animals tame twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'FEED_BOX_RANGE', label: 'Feed Box Range', desc: '2.0 = covers twice the area', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'PLAYER_CORRUPTION_GAIN', label: 'Corruption Gain', desc: '0.5 = gain corruption slower', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'building', icon: '🏗️', title: 'Building & Decay',
+    fields: [
+      { key: 'LAND_CLAIM_RADIUS', label: 'Land Claim Radius', desc: 'How far your territory extends around your buildings', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'BUILD_ANYWHERE', label: 'Build Anywhere', desc: 'Allow building in restricted areas', type: 'bool', default: false },
+      { key: 'BUILDING_PICKUP', label: 'Building Pickup', desc: 'Can pick up placed buildings', type: 'bool', default: true },
+      { key: 'STABILITY_LOSS', label: 'Stability Loss', desc: 'Higher = buildings collapse easier', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'DISABLE_BUILDING_DECAY', label: 'Disable Building Decay', desc: 'Buildings never decay', type: 'bool', default: true },
+      { key: 'MAX_BUILDING_DECAY_TIME', label: 'Max Decay Time', desc: 'Max time before buildings decay (default: 1296000 = 15 days)', type: 'number', default: 1296000 },
+      { key: 'DISABLE_THRALL_DECAY', label: 'Disable Thrall Decay', desc: 'Thralls/followers never decay', type: 'bool', default: true },
+      { key: 'THRALL_DECAY_TIME', label: 'Thrall Decay Time', desc: 'Time before thralls decay (default: 1296000 = 15 days)', type: 'number', default: 1296000 },
+      { key: 'BUILDING_DECAY_PER_SCORE', label: 'Decay Per Score', desc: 'Decay time added per building score point (seconds)', type: 'number', default: 5400 },
+      { key: 'BUILDING_DECAY_MULTIPLIER', label: 'Decay Speed', desc: 'Building decay speed multiplier', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'DECAY_CLEANUP_MULTIPLIER', label: 'Decay Cleanup Speed', desc: 'How fast decayed buildings are cleaned up', type: 'range', default: 2.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'DECAY_BONUS_TIME_RATE', label: 'Decay Bonus Time', desc: 'Bonus time added to decay timer (seconds)', type: 'number', default: 600 },
+      { key: 'DECAY_SHOW_SCORE', label: 'Show Building Score', desc: 'Show building decay score to players', type: 'bool', default: false },
+      { key: 'BUILDING_VALIDATION', label: 'Building Validation', desc: 'Validate building placement rules', type: 'bool', default: false },
+      { key: 'BUILDING_PRELOAD_RADIUS', label: 'Preload Radius', desc: 'How far to preload building chunks (game units)', type: 'number', default: 80 },
+      { key: 'DISABLE_LANDCLAIM_NOTIFICATIONS', label: 'Disable Landclaim Alerts', desc: 'Hide notifications when entering claimed land', type: 'bool', default: true },
+      { key: 'CAMPS_IGNORE_LANDCLAIM', label: 'NPC Camps Ignore Claims', desc: 'NPC camps not affected by player land claims', type: 'bool', default: true },
+      { key: 'POI_PROTECTION', label: 'POI Protection', desc: 'Protect Points of Interest from building', type: 'bool', default: false },
+    ]
+  },
+  {
+    id: 'npc', icon: '🐉', title: 'NPC & World',
+    fields: [
+      { key: 'NPC_HEALTH', label: 'NPC Health', desc: '2.0 = enemies have double HP', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'NPC_RESPAWN', label: 'NPC Respawn Speed', desc: 'Lower = faster respawn', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'NPC_MAX_SPAWN_CAP', label: 'NPC Spawn Cap', desc: 'Maximum number of NPCs that can exist at once', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'MAX_AGGRO_RANGE', label: 'Aggro Range', desc: 'How far away NPCs will notice and attack you (in game units)', type: 'number', default: 9000 },
+      { key: 'AMBIENT_LIFE', label: 'Ambient Wildlife', desc: 'Show ambient wildlife like rabbits, deer, birds', type: 'bool', default: true },
+      { key: 'NPC_MIND_READING', label: 'NPC Mind Reading', desc: 'NPCs react to player actions (0 = off)', type: 'number', default: 0 },
+      { key: 'DOGS_SPAWN_WITH_DOGS', label: 'Dogs of the Desert', desc: 'Dogs of the Desert faction spawn with dogs', type: 'bool', default: false },
+      { key: 'CROSS_DESERT_ONCE', label: 'Cross Desert Once', desc: 'Players can only cross the desert boundary once', type: 'bool', default: true },
+    ]
+  },
+  {
+    id: 'avatars', icon: '🗿', title: 'Avatars / Gods',
+    fields: [
+      { key: 'AVATARS_DISABLED', label: 'Disable Avatars', desc: 'Prevent god summoning entirely', type: 'bool', default: false },
+      { key: 'AVATAR_LIFETIME', label: 'Avatar Lifetime', desc: 'How long a summoned god stays active (default: 600 = 10 min)', type: 'number', default: 600 },
+      { key: 'AVATAR_SUMMON_TIME', label: 'Summon Time', desc: 'Channeling time to summon a god (default: 60 = 1 min)', type: 'number', default: 60 },
+      { key: 'AVATAR_DOME_DURATION', label: 'Dome Duration', desc: 'How long the god protection dome lasts', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'AVATAR_DOME_DAMAGE', label: 'Dome Damage', desc: 'How much damage the god protection dome absorbs', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'RESTRICT_AVATAR_TIME', label: 'Restrict Summoning Time', desc: 'Only allow god summoning at certain times', type: 'bool', default: false },
+      { key: 'AVATAR_WEEKDAY_START', label: 'Weekday Start Hour', desc: 'When summoning is allowed on weekdays (0-24)', type: 'number', default: 0 },
+      { key: 'AVATAR_WEEKDAY_END', label: 'Weekday End Hour', desc: 'When summoning ends on weekdays (0-24)', type: 'number', default: 0 },
+      { key: 'AVATAR_WEEKEND_START', label: 'Weekend Start Hour', desc: 'When summoning is allowed on weekends (0-24)', type: 'number', default: 0 },
+      { key: 'AVATAR_WEEKEND_END', label: 'Weekend End Hour', desc: 'When summoning ends on weekends (0-24)', type: 'number', default: 0 },
+    ]
+  },
+  {
+    id: 'ui', icon: '💬', title: 'UI & Social',
+    fields: [
+      { key: 'VOICE_CHAT', label: 'Voice Chat', desc: 'Enable in-game voice', type: 'select', default: '1', options: [
+        { value: '1', label: 'On' },
+        { value: '0', label: 'Off' }
+      ]},
+      { key: 'SHOW_ONLINE_PLAYERS', label: 'Show Online Players', desc: 'Show player list', type: 'select', default: '0', options: [
+        { value: '0', label: 'Hidden' },
+        { value: '1', label: 'Visible' }
+      ]},
+      { key: 'MAX_DEATH_MARKERS', label: 'Death Map Markers', desc: 'How many death markers show on your map', type: 'number', default: 3 },
+      { key: 'ENABLE_CLAN_MARKERS', label: 'Clan Markers', desc: 'Show clan members on map', type: 'bool', default: true },
+      { key: 'HEALTHBAR_DISTANCE', label: 'Healthbar Distance', desc: 'Distance at which enemy healthbars are visible (in game units)', type: 'number', default: 15000 },
+      { key: 'EVENT_SYSTEM', label: 'Event System', desc: 'Enable purges and events', type: 'bool', default: true },
+      { key: 'DISABLE_CHAT_FORMATTING', label: 'Disable Chat Formatting', desc: 'Disable colors and formatting in chat', type: 'bool', default: false },
+      { key: 'EVENT_LOG_PVP_PRIVACY', label: 'PvP Event Log Privacy', desc: 'Who caused PvP damage (0=show all, 1=partial, 2=hidden)', type: 'select', default: '2', options: [
+        { value: '0', label: '0 — Show attacker name' },
+        { value: '1', label: '1 — Partial (clan only)' },
+        { value: '2', label: '2 — Hidden' }
+      ]},
+      { key: 'EVENT_LOG_PVE_PRIVACY', label: 'PvE Event Log Privacy', desc: 'Who caused PvE damage (0=show all, 1=partial, 2=hidden)', type: 'select', default: '1', options: [
+        { value: '0', label: '0 — Show attacker name' },
+        { value: '1', label: '1 — Partial (clan only)' },
+        { value: '2', label: '2 — Hidden' }
+      ]},
+    ]
+  },
+  {
+    id: 'region', icon: '🌍', title: 'Region Restrictions',
+    fields: [
+      { key: 'REGION_ALLOW_AFRICA', label: 'Allow Africa', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_ASIA', label: 'Allow Asia', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_CENTRAL_EUROPE', label: 'Allow Central Europe', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_EASTERN_EUROPE', label: 'Allow Eastern Europe', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_WESTERN_EUROPE', label: 'Allow Western Europe', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_NORTH_AMERICA', label: 'Allow North America', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_OCEANIA', label: 'Allow Oceania', desc: '', type: 'bool', default: true },
+      { key: 'REGION_ALLOW_SOUTH_AMERICA', label: 'Allow South America', desc: '', type: 'bool', default: true },
+      { key: 'REGION_BLOCK_LIST', label: 'Region Block List', desc: 'Comma-separated list of blocked regions', type: 'text', default: '' },
+    ]
+  },
+  {
+    id: 'durability', icon: '🔨', title: 'Durability',
+    fields: [
+      { key: 'DURABILITY', label: 'Tool/Weapon Durability', desc: '0 = never breaks, 2.0 = breaks twice as fast', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+      { key: 'SHIELD_DURABILITY', label: 'Shield Durability', desc: '0 = shields never break', type: 'range', default: 1.0, min: 0.0, max: 5.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'chat', icon: '💭', title: 'Chat',
+    fields: [
+      { key: 'CHAT_MAX_LENGTH', label: 'Max Message Length', desc: 'Maximum characters per chat message', type: 'number', default: 512 },
+      { key: 'CHAT_LOCAL_RADIUS', label: 'Local Chat Radius', desc: 'How close players must be to see local chat (game units)', type: 'number', default: 9000 },
+      { key: 'CHAT_HAS_GLOBAL', label: 'Global Chat', desc: 'Enable server-wide chat channel', type: 'bool', default: true },
+    ]
+  },
+  {
+    id: 'clans', icon: '🛡️', title: 'Clans',
+    fields: [
+      { key: 'CLAN_MAX_SIZE', label: 'Max Clan Size', desc: 'Maximum members per clan (0 = unlimited)', type: 'number', default: 0 },
+    ]
+  },
+  {
+    id: 'crafting_extra', icon: '🔧', title: 'Crafting (Extra)',
+    fields: [
+      { key: 'THRALL_CRAFTING_TIME', label: 'Thrall Training Speed', desc: '0.5 = train thralls twice as fast', type: 'range', default: 1.0, min: 0.1, max: 5.0, step: 0.1 },
+      { key: 'CRAFTING_SPEED', label: 'Station Crafting Speed', desc: 'Speed of crafting at workbenches/stations', type: 'range', default: 1.0, min: 0.1, max: 10.0, step: 0.1 },
+      { key: 'THRALL_WAKEUP_TIME', label: 'Thrall Knockout Time', desc: 'How long knocked out thralls stay unconscious (default: 600 = 10 min)', type: 'number', default: 600 },
+    ]
+  },
+  {
+    id: 'pethunger', icon: '🐾', title: 'Pet & Hunger System',
+    fields: [
+      { key: 'HUNGER_SYSTEM_THRALLS', label: 'Thrall Hunger', desc: 'Thralls need food to survive', type: 'bool', default: true },
+      { key: 'HUNGER_SYSTEM_PETS', label: 'Pet Hunger', desc: 'Pets need food to survive', type: 'bool', default: true },
+      { key: 'STARVATION_TIME', label: 'Starvation Time', desc: 'Time before companions starve (default: 10080 = 7 days)', type: 'number', default: 10080 },
+      { key: 'STARVATION_DAMAGE_CAP', label: 'Starvation Damage Cap', desc: 'Max health lost from starvation (0.2 = 20%)', type: 'range', default: 0.2, min: 0.0, max: 1.0, step: 0.05 },
+      { key: 'EXCLUSIVE_DIET', label: 'Exclusive Diet', desc: 'Companions can only eat their specific food', type: 'bool', default: false },
+    ]
+  },
+  {
+    id: 'purge', icon: '⚡', title: 'Purge',
+    fields: [
+      { key: 'PURGE_ENABLED', label: 'Enable Purge', desc: 'Enable purge attack events', type: 'bool', default: true },
+      { key: 'PURGE_LEVEL', label: 'Purge Difficulty', desc: 'Difficulty level (1 = easy, 6 = hardest)', type: 'select', default: '6', options: [
+        { value: '1', label: '1 — Very Easy' },
+        { value: '2', label: '2 — Easy' },
+        { value: '3', label: '3 — Medium' },
+        { value: '4', label: '4 — Hard' },
+        { value: '5', label: '5 — Very Hard' },
+        { value: '6', label: '6 — Hardest' }
+      ]},
+      { key: 'RESTRICT_PURGE_TIME', label: 'Restrict Purge Time', desc: 'Only allow purges at specific times', type: 'bool', default: true },
+      { key: 'PURGE_PREP_TIME', label: 'Warning Time', desc: 'Minutes of warning before purge starts', type: 'number', default: 10 },
+      { key: 'PURGE_DURATION', label: 'Purge Duration', desc: 'Maximum purge length (minutes)', type: 'number', default: 30 },
+      { key: 'PURGE_MIN_PLAYERS', label: 'Min Online Players', desc: 'Min players online to trigger (0 = offline purges)', type: 'number', default: 1 },
+      { key: 'PURGE_ALLOW_BUILDING', label: 'Allow Building in Purge', desc: 'Can players build during a purge', type: 'bool', default: true },
+      { key: 'PURGE_TRIGGER_VALUE', label: 'Purge Trigger Value', desc: 'Activity needed to fill purge meter (lower = more purges)', type: 'number', default: 42000 },
+      { key: 'PURGE_NPC_BUILDING_DAMAGE', label: 'Purge NPC Damage', desc: 'Purge NPC damage to buildings', type: 'range', default: 1.0, min: 0.0, max: 10.0, step: 0.1 },
+    ]
+  },
+  {
+    id: 'pvpschedule', icon: '⏰', title: 'PvP Schedule (PvE-C / PvP)',
+    fields: [
+      { key: 'RESTRICT_PVP_TIME', label: 'Restrict PvP Hours', desc: 'Only allow PvP at specific times (for PvE-C)', type: 'bool', default: false },
+      { key: 'PVP_TIME_MON_START', label: 'Monday Start', desc: 'PvP starts (0-24 hour)', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_MON_END', label: 'Monday End', desc: 'PvP ends (0-24 hour)', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_TUE_START', label: 'Tuesday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_TUE_END', label: 'Tuesday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_WED_START', label: 'Wednesday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_WED_END', label: 'Wednesday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_THU_START', label: 'Thursday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_THU_END', label: 'Thursday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_FRI_START', label: 'Friday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_FRI_END', label: 'Friday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SAT_START', label: 'Saturday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SAT_END', label: 'Saturday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SUN_START', label: 'Sunday Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_TIME_SUN_END', label: 'Sunday End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'RESTRICT_PVP_BUILDING_DAMAGE_TIME', label: 'Restrict Building Damage Hours', desc: 'Only allow building damage at specific times', type: 'bool', default: false },
+      { key: 'PVP_BUILD_MON_START', label: 'Building Mon Start', desc: 'Building damage starts (0-24)', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_MON_END', label: 'Building Mon End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_TUE_START', label: 'Building Tue Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_TUE_END', label: 'Building Tue End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_WED_START', label: 'Building Wed Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_WED_END', label: 'Building Wed End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_THU_START', label: 'Building Thu Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_THU_END', label: 'Building Thu End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_FRI_START', label: 'Building Fri Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_FRI_END', label: 'Building Fri End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SAT_START', label: 'Building Sat Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SAT_END', label: 'Building Sat End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SUN_START', label: 'Building Sun Start', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'PVP_BUILD_SUN_END', label: 'Building Sun End', desc: '', type: 'number', default: 0, min: 0, max: 24 },
+      { key: 'DISABLE_BUILDING_DURING_PVP', label: 'No Building During PvP', desc: 'Prevent building during PvP hours', type: 'bool', default: false },
+    ]
+  },
+  {
+    id: 'nativeops', icon: '🐧', title: 'Native Linux Experimental Operations',
+    fields: [
+      { key: 'NATIVE_VALIDATE_SERVER', label: 'Validate Native Server Files', desc: 'Native only. Ask SteamCMD to validate every server file on startup (slower).', type: 'bool', default: false },
+      { key: 'NATIVE_PRUNE_REMOVED_MODS', label: 'Prune Removed Managed Mods', desc: 'Native only. Delete only previously managed PAKs removed from the active list.', type: 'bool', default: false },
+      { key: 'NATIVE_STOP_GRACE_SECONDS', label: 'Graceful Stop Window', desc: 'Native only. Seconds to wait after RCON stop before TERM fallback.', type: 'number', default: 30, min: 1, max: 600 },
+      { key: 'NATIVE_BACKUP_ENABLED', label: 'Scheduled Backups', desc: 'Native only. Create periodic SQLite-safe backups.', type: 'bool', default: false },
+      { key: 'NATIVE_BACKUP_MODE', label: 'Backup Mode', desc: 'Native only. Light stores world/config/mod IDs; Full also stores active managed PAKs.', type: 'select', default: 'light', options: [
+        { value: 'light', label: 'Light — world, config, and mod IDs' },
+        { value: 'full', label: 'Full — also include active managed PAKs' }
+      ]},
+      { key: 'NATIVE_BACKUP_INTERVAL_MINUTES', label: 'Backup Interval', desc: 'Native only. Minutes between scheduled backups.', type: 'number', default: 60, min: 1, max: 10080 },
+      { key: 'NATIVE_BACKUP_RETENTION_COUNT', label: 'Backup Retention Count', desc: 'Native only. Maximum number of backup archives to retain.', type: 'number', default: 14, min: 1, max: 1000 },
+      { key: 'NATIVE_BACKUP_RETENTION_DAYS', label: 'Backup Retention Days', desc: 'Native only. Delete backup archives older than this many days.', type: 'number', default: 30, min: 1, max: 3650 },
+      { key: 'ADMIN_PASSWORD_FILE', label: 'Admin Password File', desc: 'Native advanced option. Mounted secret-file path; when set, ADMIN_PASSWORD is omitted from generated output.', type: 'text', default: '' },
+      { key: 'SERVER_PASSWORD_FILE', label: 'Join Password File', desc: 'Native advanced option. Mounted secret-file path; when set, SERVER_PASSWORD is omitted from generated output.', type: 'text', default: '' },
+      { key: 'RCON_PASSWORD_FILE', label: 'RCON Password File', desc: 'Native advanced option. Mounted secret-file path; when set, RCON_PASSWORD is omitted from generated output.', type: 'text', default: '' },
+    ]
+  },
+  {
+    id: 'advanced', icon: '🔧', title: 'Advanced / Anti-Exploit',
+    fields: [
+      { key: 'VAC_ENABLED', label: 'VAC Anti-Cheat', desc: 'Enable Valve Anti-Cheat', type: 'bool', default: false },
+      { key: 'VALIDATE_PLAYER_STATS', label: 'Validate Player Stats', desc: 'Server validates player stats for cheating', type: 'bool', default: false },
+      { key: 'MAX_CLIENT_RATE', label: 'Max Client Network Rate', desc: 'Maximum network rate per client', type: 'number', default: 15000 },
+      { key: 'RCON_MAX_KARMA', label: 'RCON Max Karma', desc: 'Max RCON karma before throttling', type: 'number', default: 60 },
+      { key: 'SERVER_MOD_LIST', label: 'Server Mod List', desc: 'Optional. You provide comma-separated Steam Workshop mod IDs; the container downloads them and writes ConanSandbox/Mods/modlist.txt automatically in this order.', type: 'text', default: '' },
+      { key: 'ALLOWED_TIME_UNDERMESH', label: 'Undermesh Time Limit', desc: 'Seconds allowed under the mesh before action (-1 = disabled)', type: 'number', default: -1 },
+      { key: 'ALLOWED_DISTANCE_UNDERMESH', label: 'Undermesh Distance²', desc: 'Squared distance threshold for undermesh detection', type: 'number', default: 490000 },
+      { key: 'CAP_CHARACTER_LAYOUT', label: 'Cap Character Layout', desc: 'Cap character creation/body scalar parameters', type: 'bool', default: false },
+      { key: 'PATH_FOLLOWING_ANGULAR', label: 'Path Following Angular Velocity', desc: 'Advanced AI/networking setting for path-following angular velocity replication', type: 'bool', default: false },
+      { key: 'MAX_DECAY_AUTO_DEMOLISH', label: 'Auto-Demolish Time', desc: 'Time before abandoned buildings auto-demolish (default: 604800 = 7 days)', type: 'number', default: 604800 },
+    ]
+  },
+];
+
+// ============================================
+// STATE
+// ============================================
+let values = {};
+let outputMode = 'changed';
+
+function formatTime(seconds) {
+  const numericSeconds = Number(seconds);
+  if (!Number.isFinite(numericSeconds) || numericSeconds < 0) return 'Invalid duration';
+
+  const roundedSeconds = Math.round(numericSeconds);
+  if (roundedSeconds < 60) {
+    return `${roundedSeconds} second${roundedSeconds === 1 ? '' : 's'}`;
+  }
+
+  const totalMinutes = Math.round(roundedSeconds / 60);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return [
+      `${days} day${days === 1 ? '' : 's'}`,
+      hours > 0 ? `${hours}h` : '',
+      minutes > 0 ? `${minutes} min` : '',
+    ].filter(Boolean).join(' ');
+  }
+
+  if (hours > 0) {
+    return `${hours} hour${hours === 1 ? '' : 's'}${minutes > 0 ? ` ${minutes} min` : ''}`;
+  }
+
+  return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+}
+
+function formatHours(hours) {
+  return formatTime(Number(hours) * 3600);
+}
+
+function getRangeHint(val, f) {
+  val = parseFloat(val);
+  if (val === 1.0) return 'Default (normal)';
+  if (val === 0) return 'Disabled';
+  if (val === 0.1) return '10% of normal';
+  if (val === 0.25) return '¼ of normal';
+  if (val === 0.5) return 'Half of normal';
+  if (val === 2.0) return 'Double';
+  if (val === 3.0) return 'Triple';
+  if (val === 5.0) return '5× normal';
+  if (val === 10.0) return '10× normal';
+  if (val < 1.0) return `${Math.round(val * 100)}% of normal`;
+  return `${val}× normal`;
+}
+
+function updateRangeDisplay(input, key) {
+  const val = parseFloat(input.value);
+  input.nextElementSibling.textContent = val + '×';
+  const f = getFieldConfig(key);
+  const hint = document.getElementById('hint-' + key);
+  if (hint && f) {
+    const text = getRangeHint(val, f);
+    hint.textContent = text;
+    input.setAttribute('aria-valuetext', text);
+  }
+}
+
+function init() {
+  CONFIG.forEach(section => {
+    section.fields.forEach(f => {
+      values[f.key] = f.default;
+    });
+  });
+  renderSections();
+  updateOutput();
+  updateStats();
+  updateSecurityWarning();
+  enhanceCodeBlocks();
+  const hashTab = location.hash.slice(1);
+  if (hashTab === 'native-quick-start') {
+    openNativeQuickStart(null, false, false);
+    setTimeout(() => openNativeQuickStart(null, false, false), 100);
+    return;
+  }
+  if (hashTab === 'cpu-compatibility') {
+    openCpuCompatibility(false, false);
+    const settleCpuAnchor = () => setTimeout(() => requestAnimationFrame(() => {
+      if (location.hash === '#cpu-compatibility') openCpuCompatibility(false, false);
+    }), 0);
+    if (document.readyState === 'complete') settleCpuAnchor();
+    else window.addEventListener('load', settleCpuAnchor, { once: true });
+    document.fonts?.ready.then(settleCpuAnchor);
+    return;
+  }
+  const hasDeepLink = TAB_NAMES.includes(hashTab);
+  const initialTab = hasDeepLink ? hashTab : DEFAULT_TAB;
+  activateTab(initialTab, null, false, hasDeepLink, false);
+}
+
+// ============================================
+// RENDER
+// ============================================
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function renderSections() {
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+  document.getElementById('sectionCount').textContent = CONFIG.length;
+
+  CONFIG.forEach(section => {
+    const div = document.createElement('div');
+    div.className = 'section' + (section.open ? ' open' : '');
+    div.dataset.sectionId = section.id;
+    div.innerHTML = `
+      <button type="button" class="section-header" aria-expanded="${section.open}" aria-controls="body-${section.id}" onclick="toggleSection(this)">
+        <span class="section-heading" role="heading" aria-level="3">${section.icon} ${section.title} <span class="changed-count" id="cc-${section.id}">0</span></span>
+        <span class="arrow" aria-hidden="true">▼</span>
+      </button>
+      <div class="section-body" id="body-${section.id}"${section.open ? '' : ' hidden'}>
+        ${section.fields.map(f => renderField(f)).join('')}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  filterSettings();
+}
+
+function renderField(f) {
+  let input = '';
+  const val = values[f.key];
+  const inputId = `input-${f.key}`;
+  const descId = `desc-${f.key}`;
+  const describedBy = f.desc ? ` aria-describedby="${descId}"` : '';
+
+  if (f.type === 'text') {
+    input = `<input id="${inputId}" type="text" value="${escapeHtml(val)}" onchange="setValue('${f.key}', this.value)" placeholder="${escapeHtml(f.default || '(empty)')}"${describedBy}>`;
+  } else if (f.type === 'password') {
+    input = `<div class="password-wrap">
+      <input id="${inputId}" type="password" value="${escapeHtml(val)}" onchange="setValue('${f.key}', this.value)" autocomplete="new-password"${describedBy}>
+      <button type="button" class="password-toggle" aria-label="Show ${escapeHtml(f.label)}" aria-pressed="false" onclick="togglePasswordVisibility('${inputId}', this)">👁️</button>
+    </div>`;
+  } else if (f.type === 'number') {
+    const timeKeys = ['KICK_AFK_TIME','DISCONNECTION_GRACE_TIME','UNCONSCIOUS_TIME','PLAYER_CORPSE_LIFETIME','NPC_CORPSE_LIFETIME','FOLLOWER_RESCUE_COOLDOWN','MAX_BUILDING_DECAY_TIME','AVATAR_LIFETIME','AVATAR_SUMMON_TIME','THRALL_DECAY_TIME','MAX_DECAY_AUTO_DEMOLISH'];
+    const hourKeys = ['OFFLINE_BODY_HOURS'];
+    const isTime = timeKeys.includes(f.key);
+    const isHours = hourKeys.includes(f.key);
+    const onchange = isTime ? `setNumberValue('${f.key}', this, 'th-${f.key}', 'seconds')` :
+      (isHours ? `setNumberValue('${f.key}', this, 'th-${f.key}', 'hours')` :
+      `setNumberValue('${f.key}', this)`);
+    input = `<input id="${inputId}" type="number" step="${f.step !== undefined ? f.step : 'any'}" value="${val}" onchange="${onchange}" ${f.min !== undefined ? 'min="'+f.min+'"' : ''} ${f.max !== undefined ? 'max="'+f.max+'"' : ''}${describedBy}>
+    ${(isTime || isHours) ? '<div class="range-hint" id="th-'+f.key+'">' + (isTime ? formatTime(val) : formatHours(val)) + '</div>' : ''}`;
+  } else if (f.type === 'bool') {
+    input = `
+      <div class="toggle-wrap">
+        <span class="toggle-label" id="status-${f.key}">${val ? 'On' : 'Off'}</span>
+        <label class="toggle" for="${inputId}">
+          <input id="${inputId}" type="checkbox" ${val ? 'checked' : ''} onchange="setValue('${f.key}', this.checked)"${describedBy}>
+          <span class="toggle-slider" aria-hidden="true"></span>
+        </label>
+      </div>`;
+  } else if (f.type === 'select') {
+    input = `<select id="${inputId}" onchange="setValue('${f.key}', this.value)"${describedBy}>
+      ${f.options.map(o => `<option value="${escapeHtml(o.value)}" ${val == o.value ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}
+    </select>`;
+  } else if (f.type === 'range') {
+    input = `
+      <div class="range-wrap">
+        <input id="${inputId}" type="range" min="${f.min}" max="${f.max}" step="${f.step}" value="${val}" aria-valuetext="${escapeHtml(getRangeHint(val, f))}"${describedBy}
+          oninput="setValue('${f.key}', parseFloat(this.value)); updateRangeDisplay(this, '${f.key}')">
+        <span class="range-val">${val}×</span>
+      </div>
+      <div class="range-hint" id="hint-${f.key}">${getRangeHint(val, f)}</div>`;
+  }
+
+  const isChanged = val !== f.default && String(val) !== String(f.default);
+  const searchText = `${f.label} ${f.key} ${f.desc || ''}`.toLowerCase();
+
+  return `
+    <div class="field${isChanged ? ' changed' : ''}" id="field-${f.key}" data-search="${escapeHtml(searchText)}">
+      <div class="field-info">
+        <label class="field-label" for="${inputId}">${escapeHtml(f.label)} <span class="env-name">${f.key}</span></label>
+        ${f.desc ? `<div class="field-desc" id="${descId}">${escapeHtml(f.desc)}</div>` : ''}
+      </div>
+      <div class="field-input">${input}</div>
+    </div>`;
+}
+
+// ============================================
+// LOGIC
+// ============================================
+function setNumberValue(key, input, hintId = '', unit = '') {
+  const parsed = Number.parseFloat(input.value);
+  const cfg = getFieldConfig(key);
+  const isDuration = unit === 'seconds' || unit === 'hours';
+  const belowMin = (cfg?.min !== undefined && parsed < Number(cfg.min)) || (isDuration && parsed < 0);
+  const aboveMax = cfg?.max !== undefined && parsed > Number(cfg.max);
+
+  if (!Number.isFinite(parsed) || belowMin || aboveMax) {
+    input.value = String(values[key] ?? cfg?.default ?? '');
+    input.setAttribute('aria-invalid', 'true');
+    const effectiveMin = cfg?.min ?? (isDuration ? 0 : '−∞');
+    const hasRange = cfg?.min !== undefined || cfg?.max !== undefined || isDuration;
+    showToast(`Enter a valid number${hasRange ? ` (${effectiveMin} to ${cfg?.max ?? '∞'})` : ''}`, true);
+    window.setTimeout(() => input.removeAttribute('aria-invalid'), 2000);
+    return;
+  }
+
+  input.removeAttribute('aria-invalid');
+  setValue(key, parsed);
+  const hint = hintId ? document.getElementById(hintId) : null;
+  if (hint) hint.textContent = unit === 'hours' ? formatHours(parsed) : formatTime(parsed);
+}
+
+function setValue(key, val) {
+  values[key] = val;
+  const field = document.getElementById('field-' + key);
+  const def = getDefault(key);
+  const changed = val !== def && String(val) !== String(def);
+  field.classList.toggle('changed', changed);
+
+  const cfg = getFieldConfig(key);
+  if (cfg && cfg.type === 'bool') {
+    const label = field.querySelector('.toggle-label');
+    if (label) label.textContent = val ? 'On' : 'Off';
+  }
+
+  updateOutput();
+  updateStats();
+  updateSecurityWarning();
+  filterSettings();
+}
+
+function getDefault(key) {
+  for (const s of CONFIG) for (const f of s.fields) if (f.key === key) return f.default;
+  return '';
+}
+
+function getFieldConfig(key) {
+  for (const s of CONFIG) for (const f of s.fields) if (f.key === key) return f;
+  return null;
+}
+
+const SECRET_FILE_OVERRIDES = {
+  ADMIN_PASSWORD: 'ADMIN_PASSWORD_FILE',
+  SERVER_PASSWORD: 'SERVER_PASSWORD_FILE',
+  RCON_PASSWORD: 'RCON_PASSWORD_FILE',
+};
+
+function shouldEmitField(field) {
+  const fileKey = SECRET_FILE_OVERRIDES[field.key];
+  return !fileKey || !String(values[fileKey] ?? '').trim();
+}
+
+function getChangedFields() {
+  const changed = [];
+  CONFIG.forEach(s => s.fields.forEach(f => {
+    if (shouldEmitField(f) && values[f.key] !== f.default && String(values[f.key]) !== String(f.default)) {
+      changed.push(f);
+    }
+  }));
+  return changed;
+}
+
+function toggleSection(header) {
+  const sectionElement = header.parentElement;
+  const section = CONFIG.find(item => item.id === sectionElement.dataset.sectionId);
+  const isOpen = !sectionElement.classList.contains('open');
+  sectionElement.classList.toggle('open', isOpen);
+  if (section) section.open = isOpen;
+  header.setAttribute('aria-expanded', String(isOpen));
+  const body = document.getElementById(header.getAttribute('aria-controls'));
+  body.hidden = !isOpen;
+}
+
+function setAllSections(open) {
+  CONFIG.forEach(section => { section.open = open; });
+  document.querySelectorAll('.section').forEach(sectionElement => {
+    sectionElement.classList.toggle('open', open);
+    const header = sectionElement.querySelector('.section-header');
+    const body = sectionElement.querySelector('.section-body');
+    header.setAttribute('aria-expanded', String(open));
+    body.hidden = !open;
+  });
+}
+
+function filterSettings() {
+  const search = document.getElementById('settingSearch');
+  const changedOnlyInput = document.getElementById('changedOnlyFilter');
+  if (!search || !changedOnlyInput) return;
+  const query = search.value.trim().toLowerCase();
+  const changedOnly = changedOnlyInput.checked;
+  const forceOpen = Boolean(query || changedOnly);
+  let visible = 0;
+
+  document.querySelectorAll('.section').forEach(sectionElement => {
+    let sectionVisible = 0;
+    sectionElement.querySelectorAll('.field').forEach(field => {
+      const matchesText = !query || field.dataset.search.includes(query);
+      const matchesChanged = !changedOnly || field.classList.contains('changed');
+      const show = matchesText && matchesChanged;
+      field.classList.toggle('filtered-out', !show);
+      if (show) sectionVisible++;
+    });
+    sectionElement.classList.toggle('filtered-out', sectionVisible === 0);
+    if (sectionVisible > 0) visible += sectionVisible;
+
+    const configSection = CONFIG.find(item => item.id === sectionElement.dataset.sectionId);
+    const isOpen = forceOpen || Boolean(configSection?.open);
+    sectionElement.classList.toggle('open', isOpen);
+    const header = sectionElement.querySelector('.section-header');
+    const body = sectionElement.querySelector('.section-body');
+    header.setAttribute('aria-expanded', String(isOpen));
+    body.hidden = !isOpen;
+  });
+
+  const summary = document.getElementById('filterSummary');
+  summary.textContent = query || changedOnly
+    ? `Showing ${visible} matching setting${visible === 1 ? '' : 's'}`
+    : `Showing all ${CONFIG.reduce((total, section) => total + section.fields.length, 0)} settings`;
+}
+
+function scrollToOutput() {
+  const output = document.getElementById('generated-output');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  output.focus({ preventScroll: true });
+}
+
+function togglePasswordVisibility(inputId, button) {
+  const input = document.getElementById(inputId);
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(show));
+  const key = inputId.replace(/^input-/, '');
+  const label = getFieldConfig(key)?.label || 'Password';
+  button.setAttribute('aria-label', `${show ? 'Hide' : 'Show'} ${label}`);
+  button.textContent = show ? '🙈' : '👁️';
+}
+
+function updateSecurityWarning() {
+  const warning = document.getElementById('securityWarning');
+  if (!warning) return;
+  const issues = [];
+  if ((!values.ADMIN_PASSWORD && !values.ADMIN_PASSWORD_FILE) || (values.ADMIN_PASSWORD === 'changeme' && !values.ADMIN_PASSWORD_FILE)) {
+    issues.push('change ADMIN_PASSWORD from the public default or configure ADMIN_PASSWORD_FILE');
+  }
+  if (values.RCON_ENABLED && ((!values.RCON_PASSWORD && !values.RCON_PASSWORD_FILE) || (values.RCON_PASSWORD === 'changeme' && !values.RCON_PASSWORD_FILE))) {
+    issues.push('set a unique RCON_PASSWORD or RCON_PASSWORD_FILE before enabling RCON');
+  }
+  warning.hidden = issues.length === 0;
+  warning.innerHTML = issues.length
+    ? `<strong>🔐 Security check:</strong> ${issues.join('; ')}.`
+    : '';
+}
+
+// ============================================
+// OUTPUT
+// ============================================
+function updateOutput() {
+  const out = document.getElementById('output');
+  let lines = [];
+
+  if (outputMode === 'changed') {
+    const changed = getChangedFields();
+    if (changed.length === 0) {
+      out.textContent = '# No changes — all settings are at default values.\n# Modify settings above and they will appear here.';
+      return;
+    }
+    lines.push('# Conan Exiles Enhanced Server - Custom Configuration');
+    lines.push('# Generated at ' + new Date().toISOString().slice(0,16));
+    lines.push('# Only changed settings are shown\n');
+
+    let lastSection = '';
+    CONFIG.forEach(s => {
+      const sectionChanged = s.fields.filter(f =>
+        shouldEmitField(f) && values[f.key] !== f.default && String(values[f.key]) !== String(f.default)
+      );
+      if (sectionChanged.length > 0) {
+        lines.push(`# --- ${s.icon} ${s.title} ---`);
+        sectionChanged.forEach(f => {
+          const v = formatValue(f);
+          lines.push(`${f.key}=${v}`);
+        });
+        lines.push('');
+      }
+    });
+  } else {
+    lines.push('# Conan Exiles Enhanced Server - Full Configuration');
+    lines.push('# Generated at ' + new Date().toISOString().slice(0,16));
+    lines.push('');
+
+    CONFIG.forEach(s => {
+      lines.push(`# ============================================`);
+      lines.push(`# ${s.icon} ${s.title.toUpperCase()}`);
+      lines.push(`# ============================================\n`);
+      s.fields.forEach(f => {
+        if (!shouldEmitField(f)) return;
+        if (f.desc) lines.push(`# ${f.desc}`);
+        const v = formatValue(f);
+        const changed = values[f.key] !== f.default && String(values[f.key]) !== String(f.default);
+        lines.push(`${f.key}=${v}`);
+      });
+      lines.push('');
+    });
+  }
+
+  out.textContent = lines.join('\n');
+}
+
+function formatEnvValue(value) {
+  return `'${String(value ?? '').replaceAll("'", "\\'")}'`;
+}
+
+function formatValue(f) {
+  const v = values[f.key];
+  if (f.type === 'bool') return v ? 'True' : 'False';
+  if (f.type === 'text' || f.type === 'password' || f.type === 'select') return formatEnvValue(v);
+  return String(v);
+}
+
+function setOutputMode(mode, btn) {
+  outputMode = mode;
+  document.querySelectorAll('.output-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateOutput();
+}
+
+// ============================================
+// STATS
+// ============================================
+function updateStats() {
+  let total = 0, changed = 0;
+  CONFIG.forEach(s => {
+    let sc = 0;
+    s.fields.forEach(f => {
+      total++;
+      if (shouldEmitField(f) && values[f.key] !== f.default && String(values[f.key]) !== String(f.default)) {
+        changed++;
+        sc++;
+      }
+    });
+    const badge = document.getElementById('cc-' + s.id);
+    if (badge) {
+      badge.textContent = sc;
+      badge.style.display = sc > 0 ? 'inline' : 'none';
+    }
+  });
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('changedCount').textContent = changed;
+  const outputCount = document.querySelector('#viewOutputButton .view-output-count');
+  if (outputCount) outputCount.textContent = `(${changed})`;
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+function copyOutput() {
+  return copyText(document.getElementById('output').textContent, 'Copied to clipboard! 📋');
+}
+
+async function copyText(text, successMessage = 'Copied! 📋') {
+  let textarea = null;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      if (!document.execCommand('copy')) throw new Error('Copy command was rejected');
+    }
+    showToast(successMessage);
+    return true;
+  } catch (error) {
+    console.error('Clipboard copy failed:', error);
+    showToast('Copy failed — select the text and copy it manually.');
+    return false;
+  } finally {
+    textarea?.remove();
+  }
+}
+
+function enhanceCodeBlocks() {
+  document.querySelectorAll('.code-block').forEach(block => {
+    if (block.parentElement.classList.contains('code-wrap')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-wrap';
+    block.parentNode.insertBefore(wrapper, block);
+    wrapper.appendChild(block);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'copy-code-btn';
+    button.textContent = 'Copy command';
+    button.setAttribute('aria-label', 'Copy command block');
+    button.addEventListener('click', () => copyText(block.textContent, 'Command copied! 📋'));
+    wrapper.appendChild(button);
+  });
+}
+
+function downloadEnv() {
+  const text = document.getElementById('output').textContent;
+  download('.env', text);
+  showToast('Downloaded .env ⬇️');
+}
+
+function downloadEnvExample() {
+  const prev = outputMode;
+  outputMode = 'all';
+  updateOutput();
+  const text = document.getElementById('output').textContent;
+  download('.env.example', text);
+  outputMode = prev;
+  updateOutput();
+  showToast('Downloaded .env.example 📝');
+}
+
+function download(filename, text) {
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+  a.download = filename;
+  a.click();
+}
+
+function resetAll() {
+  if (!confirm('Reset all settings to defaults?')) return;
+  CONFIG.forEach(s => s.fields.forEach(f => { values[f.key] = f.default; }));
+  renderSections();
+  updateOutput();
+  updateStats();
+  updateSecurityWarning();
+  filterSettings();
+  showToast('All settings reset! 🔄');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================
+// INIT
+// ============================================
+init();
+</script>
+</body>
+</html>

@@ -109,7 +109,39 @@ Restore validates paths, checksums, and SQLite integrity, refuses an active trac
 
 ## Wine-to-Native migration
 
-The helper defaults to dry-run, checks `game_0.db`, creates a mode-0600 Wine rollback archive, and writes a SQLite snapshot into a new destination:
+For the repository's default Compose named volumes, use the Compose-aware wrapper from the existing Wine project directory. It discovers the runtime services and the exact nested save volumes from `docker compose config`; it does not guess volume names.
+
+Review the read-only plan while Wine is still running:
+
+```bash
+./scripts/migrate-compose-wine-to-native.sh plan
+```
+
+Apply the reviewed cutover:
+
+```bash
+./scripts/migrate-compose-wine-to-native.sh apply
+```
+
+Do **not** stop Wine manually first. Apply owns the cutover: it stops Wine, proves no running container still uses the source volume, rechecks the database hash, creates separate Native volumes, takes a mode-0600 rollback archive under `.conan-migration/`, snapshots `game_0.db` through SQLite, starts Native, and waits for Docker health. If Native becomes unhealthy or times out, the wrapper stops Native and restarts Wine automatically.
+
+Rollback remains explicit and non-destructive:
+
+```bash
+./scripts/migrate-compose-wine-to-native.sh rollback
+```
+
+Rollback restarts Wine against its unchanged source volume and preserves the Native volume and archive for diagnosis. The wrapper never removes volumes. Keep both runtimes' data until database, A2S, RCON, mods, player connections, and at least one save cycle pass. The archive may contain credentials from Wine INIs; `.conan-migration/` is ignored by Git and must remain protected.
+
+If the original deployment used `docker compose --project-name NAME`, pass the same value to every wrapper command:
+
+```bash
+./scripts/migrate-compose-wine-to-native.sh plan --project-name NAME
+```
+
+### Advanced filesystem-path helper
+
+Operators using bind-mounted whole game directories can use the low-level helper directly. It defaults to dry-run:
 
 ```bash
 ./scripts/migrate-wine-to-native.sh \
@@ -117,6 +149,4 @@ The helper defaults to dry-run, checks `game_0.db`, creates a mode-0600 Wine rol
   --destination /path/to/new-native-data
 ```
 
-Review the plan, stop Wine, then repeat with `--source-stopped --apply`.
-
-The helper never deletes the source and does not activate Windows INIs as Linux configuration. Native renders reviewed `LinuxServer` values from `.env`. Keep Wine data and the rollback archive until database, A2S, RCON, mods, and player connections pass. The rollback archive may contain credentials; protect it as secret-bearing data.
+Review the plan, stop the source, then repeat with `--source-stopped --apply`. The low-level helper never deletes the source and never activates Windows INIs as Linux configuration. Native renders reviewed `LinuxServer` values from `.env`.

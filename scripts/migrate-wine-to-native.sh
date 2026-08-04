@@ -8,10 +8,14 @@ apply=false
 source_stopped=false
 pid_file=""
 stage=""
+source_saved_root=false
+destination_saved_root=false
+backup_dir=""
 
 usage() {
     cat <<'EOF'
 Usage: migrate-wine-to-native.sh --source PATH --destination PATH [--source-stopped | --pid-file PATH] [--apply]
+       [--source-saved-root] [--destination-saved-root] [--backup-dir PATH]
 
 Defaults to dry-run. Before --apply, stop Wine and either pass --source-stopped
 as an explicit acknowledgement or provide a stale Wine --pid-file that can be
@@ -19,6 +23,7 @@ verified as inactive. The source is never deleted. Apply requires an empty
 new destination, creates a mode-0600 Wine rollback archive, and migrates the
 world through SQLite's snapshot API. Native LinuxServer INIs are rendered from
 your .env on first startup; WindowsServer INIs are never activated as Linux INIs.
+The saved-root options are for Compose volumes mounted directly at ConanSandbox/Saved.
 EOF
 }
 
@@ -32,6 +37,9 @@ while [ "$#" -gt 0 ]; do
         --source) source_dir="${2:-}"; shift 2 ;;
         --destination) destination_dir="${2:-}"; shift 2 ;;
         --pid-file) pid_file="${2:-}"; shift 2 ;;
+        --source-saved-root) source_saved_root=true; shift ;;
+        --destination-saved-root) destination_saved_root=true; shift ;;
+        --backup-dir) backup_dir="${2:-}"; shift 2 ;;
         --source-stopped) source_stopped=true; shift ;;
         --apply) apply=true; shift ;;
         -h|--help) usage; exit 0 ;;
@@ -43,9 +51,15 @@ done
 source_dir="$(realpath -e "$source_dir")"
 destination_parent="$(realpath -m "$(dirname "$destination_dir")")"
 destination_dir="${destination_parent}/$(basename "$destination_dir")"
+[ -n "$backup_dir" ] || backup_dir="$destination_parent"
+backup_dir="$(realpath -m "$backup_dir")"
 [ "$source_dir" != "$destination_dir" ] || { printf 'Migration error: source and destination are identical\n' >&2; exit 2; }
 
-saved_source="${source_dir}/ConanSandbox/Saved"
+if [ "$source_saved_root" = true ]; then
+    saved_source="$source_dir"
+else
+    saved_source="${source_dir}/ConanSandbox/Saved"
+fi
 source_db="${saved_source}/game_0.db"
 [ -f "$source_db" ] && [ ! -L "$source_db" ] || { printf 'Migration error: source game_0.db is missing or unsafe\n' >&2; exit 1; }
 
@@ -106,16 +120,29 @@ printf '  source_sha256: %s\n' "$source_hash"
 
 [ "$apply" = true ] || exit 0
 mkdir -p "$destination_parent"
-if [ -d "$destination_dir" ]; then rmdir "$destination_dir"; fi
+mkdir -p "$backup_dir"
+if [ "$destination_saved_root" != true ] && [ -d "$destination_dir" ]; then
+    rmdir "$destination_dir"
+fi
 
 # This archive intentionally preserves the complete Wine Saved tree for rollback
 # and may contain credentials in its INIs. umask 077 and chmod 0600 restrict it.
-backup_path="$(mktemp "${destination_parent}/wine-pre-native-XXXXXXXX.tar.gz")"
-tar -czf "$backup_path" -C "$source_dir" ConanSandbox/Saved
+backup_path="$(mktemp "${backup_dir}/wine-pre-native-XXXXXXXX.tar.gz")"
+if [ "$source_saved_root" = true ]; then
+    tar -czf "$backup_path" -C "$source_dir" .
+else
+    tar -czf "$backup_path" -C "$source_dir" ConanSandbox/Saved
+fi
 chmod 0600 "$backup_path"
 
-stage="$(mktemp -d "${destination_parent}/.native-migration.XXXXXX")"
-saved_destination="${stage}/ConanSandbox/Saved"
+if [ "$destination_saved_root" = true ]; then
+    mkdir -p "$destination_dir"
+    stage="$(mktemp -d "${destination_dir}/.native-migration.XXXXXX")"
+    saved_destination="$stage"
+else
+    stage="$(mktemp -d "${destination_parent}/.native-migration.XXXXXX")"
+    saved_destination="${stage}/ConanSandbox/Saved"
+fi
 mkdir -p "$saved_destination"
 python3 - "$source_db" "${saved_destination}/game_0.db" <<'PY'
 import sqlite3
@@ -149,9 +176,15 @@ and player connectivity before considering cleanup of the original Wine data.
 EOF
 chmod 0600 "${stage}/.migration/README.txt"
 
-mv -- "$stage" "$destination_dir"
-stage=""
+if [ "$destination_saved_root" = true ]; then
+    find "$stage" -mindepth 1 -maxdepth 1 -exec mv -- {} "$destination_dir"/ \;
+    rmdir "$stage"
+    stage=""
+else
+    mv -- "$stage" "$destination_dir"
+    stage=""
+fi
 printf 'Runtime migration applied successfully. Protected Wine rollback archive: %s\n' "$backup_path"
 printf 'Source data was not deleted. Native LinuxServer configuration will be rendered from your .env.\n'
 printf 'Rollback: stop Native and restart Wine against the unchanged source path: %s\n' "$source_dir"
-printf 'For the previous image scripts, pin ghcr.io/balnaimi/conan-exiles-server:2.6.1.\n'
+printf 'For rollback with an older image, pin the exact Wine version you were running.\n'

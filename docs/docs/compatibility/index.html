@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Conan Exiles Enhanced Compatibility guide for the Conan Exiles Enhanced Docker server.">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <title>Conan Exiles Enhanced Compatibility — Conan Exiles Enhanced Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../../">Quick Start</a><a href="../../config/">Config Generator</a><a href="../../migrate/">Migrate</a><a aria-current="page" href="../">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Documentation sections">
+      <strong><a href="../">Documentation</a></strong>
+      <a href="../configuration/">Configuration</a>
+      <a href="../mods/">Steam Workshop Mods</a>
+      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../operations/">Operations and Troubleshooting</a>
+      <a aria-current="page" href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
+      <a href="../development/">Development</a>
+    </aside>
+    <article class="docs-content">
+<h1 id="conan-exiles-enhanced-compatibility">Conan Exiles Enhanced Compatibility</h1>
+<p><a href="../">← Documentation index</a></p>
+<p>The first reference for current settings is the <a href="https://exiles-enhanced.inflexion.io/servers/settings/">official Conan Exiles Enhanced server settings page</a>. It is explicitly non-exhaustive: absence is not proof that a key is broken, only that runtime confirmation is still needed.</p>
+<p>The image writes INIs from <code>.env</code>, while Conan may also store or override values through the Admin Panel and world database.</p>
+<h2 id="current-and-legacy-setting-notes">Current and legacy setting notes</h2>
+<h3 id="officially-documented">Officially documented</h3>
+<ul>
+<li><code>CraftingCostMultiplier</code> — current Enhanced docs list it; gameplay testing remains welcome.</li>
+<li><code>PlayerStaminaRegenSpeedScale</code> — current Enhanced docs list it; Admin Panel/database precedence can still affect a running world.</li>
+</ul>
+<h3 id="prefer-the-enhanced-key">Prefer the Enhanced key</h3>
+<ul>
+<li><code>StaminaCostMultiplier</code> — preferred current stamina cost key.</li>
+<li><code>PlayerStaminaCostMultiplier</code> — legacy/hosting-doc alias; do not prefer it without a tested need.</li>
+<li><code>PlayerStaminaCostSprintMultiplier</code> — older key not found in the current official reference; needs runtime confirmation.</li>
+</ul>
+<h3 id="runtime-confirmation-still-needed">Runtime confirmation still needed</h3>
+<p>These older keys are not in the current official reference or have historically inconsistent behavior:</p>
+<ul>
+<li><code>PlayerEncumbranceMultiplier</code></li>
+<li><code>PlayerSprintSpeedScale</code></li>
+<li><code>PlayerMovementSpeedScale</code> — Enhanced instead documents <code>PlayerMovementAccelerationMultiplier (BP)</code>.</li>
+<li><code>PlayerHealthRegenSpeedScale</code></li>
+</ul>
+<p>If an <code>.env</code> setting appears ineffective, test it through the in-game Admin Panel. Remove the matching <code>.env</code> key afterward if the database/Admin Panel value should win on future starts.</p>
+<h2 id="enhanced-migration-notes">Enhanced migration notes</h2>
+<ul>
+<li>Steam app <code>443030</code> installs Conan Exiles Enhanced / UE5.</li>
+<li>The old UE4 server lives on a legacy beta branch such as <code>conan-exiles-legacy</code> / <code>Conan-Exiles-Legacy</code>.</li>
+<li>Enhanced uses <code>ConanSandbox/Saved/game_0.db</code> as the default world database.</li>
+<li>If upgraded servers reject clients, inspect <code>Engine.ini</code> and remove stale build overrides such as <code>bUseBuildIdOverride=True</code> and <code>BuildIdOverride=...</code>.</li>
+<li>If <code>MULTIHOME</code> is set, the maintained image also passes <code>MULTIHOMEHTTP</code> for server-browser registration.</li>
+<li>Do not rename Workshop PAK files.</li>
+</ul>
+<p>When reporting an uncertain setting, include the game build, exact key/value, whether the world already existed, whether the Admin Panel was used, and how behavior was measured.</p>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Generated from <code>docs/guides/compatibility.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/compatibility.md">Edit this guide</a></footer>
+</body>
+</html>

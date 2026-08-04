@@ -13,7 +13,9 @@ The project README is intentionally short. Use these focused guides for setup an
 
 Other useful links:
 
-- [Interactive Config Generator](https://balnaimi.github.io/conan-exiles-server/)
+- [Interactive Config Generator](https://balnaimi.github.io/conan-exiles-server/config/)
+- [Fast GitHub Pages documentation](https://balnaimi.github.io/conan-exiles-server/docs/)
+- [Safe Wine-to-Native migration](https://balnaimi.github.io/conan-exiles-server/migrate/)
 - [GitHub Releases and changelogs](https://github.com/balnaimi/conan-exiles-server/releases)
 - [Open an issue](https://github.com/balnaimi/conan-exiles-server/issues)
 - [Official Conan Exiles Enhanced server settings](https://exiles-enhanced.inflexion.io/servers/settings/)

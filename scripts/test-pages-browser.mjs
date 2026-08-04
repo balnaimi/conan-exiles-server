@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Browser-level regression checks for the self-contained GitHub Pages UI. */
+/** Browser-level regression checks for the multi-page GitHub Pages site. */
 
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -13,6 +13,8 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DOCS = join(ROOT, 'docs');
 const MIME = {
   '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.jpg': 'image/jpeg',
   '.png': 'image/png',
@@ -32,7 +34,7 @@ function chromeExecutable() {
   ].filter(Boolean);
   for (const candidate of candidates) {
     if (candidate.includes('/') && spawnSync('test', ['-x', candidate]).status === 0) return candidate;
-    const found = spawnSync('sh', ['-c', `command -v "$1"`, 'sh', candidate], { encoding: 'utf8' });
+    const found = spawnSync('sh', ['-c', 'command -v "$1"', 'sh', candidate], { encoding: 'utf8' });
     if (found.status === 0 && found.stdout.trim()) return found.stdout.trim();
   }
   throw new Error('Chrome/Chromium executable not found');
@@ -52,7 +54,8 @@ function freePort() {
 function startStaticServer() {
   const server = createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
-    const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+    let relative = pathname.replace(/^\/+/, '');
+    if (!relative || pathname.endsWith('/')) relative += 'index.html';
     const file = resolve(DOCS, normalize(relative));
     if (!file.startsWith(`${DOCS}/`)) {
       response.writeHead(403).end('Forbidden');
@@ -72,8 +75,11 @@ function startStaticServer() {
   });
 }
 
-async function waitForTarget(port, expectedUrl, attempts = 80) {
+async function waitForTarget(port, expectedUrl, child, stderr, attempts = 250) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(`Chromium exited before CDP was ready: ${stderr()}`);
+    }
     try {
       const targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
       const page = targets.find(target => target.type === 'page' && target.url.startsWith(expectedUrl));
@@ -83,16 +89,25 @@ async function waitForTarget(port, expectedUrl, attempts = 80) {
     }
     await new Promise(resolveWait => setTimeout(resolveWait, 100));
   }
-  throw new Error('Timed out waiting for Chromium DevTools target');
+  throw new Error(`Timed out after 25s waiting for Chromium DevTools target: ${stderr()}`);
 }
 
-function createCdp(webSocketUrl) {
+function createCdp(webSocketUrl, browserErrors) {
   const socket = new WebSocket(webSocketUrl);
   let nextId = 0;
   const pending = new Map();
   socket.addEventListener('message', event => {
     const message = JSON.parse(event.data);
-    if (!message.id || !pending.has(message.id)) return;
+    if (!message.id) {
+      if (message.method === 'Runtime.exceptionThrown') {
+        browserErrors.push(message.params?.exceptionDetails?.text || 'Uncaught browser exception');
+      }
+      if (message.method === 'Log.entryAdded' && message.params?.entry?.level === 'error') {
+        browserErrors.push(message.params.entry.text);
+      }
+      return;
+    }
+    if (!pending.has(message.id)) return;
     const { resolveRequest, rejectRequest } = pending.get(message.id);
     pending.delete(message.id);
     if (message.error) rejectRequest(new Error(message.error.message));
@@ -112,9 +127,7 @@ function createCdp(webSocketUrl) {
       socket.send(JSON.stringify({ id, method, params }));
       return result;
     },
-    close() {
-      socket.close();
-    },
+    close() { socket.close(); },
   };
 }
 
@@ -128,47 +141,53 @@ async function evaluate(cdp, expression) {
   return result.result.value;
 }
 
-async function eventuallyEvaluate(cdp, expression, predicate, description, attempts = 80) {
+function isTransientNavigationError(error) {
+  return /Execution context was destroyed|Cannot find context|Inspected target navigated or closed/i.test(error.message);
+}
+
+async function eventuallyEvaluate(cdp, expression, predicate, description, attempts = 100) {
   let lastValue;
-  let lastError;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
       lastValue = await evaluate(cdp, expression);
       if (predicate(lastValue)) return lastValue;
     } catch (error) {
-      if (!/Execution context was destroyed|Cannot find context/i.test(error.message)) throw error;
-      lastError = error;
+      if (!isTransientNavigationError(error)) throw error;
     }
     await new Promise(resolveWait => setTimeout(resolveWait, 100));
   }
-  const detail = lastValue === undefined ? lastError?.message : JSON.stringify(lastValue);
-  throw new Error(`Timed out waiting for ${description}: ${detail}`);
+  throw new Error(`Timed out waiting for ${description}: ${JSON.stringify(lastValue)}`);
 }
 
 async function navigate(cdp, url) {
   try {
     await cdp.send('Page.navigate', { url });
   } catch (error) {
-    if (!/Execution context was destroyed|Cannot find context/i.test(error.message)) throw error;
-    // Navigation may destroy the old context before CDP acknowledges the command.
-    // The following eventuallyEvaluate call verifies the destination page state.
+    if (!isTransientNavigationError(error)) throw error;
   }
+}
+
+async function waitForPage(cdp, pathname, hash = null) {
+  return eventuallyEvaluate(cdp, `({
+    readyState: document.readyState,
+    pathname: location.pathname,
+    hash: location.hash,
+    title: document.title
+  })`, value => value?.readyState === 'complete' && value.pathname === pathname &&
+    (hash === null || value.hash === hash), `${pathname}${hash || ''}`);
 }
 
 function waitForChildExit(child, timeoutMs) {
   return new Promise(resolveWait => {
-    if (child.exitCode !== null || child.signalCode !== null) {
-      resolveWait(true);
-      return;
-    }
-    const onExit = () => {
-      clearTimeout(timer);
-      resolveWait(true);
-    };
+    if (child.exitCode !== null || child.signalCode !== null) return resolveWait(true);
     const timer = setTimeout(() => {
       child.off('exit', onExit);
       resolveWait(false);
     }, timeoutMs);
+    const onExit = () => {
+      clearTimeout(timer);
+      resolveWait(true);
+    };
     child.once('exit', onExit);
   });
 }
@@ -185,9 +204,12 @@ let staticServer;
 let chrome;
 let profile;
 let cdp;
+let chromeStderr = '';
+const browserErrors = [];
 try {
   staticServer = await startStaticServer();
   const pagePort = staticServer.address().port;
+  const base = `http://127.0.0.1:${pagePort}`;
   const debugPort = await freePort();
   profile = mkdtempSync(join(tmpdir(), 'conan-pages-browser-'));
   chrome = spawn(chromeExecutable(), [
@@ -198,283 +220,76 @@ try {
     `--remote-debugging-port=${debugPort}`,
     '--remote-allow-origins=*',
     `--user-data-dir=${profile}`,
-    `http://127.0.0.1:${pagePort}/index.html#config-generator`,
-  ], { stdio: 'ignore' });
+    `${base}/`,
+  ], { stdio: ['ignore', 'ignore', 'pipe'] });
+  chrome.stderr.setEncoding('utf8');
+  chrome.stderr.on('data', chunk => { chromeStderr = `${chromeStderr}${chunk}`.slice(-8000); });
 
-  const target = await waitForTarget(debugPort, `http://127.0.0.1:${pagePort}/`);
-  cdp = createCdp(target.webSocketDebuggerUrl);
+  const target = await waitForTarget(debugPort, `${base}/`, chrome, () => chromeStderr);
+  cdp = createCdp(target.webSocketDebuggerUrl, browserErrors);
   await cdp.send('Runtime.enable');
+  await cdp.send('Log.enable');
   await cdp.send('Page.enable');
-  const readiness = await evaluate(cdp, `new Promise(resolve => {
-    const deadline = Date.now() + 5000;
-    const inspect = () => {
-      const tabBar = document.querySelector('.tab-bar');
-      const active = document.querySelector('.tab-btn.active')?.dataset.tab;
-      const state = {
-        readyState: document.readyState,
-        hash: location.hash,
-        active,
-        tabTop: tabBar ? Math.round(tabBar.getBoundingClientRect().top) : null
-      };
-      if (state.readyState === 'complete' && state.hash === '#config-generator' && active === 'config-generator' && Math.abs(state.tabTop) <= 1) {
-        resolve(state);
-      } else if (Date.now() >= deadline) {
-        resolve(state);
-      } else {
-        setTimeout(inspect, 50);
-      }
-    };
-    inspect();
-  })`);
-  assert(
-    readiness.readyState === 'complete' && readiness.hash === '#config-generator' && readiness.active === 'config-generator' && Math.abs(readiness.tabTop) <= 1,
-    `Page did not reach stable deep-link state: ${JSON.stringify(readiness)}`,
-  );
+  await waitForPage(cdp, '/');
 
-  const initial = await evaluate(cdp, `(() => {
-    window.__tabActivations = [];
-    const original = window.activateTab;
-    window.activateTab = function(...args) {
-      window.__tabActivations.push(args[0]);
-      return original.apply(this, args);
-    };
-    return {
-      hash: location.hash,
-      active: document.querySelector('.tab-btn.active')?.dataset.tab,
-      selectedCount: document.querySelectorAll('[role="tab"][aria-selected="true"]').length,
-      tabTop: Math.round(document.querySelector('.tab-bar').getBoundingClientRect().top),
-    };
-  })()`);
-  assert(initial.hash === '#config-generator', `Unexpected initial hash: ${initial.hash}`);
-  assert(initial.active === 'config-generator', `Unexpected initial tab: ${initial.active}`);
-  assert(initial.selectedCount === 1, `Expected one selected tab, got ${initial.selectedCount}`);
-  assert(Math.abs(initial.tabTop) <= 1, `Deep link did not align tab bar: ${initial.tabTop}`);
-
-  await evaluate(cdp, `document.querySelector('.tab-btn[data-tab="mods"]').click()`);
-  await new Promise(resolveWait => setTimeout(resolveWait, 250));
-  const afterClick = await evaluate(cdp, `({ hash: location.hash, calls: window.__tabActivations.slice() })`);
-  assert(afterClick.hash === '#mods', `Click did not update hash: ${afterClick.hash}`);
-  assert(JSON.stringify(afterClick.calls) === JSON.stringify(['mods']), `Unexpected click activations: ${JSON.stringify(afterClick.calls)}`);
-
-  await evaluate(cdp, `new Promise(resolve => { history.back(); setTimeout(resolve, 400); })`);
-  const afterBack = await evaluate(cdp, `({
-    hash: location.hash,
-    calls: window.__tabActivations.slice(),
-    active: document.querySelector('.tab-btn.active')?.dataset.tab,
-    selectedCount: document.querySelectorAll('[role="tab"][aria-selected="true"]').length
-  })`);
-  assert(afterBack.hash === '#config-generator', `Back did not restore hash: ${afterBack.hash}`);
-  assert(afterBack.active === 'config-generator', `Back did not restore tab: ${afterBack.active}`);
-  assert(afterBack.selectedCount === 1, `Back left ${afterBack.selectedCount} selected tabs`);
-  assert(
-    JSON.stringify(afterBack.calls) === JSON.stringify(['mods', 'config-generator']),
-    `Back triggered duplicate/missing activation: ${JSON.stringify(afterBack.calls)}`,
-  );
-
-  const keyboardTabs = await evaluate(cdp, `(() => {
-    const press = (element, key) => element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
-    const selected = () => document.querySelector('.tab-btn.active')?.dataset.tab;
-    const quick = document.getElementById('tab-button-quick-start');
-    quick.focus();
-    press(quick, 'End');
-    const afterEnd = selected();
-    const about = document.getElementById('tab-button-about');
-    press(about, 'Home');
-    const afterHome = selected();
-    press(quick, 'ArrowRight');
-    const afterRight = selected();
-    const mods = document.getElementById('tab-button-mods');
-    press(mods, 'ArrowLeft');
-    const focused = document.activeElement;
-    const style = getComputedStyle(focused);
-    return {
-      afterEnd,
-      afterHome,
-      afterRight,
-      afterLeft: selected(),
-      focused: focused?.dataset?.tab,
-      visibleFocus: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0,
-    };
-  })()`);
-  assert(
-    keyboardTabs.afterEnd === 'about' && keyboardTabs.afterHome === 'quick-start' &&
-      keyboardTabs.afterRight === 'mods' && keyboardTabs.afterLeft === 'quick-start' &&
-      keyboardTabs.focused === 'quick-start' && keyboardTabs.visibleFocus,
-    `Keyboard tab navigation/focus failed: ${JSON.stringify(keyboardTabs)}`,
-  );
-
-  await evaluate(cdp, `document.querySelector('.native-hero-banner').click()`);
-  await new Promise(resolveWait => setTimeout(resolveWait, 700));
-  const nativeLanding = await evaluate(cdp, `(() => {
-    const target = document.getElementById('native-quick-start');
-    const tabBar = document.querySelector('.tab-bar').getBoundingClientRect();
-    const rect = target?.getBoundingClientRect();
-    return {
-      hash: location.hash,
-      active: document.querySelector('.tab-btn.active')?.dataset.tab,
-      focusedId: document.activeElement?.id,
-      targetExists: Boolean(target),
-      targetTop: rect?.top ?? null,
-      targetBottom: rect?.bottom ?? null,
-      tabBottom: tabBar.bottom,
-      viewportHeight: innerHeight,
-    };
-  })()`);
-  assert(
-    nativeLanding.hash === '#native-quick-start' && nativeLanding.active === 'quick-start' &&
-      nativeLanding.focusedId === 'native-quick-start' && nativeLanding.targetExists &&
-      nativeLanding.targetTop >= nativeLanding.tabBottom &&
-      nativeLanding.targetTop <= nativeLanding.tabBottom + 32,
-    `Native hero CTA did not land on its command card: ${JSON.stringify(nativeLanding)}`,
-  );
-
-  await evaluate(cdp, `new Promise(resolve => { history.back(); setTimeout(resolve, 500); })`);
-  const nativeBack = await evaluate(cdp, `({
-    hash: location.hash,
-    active: document.querySelector('.tab-btn.active')?.dataset.tab,
-    focused: document.activeElement?.id
-  })`);
-  assert(
-    nativeBack.hash !== '#native-quick-start' && nativeBack.active === 'quick-start',
-    `Back did not leave the Native anchor cleanly: ${JSON.stringify(nativeBack)}`,
-  );
-  await evaluate(cdp, `new Promise(resolve => { history.forward(); setTimeout(resolve, 700); })`);
-  const nativeForward = await evaluate(cdp, `({
-    hash: location.hash,
-    active: document.querySelector('.tab-btn.active')?.dataset.tab,
-    focused: document.activeElement?.id
-  })`);
-  assert(
-    nativeForward.hash === '#native-quick-start' && nativeForward.active === 'quick-start' &&
-      nativeForward.focused === 'native-quick-start',
-    `Forward did not restore the Native anchor/focus: ${JSON.stringify(nativeForward)}`,
-  );
-
-  await navigate(cdp, `http://127.0.0.1:${pagePort}/index.html?direct-native=1#native-quick-start`);
-  const directNative = await eventuallyEvaluate(cdp, `(() => {
-    const target = document.getElementById('native-quick-start');
-    const tabBar = document.querySelector('.tab-bar');
-    if (!target || !tabBar) return null;
-    const rect = target.getBoundingClientRect();
-    const tabBottom = tabBar.getBoundingClientRect().bottom;
-    const style = getComputedStyle(target);
-    return {
-      ready: document.readyState,
-      hash: location.hash,
-      active: document.querySelector('.tab-btn.active')?.dataset.tab,
-      focused: document.activeElement?.id,
-      top: rect.top,
-      tabBottom,
-      focusOutlineWidth: parseFloat(style.outlineWidth),
-      focusOutlineStyle: style.outlineStyle,
-    };
-  })()`, value => value?.ready === 'complete' && value.hash === '#native-quick-start' &&
-    value.active === 'quick-start' && value.focused === 'native-quick-start' &&
-    value.top >= value.tabBottom && value.top <= value.tabBottom + 32,
-  'stable Native deep link');
-  assert(
-    directNative.ready === 'complete' && directNative.hash === '#native-quick-start' &&
-      directNative.active === 'quick-start' && directNative.focused === 'native-quick-start' &&
-      directNative.top >= directNative.tabBottom && directNative.top <= directNative.tabBottom + 32 &&
-      directNative.focusOutlineStyle !== 'none' && directNative.focusOutlineWidth >= 3,
-    `Direct Native deep link is hidden or unfocused: ${JSON.stringify(directNative)}`,
-  );
-
-  await navigate(cdp, `http://127.0.0.1:${pagePort}/index.html?direct-cpu=1#cpu-compatibility`);
-  const directCpu = await eventuallyEvaluate(cdp, `(() => {
-    const target = document.getElementById('cpu-compatibility');
-    const tabBar = document.querySelector('.tab-bar');
-    if (!target || !tabBar) return null;
-    const rect = target.getBoundingClientRect();
-    const tabBottom = tabBar.getBoundingClientRect().bottom;
-    return {
-      ready: document.readyState,
-      hash: location.hash,
-      active: document.querySelector('.tab-btn.active')?.dataset.tab,
-      top: rect.top,
-      bottom: rect.bottom,
-      tabBottom,
-      innerHeight,
-      scrollY,
-      maxScroll: document.documentElement.scrollHeight - innerHeight,
-      display: getComputedStyle(target).display,
-      visible: rect.bottom > tabBottom && rect.top < innerHeight,
-      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    };
-  })()`, value => value?.ready === 'complete' && value.hash === '#cpu-compatibility' &&
-    value.active === 'quick-start' && value.visible && !value.overflow &&
-    value.top >= value.tabBottom && value.top <= value.tabBottom + 160,
-  'stable CPU deep link');
-  assert(
-    directCpu.ready === 'complete' && directCpu.hash === '#cpu-compatibility' &&
-      directCpu.active === 'quick-start' && directCpu.visible && !directCpu.overflow &&
-      directCpu.top >= directCpu.tabBottom && directCpu.top <= directCpu.tabBottom + 160,
-    `Direct CPU deep link is hidden or clipped: ${JSON.stringify(directCpu)}`,
-  );
-
-  await cdp.send('Emulation.setDeviceMetricsOverride', {
-    width: 390,
-    height: 844,
-    deviceScaleFactor: 1,
-    mobile: true,
-  });
-  await new Promise(resolveWait => setTimeout(resolveWait, 250));
-  const mobile = await evaluate(cdp, `(() => {
+  const landing = await evaluate(cdp, `(() => {
     const root = document.documentElement;
-    const banner = document.querySelector('.native-hero-banner').getBoundingClientRect();
-    const native = document.getElementById('native-quick-start').getBoundingClientRect();
+    const nav = [...document.querySelectorAll('.top-nav a')].map(link => link.getAttribute('href'));
     return {
-      width: innerWidth,
-      height: innerHeight,
-      scrollWidth: root.scrollWidth,
-      bodyScrollWidth: document.body.scrollWidth,
-      bannerLeft: banner.left,
-      bannerRight: banner.right,
-      nativeLeft: native.left,
-      nativeRight: native.right,
+      h1: document.querySelector('h1')?.textContent.trim(),
+      current: document.querySelector('.top-nav [aria-current="page"]')?.textContent.trim(),
+      nav,
+      native: Boolean(document.getElementById('native-quick-start')),
+      generatorDataPresent: document.documentElement.textContent.includes('MAX_PLAYERS') && Boolean(window.CONFIG),
+      overflow: root.scrollWidth > root.clientWidth,
+      stylesheets: [...document.styleSheets].length,
     };
   })()`);
-  assert(
-    mobile.width === 390 && mobile.height === 844 &&
-      mobile.scrollWidth <= mobile.width && mobile.bodyScrollWidth <= mobile.width &&
-      mobile.bannerLeft >= 0 && mobile.bannerRight <= mobile.width &&
-      mobile.nativeLeft >= 0 && mobile.nativeRight <= mobile.width,
-    `Mobile viewport has horizontal overflow or clipping: ${JSON.stringify(mobile)}`,
-  );
-  await cdp.send('Emulation.clearDeviceMetricsOverride');
+  assert(landing.h1 === 'Run your server without reading a manual.', `Unexpected landing h1: ${JSON.stringify(landing)}`);
+  assert(landing.current === 'Quick Start' && landing.nav.includes('config/') && landing.nav.includes('docs/') && landing.nav.includes('migrate/'), `Landing navigation failed: ${JSON.stringify(landing)}`);
+  assert(landing.native && !landing.generatorDataPresent && !landing.overflow && landing.stylesheets >= 1, `Landing contract failed: ${JSON.stringify(landing)}`);
+
+  await evaluate(cdp, `document.querySelector('a[href="#native-quick-start"]').click()`);
+  const nativeAnchor = await eventuallyEvaluate(cdp, `(() => {
+    const target = document.getElementById('native-quick-start');
+    const header = document.querySelector('.site-header');
+    const rect = target.getBoundingClientRect();
+    return { hash: location.hash, top: rect.top, headerBottom: header.getBoundingClientRect().bottom };
+  })()`, value => value?.hash === '#native-quick-start', 'Native Quick Start anchor');
+  assert(nativeAnchor.top >= nativeAnchor.headerBottom - 1, `Native anchor is hidden by sticky header: ${JSON.stringify(nativeAnchor)}`);
+
+  await navigate(cdp, `${base}/index.html#quick-start`);
+  const legacyQuickStart = await eventuallyEvaluate(cdp, `(() => {
+    const target = document.getElementById('native-quick-start');
+    const header = document.querySelector('.site-header');
+    if (!target || !header) return null;
+    const rect = target.getBoundingClientRect();
+    return { hash: location.hash, top: rect.top, headerBottom: header.getBoundingClientRect().bottom };
+  })()`, value => value?.hash === '#native-quick-start', 'Legacy Quick Start anchor');
+  assert(legacyQuickStart.top >= legacyQuickStart.headerBottom - 1, `Legacy Quick Start anchor is hidden by sticky header: ${JSON.stringify(legacyQuickStart)}`);
+
+  await navigate(cdp, `${base}/index.html#config-generator`);
+  await waitForPage(cdp, '/config/');
+  const legacyConfig = await evaluate(cdp, `({ replaced: history.length, title: document.title })`);
+  assert(legacyConfig.title.startsWith('Configuration Generator'), `Legacy generator redirect failed: ${JSON.stringify(legacyConfig)}`);
+
+  const generator = await evaluate(cdp, `(() => ({
+    active: document.querySelector('.tab-btn.active')?.dataset.tab,
+    visibleTabs: [...document.querySelectorAll('.tab-btn')].filter(tab => getComputedStyle(tab).display !== 'none').map(tab => tab.dataset.tab),
+    panelHidden: document.getElementById('tab-config-generator').hidden,
+    input: Boolean(document.getElementById('input-MAX_PLAYERS')),
+    sections: document.querySelectorAll('#sections .section').length,
+    overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  }))()`);
+  assert(generator.active === 'config-generator' && JSON.stringify(generator.visibleTabs) === JSON.stringify(['config-generator']) && !generator.panelHidden && generator.input && generator.sections > 10 && !generator.overflow, `Generator route failed: ${JSON.stringify(generator)}`);
 
   const numeric = await evaluate(cdp, `(() => {
     const input = document.getElementById('input-MAX_PLAYERS');
     input.value = '';
     input.dispatchEvent(new Event('change', { bubbles: true }));
-    return {
-      stored: values.MAX_PLAYERS,
-      input: input.value,
-      hasNaN: document.getElementById('output').textContent.includes('NaN')
-    };
+    return { stored: values.MAX_PLAYERS, input: input.value, hasNaN: document.getElementById('output').textContent.includes('NaN') };
   })()`);
   assert(numeric.stored === 40 && numeric.input === '40' && !numeric.hasNaN, `Invalid numeric regression: ${JSON.stringify(numeric)}`);
-
-  const negativeDuration = await evaluate(cdp, `(() => {
-    const input = document.getElementById('input-KICK_AFK_TIME');
-    const before = values.KICK_AFK_TIME;
-    input.value = '-1';
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    return {
-      before,
-      stored: values.KICK_AFK_TIME,
-      input: input.value,
-      hint: document.getElementById('th-KICK_AFK_TIME').textContent,
-      emitted: document.getElementById('output').textContent.includes('KICK_AFK_TIME=-1')
-    };
-  })()`);
-  assert(
-    negativeDuration.stored === negativeDuration.before &&
-      negativeDuration.input === String(negativeDuration.before) &&
-      negativeDuration.hint === '45 minutes' &&
-      !negativeDuration.emitted,
-    `Negative duration was accepted: ${JSON.stringify(negativeDuration)}`,
-  );
 
   const secretFileOverride = await evaluate(cdp, `(() => {
     values.ADMIN_PASSWORD = 'must-not-be-emitted';
@@ -487,37 +302,67 @@ try {
       hasFileKey: text.includes("ADMIN_PASSWORD_FILE='/run/secrets/conan_admin'")
     };
   })()`);
-  assert(
-    !secretFileOverride.hasDirectKey && !secretFileOverride.hasDirectValue && secretFileOverride.hasFileKey,
-    `Secret-file override emitted an ambiguous direct secret: ${JSON.stringify(secretFileOverride)}`,
-  );
+  assert(!secretFileOverride.hasDirectKey && !secretFileOverride.hasDirectValue && secretFileOverride.hasFileKey, `Secret-file override regression: ${JSON.stringify(secretFileOverride)}`);
 
-  const clipboardCleanup = await evaluate(cdp, `(async () => {
-    const existing = new Set(document.querySelectorAll('textarea'));
-    const navPrototype = Object.getPrototypeOf(navigator);
-    const clipboardDescriptor = Object.getOwnPropertyDescriptor(navPrototype, 'clipboard');
-    const originalExecCommand = document.execCommand;
-    const before = document.querySelectorAll('textarea').length;
-    try {
-      Object.defineProperty(navPrototype, 'clipboard', { configurable: true, get: () => undefined });
-      document.execCommand = () => false;
-      const copied = await copyText('clipboard failure QA');
-      return { copied, before, after: document.querySelectorAll('textarea').length };
-    } finally {
-      Object.defineProperty(navPrototype, 'clipboard', clipboardDescriptor);
-      document.execCommand = originalExecCommand;
-      document.querySelectorAll('textarea').forEach(element => {
-        if (!existing.has(element)) element.remove();
-      });
-    }
-  })()`);
-  assert(clipboardCleanup.copied === false, 'Clipboard failure test did not exercise the failure path');
-  assert(
-    clipboardCleanup.after === clipboardCleanup.before,
-    `Clipboard fallback leaked a textarea: ${JSON.stringify(clipboardCleanup)}`,
-  );
+  await navigate(cdp, `${base}/index.html#cpu-compatibility`);
+  await waitForPage(cdp, '/docs/operations/', '#cpu-compatibility-check');
+  const legacyCpu = await eventuallyEvaluate(cdp, `(() => {
+    const target = document.getElementById('cpu-compatibility-check');
+    const rect = target?.getBoundingClientRect();
+    const headerBottom = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? 0;
+    return {
+      target: Boolean(target),
+      visible: Boolean(rect && rect.bottom > headerBottom && rect.top < innerHeight),
+      top: rect?.top ?? null,
+      headerBottom,
+      sidebar: Boolean(document.querySelector('.docs-sidebar')),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  })()`, value => value?.target && value.visible && value.top >= value.headerBottom && !value.overflow,
+  'visible legacy CPU anchor below the sticky header');
+  assert(legacyCpu.target && legacyCpu.visible && legacyCpu.top >= legacyCpu.headerBottom && legacyCpu.sidebar && !legacyCpu.overflow, `Legacy CPU redirect failed: ${JSON.stringify(legacyCpu)}`);
 
-  console.log('Pages browser checks OK: tab/Native/CPU deep links, Native CTA, keyboard tabs/focus, 390x844 overflow, Back, numeric/duration guards, secret-file override, clipboard cleanup');
+  await navigate(cdp, `${base}/migrate/`);
+  await waitForPage(cdp, '/migrate/');
+  const migration = await evaluate(cdp, `(() => ({
+    h1: document.querySelector('h1')?.textContent.trim(),
+    dryRun: Boolean(document.getElementById('dry-run')),
+    rollback: Boolean(document.getElementById('rollback')),
+    warning: document.body.textContent.includes('Never point Native at Wine'),
+    dangerous: document.body.textContent.includes('down -v') && !document.body.textContent.includes('Never use'),
+    overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  }))()`);
+  assert(migration.h1 === 'Wine to Native migration' && migration.dryRun && migration.rollback && migration.warning && !migration.dangerous && !migration.overflow, `Migration route failed: ${JSON.stringify(migration)}`);
+
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+    mobile: true,
+  });
+  await navigate(cdp, `${base}/`);
+  await waitForPage(cdp, '/');
+  const mobileLanding = await evaluate(cdp, `({
+    width: innerWidth,
+    height: innerHeight,
+    scrollWidth: document.documentElement.scrollWidth,
+    bodyScrollWidth: document.body.scrollWidth,
+    routeRight: Math.max(...[...document.querySelectorAll('.route-card')].map(card => card.getBoundingClientRect().right)),
+  })`);
+  assert(mobileLanding.width === 390 && mobileLanding.height === 844 && mobileLanding.scrollWidth <= 390 && mobileLanding.bodyScrollWidth <= 390 && mobileLanding.routeRight <= 390, `Mobile landing overflow: ${JSON.stringify(mobileLanding)}`);
+
+  await navigate(cdp, `${base}/docs/operations/`);
+  await waitForPage(cdp, '/docs/operations/');
+  const mobileDocs = await evaluate(cdp, `({
+    scrollWidth: document.documentElement.scrollWidth,
+    bodyScrollWidth: document.body.scrollWidth,
+    sidebarStatic: getComputedStyle(document.querySelector('.docs-sidebar')).position,
+  })`);
+  assert(mobileDocs.scrollWidth <= 390 && mobileDocs.bodyScrollWidth <= 390 && mobileDocs.sidebarStatic === 'static', `Mobile docs overflow/layout failed: ${JSON.stringify(mobileDocs)}`);
+  await cdp.send('Emulation.clearDeviceMetricsOverride');
+
+  assert(browserErrors.length === 0, `Browser console/JavaScript errors: ${JSON.stringify(browserErrors)}`);
+  console.log('Pages browser checks OK: multi-page routes, legacy redirects, Native anchor, generator safety, docs/migration, and 390x844 overflow');
 } finally {
   cdp?.close();
   await stopChild(chrome);

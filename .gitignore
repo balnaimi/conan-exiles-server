@@ -13,3 +13,6 @@ research/runtime-configs/2026-*-saved/
 research/runtime-configs/2026-*-windowsserver/
 research/runtime-configs/2026-*-analysis.md
 research/runtime-configs/analyze-runtime-configs.py
+
+# Compose migration state may contain rollback archives with server INIs/secrets.
+.conan-migration/

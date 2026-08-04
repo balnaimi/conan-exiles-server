@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Native Linux Experimental guide for the Conan Exiles Enhanced Docker server.">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <title>Native Linux Experimental — Conan Exiles Enhanced Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../../">Quick Start</a><a href="../../config/">Config Generator</a><a href="../../migrate/">Migrate</a><a aria-current="page" href="../">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Documentation sections">
+      <strong><a href="../">Documentation</a></strong>
+      <a href="../configuration/">Configuration</a>
+      <a href="../mods/">Steam Workshop Mods</a>
+      <a aria-current="page" href="../native-linux/">Native Linux Experimental</a>
+      <a href="../operations/">Operations and Troubleshooting</a>
+      <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
+      <a href="../development/">Development</a>
+    </aside>
+    <article class="docs-content">
+<h1 id="native-linux-experimental">Native Linux Experimental</h1>
+<p><a href="../">← Documentation index</a></p>
+<p>Native Linux runs the upstream Linux Shipping server without Wine. It is <strong>experimental and opt-in</strong>; Wine remains the stable/default runtime.</p>
+<h2 id="images-and-compose">Images and Compose</h2>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Image</th>
+<th>Compose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rolling</td>
+<td><code>ghcr.io/balnaimi/conan-exiles-server:native</code></td>
+<td><code>docker-compose.native.yml</code></td>
+</tr>
+<tr>
+<td>Versioned</td>
+<td><code>ghcr.io/balnaimi/conan-exiles-server:2.7.2-native</code></td>
+<td><code>docker-compose.native.yml</code></td>
+</tr>
+</tbody>
+</table>
+<p>The image runs as non-root UID/GID <code>1000:1000</code>.</p>
+<h2 id="fresh-start">Fresh start</h2>
+<pre><code class="language-bash">mkdir conan-native &amp;&amp; cd conan-native
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
+curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
+nano .env
+docker compose -f docker-compose.native.yml up -d
+</code></pre>
+<p>Use the supplied named volumes. If you replace them with bind mounts, create writable directories owned by UID/GID 1000 before startup. The non-root image intentionally does not recursively change ownership of arbitrary host data.</p>
+<h2 id="isolation-rule">Isolation rule</h2>
+<p>Never attach the same live data volume to Wine and Native. Existing Wine servers must use the migration helper to copy into new Native volumes while the original Wine data remains unchanged for rollback.</p>
+<h2 id="cpu-and-resources">CPU and resources</h2>
+<ul>
+<li>Guest-visible SSE4.2 is required by the current UE5 x64 baseline and enforced by preflight.</li>
+<li>AVX and AVX2 are reported as diagnostics; Funcom has not officially confirmed AVX2 as a hard requirement.</li>
+<li>Use 12 GB as a practical starting allocation for a small vanilla server; 16 GB remains recommended for typical use and more headroom.</li>
+<li>Storage sizing assumes one runtime—Wine or Native, not both. 20 GB is a practical starting allocation for one runtime.</li>
+<li>25–35 GB is recommended for updates, world growth, and a simple backup. 35–40 GB is a comfortable allocation, not a minimum.</li>
+<li>A safe Wine-to-Native trial keeps both runtimes and their isolated data temporarily. The measured clean Wine-to-Native coexistence used about 14 GB on the host; 25 GB is a practical migration floor for that scenario, while 35 GB is recommended for safer migration headroom.</li>
+<li>70 GB is comfortable, not required, for mods, multiple backups, long-term growth, or repeated maintenance. 100 GB is a safer recommendation for heavily modded servers or long backup retention.</li>
+<li>These are project planning recommendations, not official Funcom requirements or hard limits.</li>
+<li>These allocations are total disk sizes in decimal GB; preflight reports currently free binary GiB after existing host and Docker usage.</li>
+</ul>
+<p>RAM sizing uses total host/VPS allocation. 12 GB is a practical starting allocation for a small vanilla server. In measured no-player tests under a hard 10 GiB container cap with no extra swap budget, Wine peaked at 9.19 GiB and Native peaked at 8.69 GiB; both remained A2S-ready through 20-minute observation windows without cgroup pressure or OOM events, and Native completed multiple save cycles. 16 GB is recommended for typical use, not a hard minimum. The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS. The measured worlds were small and unmodded; players, larger worlds, and mods can require more memory.</p>
+<p>Native preflight prefers a finite cgroup memory limit when one is exposed; otherwise it falls back to /proc/meminfo. This prevents a constrained Docker container from reporting the physical host's larger RAM total as its own usable budget.</p>
+<p>Check exactly what Linux can see:</p>
+<pre><code class="language-bash">for flag in sse4_2 avx avx2; do
+  grep -qw &quot;$flag&quot; /proc/cpuinfo \
+    &amp;&amp; echo &quot;$flag=yes&quot; \
+    || echo &quot;$flag=no&quot;
+done
+lscpu
+</code></pre>
+<p>On VPS/QEMU hosts, select a current virtual CPU model or <code>host-passthrough</code> when available. The guest-visible flags are what the server can use. Funcom has not officially confirmed AVX2 as a hard requirement; see the detailed <a href="../operations/#cpu-compatibility-check">CPU compatibility check</a>.</p>
+<p>A dated acceptance run on Steam build <code>24383534</code> used about 8.70 GiB idle on a 16 GiB host and mounted StayBloody and Better Thralls. Treat that as a test observation, not a fixed sizing promise.</p>
+<h2 id="updates-and-readiness">Updates and readiness</h2>
+<p>SteamCMD updates Native game binaries in place at startup; updates are not transactionally rolled back. If SteamCMD fails, startup fails closed. Correct disk/network problems and retry, optionally with:</p>
+<pre><code class="language-env">NATIVE_VALIDATE_SERVER=true
+</code></pre>
+<p>Docker health uses A2S readiness by default. RCON is internal-only and is an explicit diagnostic, not a required liveness signal. Optional RCON health probing can be enabled with <code>NATIVE_HEALTHCHECK_RCON</code>, but Conan's timing-sensitive RCON endpoint may create false-unhealthy results.</p>
+<h2 id="secrets">Secrets</h2>
+<p>Prefer file-backed password variables. The entrypoint removes plaintext password environment variables before launching the Shipping process, and the RCON client does not place passwords in argv. RCON is not published to the host by the default Native Compose file.</p>
+<h2 id="backup-and-restore">Backup and restore</h2>
+<p>Native backups use SQLite's backup API and do not mix the consistent database snapshot with unrelated live WAL/SHM sidecars. INI password values are replaced with <code>[REDACTED]</code>; current secrets are rendered from environment/file sources after restore. Archives use owner-only permissions.</p>
+<p>Create a light backup:</p>
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml exec conan-native \
+  /scripts/native/backup.sh --reason manual
+</code></pre>
+<p>Set <code>NATIVE_BACKUP_MODE=full</code> to include active managed PAKs. Scheduled backups are disabled by default and use the <code>NATIVE_BACKUP_*</code> controls.</p>
+<p>Verify an archive before applying it:</p>
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --verify-only
+</code></pre>
+<p>Apply only while Native is stopped:</p>
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml stop conan-native
+docker compose -f docker-compose.native.yml run --rm --no-deps \
+  --entrypoint /scripts/native/restore.sh conan-native \
+  /data/backups/ARCHIVE.tar.gz --target /data/server --apply
+docker compose -f docker-compose.native.yml up -d conan-native
+</code></pre>
+<p>Restore validates paths, checksums, and SQLite integrity, refuses an active tracked server, and creates a pre-restore backup when replacing a world. The next startup must activate the exact Workshop dependency set recorded by the restored archive before opening the world.</p>
+<h2 id="wine-to-native-migration">Wine-to-Native migration</h2>
+<p>For the repository's default Compose named volumes, use the Compose-aware wrapper from the existing Wine project directory. It discovers the runtime services and the exact nested save volumes from <code>docker compose config</code>; it does not guess volume names.</p>
+<p>Review the read-only plan while Wine is still running:</p>
+<pre><code class="language-bash">./scripts/migrate-compose-wine-to-native.sh plan
+</code></pre>
+<p>Apply the reviewed cutover:</p>
+<pre><code class="language-bash">./scripts/migrate-compose-wine-to-native.sh apply
+</code></pre>
+<p>Do <strong>not</strong> stop Wine manually first. Apply owns the cutover: it stops Wine, proves no running container still uses the source volume, rechecks the database hash, creates separate Native volumes, takes a mode-0600 rollback archive under <code>.conan-migration/</code>, snapshots <code>game_0.db</code> through SQLite, starts Native, and waits for Docker health. If Native becomes unhealthy or times out, the wrapper stops Native and restarts Wine automatically.</p>
+<p>Rollback remains explicit and non-destructive:</p>
+<pre><code class="language-bash">./scripts/migrate-compose-wine-to-native.sh rollback
+</code></pre>
+<p>Rollback restarts Wine against its unchanged source volume and preserves the Native volume and archive for diagnosis. The wrapper never removes volumes. Keep both runtimes' data until database, A2S, RCON, mods, player connections, and at least one save cycle pass. The archive may contain credentials from Wine INIs; <code>.conan-migration/</code> is ignored by Git and must remain protected.</p>
+<p>If the original deployment used <code>docker compose --project-name NAME</code>, pass the same value to every wrapper command:</p>
+<pre><code class="language-bash">./scripts/migrate-compose-wine-to-native.sh plan --project-name NAME
+</code></pre>
+<h3 id="advanced-filesystem-path-helper">Advanced filesystem-path helper</h3>
+<p>Operators using bind-mounted whole game directories can use the low-level helper directly. It defaults to dry-run:</p>
+<pre><code class="language-bash">./scripts/migrate-wine-to-native.sh \
+  --source /path/to/wine-data \
+  --destination /path/to/new-native-data
+</code></pre>
+<p>Review the plan, stop the source, then repeat with <code>--source-stopped --apply</code>. The low-level helper never deletes the source and never activates Windows INIs as Linux configuration. Native renders reviewed <code>LinuxServer</code> values from <code>.env</code>.</p>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Generated from <code>docs/guides/native-linux.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/native-linux.md">Edit this guide</a></footer>
+</body>
+</html>

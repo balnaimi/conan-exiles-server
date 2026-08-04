@@ -9,16 +9,109 @@ import subprocess
 import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML_PATH = ROOT / "docs" / "index.html"
+CONFIG_HTML_PATH = ROOT / "docs" / "config" / "index.html"
 README_PATH = ROOT / "README.md"
 OPERATIONS_PATH = ROOT / "docs" / "guides" / "operations.md"
 NATIVE_GUIDE_PATH = ROOT / "docs" / "guides" / "native-linux.md"
-HTML = HTML_PATH.read_text(encoding="utf-8")
+QUICK_HTML = HTML_PATH.read_text(encoding="utf-8")
+HTML = CONFIG_HTML_PATH.read_text(encoding="utf-8")
 README = README_PATH.read_text(encoding="utf-8")
 OPERATIONS = OPERATIONS_PATH.read_text(encoding="utf-8")
 NATIVE_GUIDE = NATIVE_GUIDE_PATH.read_text(encoding="utf-8")
+DETAIL_HTML = "\n".join(
+    (ROOT / "docs" / "docs" / slug / "index.html").read_text(encoding="utf-8")
+    for slug in ("operations", "native-linux")
+)
+
+
+def test_multi_page_information_architecture_is_fast_and_backward_compatible() -> None:
+    quick_path = ROOT / "docs" / "index.html"
+    config_path = ROOT / "docs" / "config" / "index.html"
+    docs_path = ROOT / "docs" / "docs" / "index.html"
+    migrate_path = ROOT / "docs" / "migrate" / "index.html"
+    site_js_path = ROOT / "docs" / "assets" / "site.js"
+
+    for path in (quick_path, config_path, docs_path, migrate_path, site_js_path):
+        assert path.is_file(), f"Missing Pages route: {path.relative_to(ROOT)}"
+
+    quick = quick_path.read_text(encoding="utf-8")
+    config = config_path.read_text(encoding="utf-8")
+    docs_home = docs_path.read_text(encoding="utf-8")
+    migrate = migrate_path.read_text(encoding="utf-8")
+    site_js = site_js_path.read_text(encoding="utf-8")
+
+    assert len(quick.encode("utf-8")) <= 40_000, "Quick Start landing is no longer lightweight"
+    for marker in (
+        "Start a New Server",
+        "Existing Wine Server",
+        'href="config/"',
+        'href="docs/"',
+        'href="migrate/"',
+        'id="native-quick-start"',
+    ):
+        assert marker in quick, f"Quick Start landing is missing: {marker}"
+    assert "const CONFIG =" not in quick, "The 250-setting generator leaked back into the landing page"
+
+    for marker in ("Configuration Generator", "const CONFIG =", 'id="output"'):
+        assert marker in config, f"Dedicated generator page is missing: {marker}"
+    for marker in ("Documentation", "Configuration", "Operations", "Troubleshooting"):
+        assert marker in docs_home, f"Documentation hub is missing: {marker}"
+    for marker in ("Wine to Native", "dry-run", "rollback", "never deletes"):
+        assert marker.lower() in migrate.lower(), f"Migration page is missing: {marker}"
+
+    required_legacy_routes = {
+        "#quick-start": "#native-quick-start",
+        "#config-generator": "config/",
+        "#mods": "docs/mods/",
+        "#server-management": "docs/operations/",
+        "#about": "docs/",
+        "#cpu-compatibility": "docs/operations/#cpu-compatibility-check",
+    }
+    for old_hash, destination in required_legacy_routes.items():
+        assert old_hash in site_js and destination in site_js, (
+            f"Legacy route is not preserved: {old_hash} -> {destination}"
+        )
+
+
+def test_wiki_pages_are_generated_from_the_canonical_markdown_guides() -> None:
+    builder = ROOT / "scripts" / "build-pages-docs.py"
+    requirements = ROOT / "requirements-docs.txt"
+    assert builder.is_file(), "Missing documentation builder"
+    assert requirements.is_file(), "Missing pinned documentation build dependency"
+    assert "Markdown==" in requirements.read_text(encoding="utf-8")
+
+    guide_titles = {
+        "configuration": "Configuration",
+        "mods": "Steam Workshop Mods",
+        "native-linux": "Native Linux Experimental",
+        "operations": "Operations and Troubleshooting",
+        "compatibility": "Conan Exiles Enhanced Compatibility",
+        "development": "Development",
+    }
+    for slug, title in guide_titles.items():
+        source = ROOT / "docs" / "guides" / f"{slug}.md"
+        output = ROOT / "docs" / "docs" / slug / "index.html"
+        assert source.is_file(), f"Missing canonical guide: {source.relative_to(ROOT)}"
+        assert output.is_file(), f"Missing generated wiki page: {output.relative_to(ROOT)}"
+        html = output.read_text(encoding="utf-8")
+        for marker in (title, '../../assets/site.css', 'class="docs-shell"', 'class="docs-sidebar"'):
+            assert marker in html, f"Generated {slug} page is missing: {marker}"
+        markdown_links = re.findall(r'href="([^"]+\.md(?:#[^"]*)?)"', html)
+        assert all(link.startswith(("https://", "http://")) for link in markdown_links), (
+            f"Generated {slug} page still contains a local Markdown link: {markdown_links}"
+        )
+
+    check = subprocess.run(
+        ["python3", str(builder), "--check"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    assert check.returncode == 0, check.stdout + check.stderr
 
 class PageParser(HTMLParser):
     def __init__(self) -> None:
@@ -37,7 +130,22 @@ class PageParser(HTMLParser):
         if tag == "meta" and values.get("property"):
             self.meta_properties.add(values["property"] or "")
         if tag == "link" and "icon" in (values.get("rel") or "").split():
-            self.icon_hrefs.append(values.get("href") or "")
+            self.icon_hrefs.append(values["href"] or "")
+
+
+class LinkParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ids: set[str] = set()
+        self.references: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = dict(attrs)
+        if values.get("id"):
+            self.ids.add(values["id"] or "")
+        attribute = "href" if tag in {"a", "link"} else "src" if tag in {"img", "script"} else None
+        if attribute and values.get(attribute):
+            self.references.append(values[attribute] or "")
 
 
 def assert_contains(*needles: str) -> None:
@@ -83,7 +191,7 @@ def test_readme_stays_short_and_guides_are_reachable() -> None:
 def test_cpu_requirements_are_explicit_and_careful() -> None:
     user_facing = {
         "README": README,
-        "Page": HTML,
+        "Page details": DETAIL_HTML,
         "Operations": OPERATIONS,
         "Native guide": NATIVE_GUIDE,
     }
@@ -93,14 +201,14 @@ def test_cpu_requirements_are_explicit_and_careful() -> None:
             assert marker in text, f"{name} does not spell out the {marker} compatibility guidance"
         assert "Funcom has not officially confirmed AVX2" in text, f"{name} is missing the AVX2 disclaimer"
 
-    for name, text in {"Page": HTML, "Operations": OPERATIONS, "Native guide": NATIVE_GUIDE}.items():
+    for name, text in {"Page details": DETAIL_HTML, "Operations": OPERATIONS, "Native guide": NATIVE_GUIDE}.items():
         assert "for flag in sse4_2 avx avx2; do" in text, f"{name} is missing the copyable Linux CPU check"
         assert "grep -qw" in text, f"{name} is missing the per-flag CPU probe"
         assert "lscpu" in text, f"{name} is missing guest-visible CPU model guidance"
         assert "host-passthrough" in text, f"{name} is missing VPS/QEMU host-passthrough guidance"
 
     markdown_rows = re.findall(r"\|[^\n]+\|[^\n]+\|[^\n]+\|[^\n]+\|", README + "\n" + OPERATIONS)
-    html_sizing = HTML.split("System Requirements", 1)[1].split("CPU Compatibility", 1)[0]
+    html_sizing = DETAIL_HTML
     sizing_tables = "\n".join(markdown_rows) + "\n" + html_sizing
     assert "SSE4.2 visible" not in sizing_tables
     assert "verify AVX/AVX2" not in sizing_tables
@@ -113,14 +221,14 @@ def test_cpu_requirements_are_explicit_and_careful() -> None:
     ):
         assert re.search(claim, combined, re.IGNORECASE) is None, f"Unsupported AVX2 claim matched: {claim}"
 
-    assert "https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes" in HTML
-    assert 'id="cpu-compatibility" style="scroll-margin-top:' in HTML
+    assert "https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes" in DETAIL_HTML
+    assert 'id="cpu-compatibility-check"' in DETAIL_HTML
 
 
 def test_storage_guidance_distinguishes_capacity_from_safe_headroom() -> None:
     user_facing = {
         "README": README,
-        "Page": HTML,
+        "Page details": DETAIL_HTML,
         "Operations": OPERATIONS,
         "Native guide": NATIVE_GUIDE,
     }
@@ -153,7 +261,7 @@ def test_storage_guidance_distinguishes_capacity_from_safe_headroom() -> None:
 def test_memory_guidance_distinguishes_practical_start_from_recommended_headroom() -> None:
     user_facing = {
         "README": README,
-        "Page": HTML,
+        "Page details": DETAIL_HTML,
         "Operations": OPERATIONS,
         "Native guide": NATIVE_GUIDE,
     }
@@ -223,20 +331,21 @@ def test_document_metadata() -> None:
     assert {"og:title", "og:description", "og:type", "og:url"} <= parser.meta_properties
     assert parser.icon_hrefs, "Missing favicon link"
     for href in parser.icon_hrefs:
-        assert (ROOT / "docs" / href).exists(), f"Missing favicon asset: {href}"
+        asset = (CONFIG_HTML_PATH.parent / href).resolve()
+        assert asset.exists(), f"Missing favicon asset: {href}"
 
 
-def test_tabs_are_semantic_and_deep_linkable() -> None:
+def test_generator_route_opens_the_generator_without_legacy_page_clutter() -> None:
     assert_contains(
-        'role="tablist"',
-        'role="tab"',
-        'aria-selected="true"',
-        'aria-controls="tab-quick-start"',
-        "function activateTab(",
-        "hashchange",
+        'class="generator-page"',
+        "const DEFAULT_TAB = 'config-generator'",
+        "const initialTab = hasDeepLink ? hashTab : DEFAULT_TAB",
+        'aria-controls="tab-config-generator"',
+        '.generator-page .tab-btn:not([data-tab="config-generator"])',
+        '.generator-page .tab-content:not(#tab-config-generator)',
+        'href="../">← Back to Quick Start</a>',
     )
     assert "event.target.classList.add('active')" not in HTML
-    assert "addEventListener('popstate'" not in HTML
 
 
 def test_generator_controls_are_accessible() -> None:
@@ -448,7 +557,7 @@ def test_dotenv_values_are_safely_quoted() -> None:
     )
 
 
-def test_native_linux_is_prominent_and_unambiguous() -> None:
+def test_runtime_choice_is_prominent_without_prematurely_switching_the_default() -> None:
     readme_top = "\n".join(README.splitlines()[:80])
     for marker in (
         "Native Linux Experimental Available",
@@ -460,28 +569,70 @@ def test_native_linux_is_prominent_and_unambiguous() -> None:
         "Fresh Native deployment only",
     ):
         assert marker in readme_top, f"README top does not prominently expose Native runtime: {marker}"
-    assert_contains(
-        "Native Linux Experimental Available",
-        "Wine Stable",
+
+    for marker in (
+        "Native Linux",
+        "Experimental",
+        "Wine",
+        "Stable default",
         "docker-compose.native.yml",
-        "ghcr.io/balnaimi/conan-exiles-server:native",
-        ":2.7.2-native",
-        "Native Linux Experimental — Opt-in Quick Start",
-        'href="#native-quick-start"',
         'id="native-quick-start"',
-        "function openNativeQuickStart(",
-        "Conan Exiles Enhanced Server — Wine Stable &amp; Native Linux Experimental",
-        "Updating <code>docker-compose.yml</code> never switches it to Native",
-        "Password values in backed-up INIs are replaced",
-        "A2S health",
-        "RCON diagnostic",
+        "Do not attach Wine volumes",
+        "Existing Wine Server",
+        'href="migrate/"',
+    ):
+        assert marker in QUICK_HTML, f"Quick Start does not clearly expose the runtime choice: {marker}"
+    assert "Native Linux Stable" not in QUICK_HTML
+    assert "Native is the default" not in QUICK_HTML
+
+    for marker in (
+        "INI password values are replaced",
+        "current secrets are rendered",
+        "Docker health uses A2S readiness",
+        "RCON is internal-only and is an explicit diagnostic",
         "SSE4.2",
-        "8.70 GiB",
         "StayBloody",
         "Better Thralls",
-        "CPU Compatibility",
         "host-passthrough",
-    )
+    ):
+        assert marker in DETAIL_HTML, f"Detailed Pages documentation is missing: {marker}"
+
+
+def test_all_internal_page_links_assets_and_fragments_resolve() -> None:
+    document_root = ROOT / "docs"
+    pages = sorted(document_root.rglob("*.html"))
+    assert pages, "No Pages HTML documents found"
+    parsed: dict[Path, LinkParser] = {}
+    for page in pages:
+        parser = LinkParser()
+        parser.feed(page.read_text(encoding="utf-8"))
+        parsed[page.resolve()] = parser
+
+    for page in pages:
+        for reference in parsed[page.resolve()].references:
+            parts = urlsplit(reference)
+            if parts.scheme or parts.netloc or reference.startswith(("mailto:", "tel:", "data:")):
+                continue
+            path_text = unquote(parts.path)
+            if path_text.startswith("/conan-exiles-server/"):
+                target = document_root / path_text.removeprefix("/conan-exiles-server/")
+            elif path_text.startswith("/"):
+                raise AssertionError(f"Project Pages link must not be host-root-relative: {page}: {reference}")
+            elif path_text:
+                target = page.parent / path_text
+            else:
+                target = page
+            target = target.resolve()
+            assert target.is_relative_to(document_root.resolve()), f"Internal link escapes docs/: {page}: {reference}"
+            if path_text.endswith("/") or target.is_dir():
+                target = target / "index.html"
+            assert target.exists(), f"Broken internal reference in {page.relative_to(ROOT)}: {reference}"
+            if parts.fragment and target.suffix == ".html":
+                target_parser = parsed.get(target.resolve())
+                assert target_parser is not None, f"HTML target was not inventoried: {target}"
+                assert unquote(parts.fragment) in target_parser.ids, (
+                    f"Broken fragment in {page.relative_to(ROOT)}: {reference}"
+                )
 
 
 def test_polish_features_exist() -> None:

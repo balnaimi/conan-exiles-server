@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Configuration guide for the Conan Exiles Enhanced Docker server.">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <title>Configuration — Conan Exiles Enhanced Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../../">Quick Start</a><a href="../../config/">Config Generator</a><a href="../../migrate/">Migrate</a><a aria-current="page" href="../">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Documentation sections">
+      <strong><a href="../">Documentation</a></strong>
+      <a aria-current="page" href="../configuration/">Configuration</a>
+      <a href="../mods/">Steam Workshop Mods</a>
+      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../operations/">Operations and Troubleshooting</a>
+      <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
+      <a href="../development/">Development</a>
+    </aside>
+    <article class="docs-content">
+<h1 id="configuration">Configuration</h1>
+<p><a href="../">← Documentation index</a></p>
+<p>Both runtimes read <code>.env</code> at container startup and generate Conan configuration files. Use <a href="https://github.com/balnaimi/conan-exiles-server/blob/main/.env.minimal">.env.minimal</a> for a small setup, <a href="https://github.com/balnaimi/conan-exiles-server/blob/main/.env.example">.env.example</a> for every documented option, or the <a href="../../config/">Config Generator</a>.</p>
+<h2 id="important-behavior">Important behavior</h2>
+<ul>
+<li>Restart or recreate the container after changing <code>.env</code>; edits do not update a running game process.</li>
+<li>The container rewrites managed INI keys on startup.</li>
+<li>If you change a setting through the in-game Admin Panel, remove the matching <code>.env</code> key when you do not want the next startup to overwrite it.</li>
+<li>Do not commit <code>.env</code> or password files.</li>
+</ul>
+<h2 id="main-settings">Main settings</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SERVER_NAME</code></td>
+<td><code>My Conan Server</code></td>
+<td>Server browser name</td>
+</tr>
+<tr>
+<td><code>SERVER_PASSWORD</code></td>
+<td>empty</td>
+<td>Join password; empty means public</td>
+</tr>
+<tr>
+<td><code>SERVER_TYPE</code></td>
+<td><code>pve</code></td>
+<td><code>pve</code>, <code>pvp</code>, or <code>pve-c</code></td>
+</tr>
+<tr>
+<td><code>MAX_PLAYERS</code></td>
+<td><code>40</code></td>
+<td>Player limit</td>
+</tr>
+<tr>
+<td><code>ADMIN_PASSWORD</code></td>
+<td><code>changeme</code></td>
+<td>Admin password; change it before public use</td>
+</tr>
+<tr>
+<td><code>SERVER_REGION</code></td>
+<td><code>0</code></td>
+<td>Region code</td>
+</tr>
+<tr>
+<td><code>BATTLEYE_ENABLED</code></td>
+<td><code>False</code></td>
+<td>BattlEye anti-cheat</td>
+</tr>
+<tr>
+<td><code>TZ</code></td>
+<td><code>UTC</code></td>
+<td>Container timezone</td>
+</tr>
+<tr>
+<td><code>SERVER_MOD_LIST</code></td>
+<td>empty</td>
+<td>Ordered Workshop IDs</td>
+</tr>
+</tbody>
+</table>
+<p>The full template and generator currently expose 250 settings: shared gameplay/server settings plus Native operation controls.</p>
+<h2 id="generated-files">Generated files</h2>
+<p>Wine Stable writes under:</p>
+<pre><code class="language-text">ConanSandbox/Saved/Config/WindowsServer/
+</code></pre>
+<p>Native Linux writes under:</p>
+<pre><code class="language-text">ConanSandbox/Saved/Config/LinuxServer/
+</code></pre>
+<p>The main files are:</p>
+<ul>
+<li><code>Engine.ini</code> — server identity, browser, password, and network values.</li>
+<li><code>ServerSettings.ini</code> — gameplay and server rules.</li>
+<li><code>Game.ini</code> — game-session and RCON configuration.</li>
+</ul>
+<p>Conan Exiles Enhanced reads RCON from <code>[RconPlugin]</code> in <code>Game.ini</code>; setting it only in <code>ServerSettings.ini</code> may leave RCON disabled.</p>
+<h2 id="password-files">Password files</h2>
+<p>Native supports file-backed secrets for server, admin, and RCON passwords. Prefer the <code>_FILE</code> variables and mount files with restrictive permissions instead of putting plaintext passwords directly in environment variables.</p>
+<p>The Native entrypoint reads the files and removes plaintext password variables before launching the game. RCON passwords are not passed in process arguments.</p>
+<h2 id="networking-and-advertised-address">Networking and advertised address</h2>
+<p>For CG-NAT, tunnels, port-forwarded VPS hosts, or systems with multiple interfaces, set the public/forwarded address:</p>
+<pre><code class="language-env">MULTIHOME=your.public.or.forwarded.ip
+</code></pre>
+<p>The container also uses that value for <code>MULTIHOMEHTTP</code>, keeping game traffic and server-browser registration on the same address. Override it only if the HTTP registration path needs a different source IP:</p>
+<pre><code class="language-env">MULTIHOMEHTTP=your.http.source.ip
+</code></pre>
+<p>Leave both empty for normal single-address hosting.</p>
+<h2 id="regions">Regions</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Value</th>
+<th>Region</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;"><code>0</code></td>
+<td>Europe, Middle East, Africa</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>1</code></td>
+<td>North America</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>2</code></td>
+<td>Asia / Oceania</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>3</code></td>
+<td>Australia / New Zealand</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>4</code></td>
+<td>South America</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>5</code></td>
+<td>Japan</td>
+</tr>
+</tbody>
+</table>
+<h2 id="setting-groups">Setting groups</h2>
+<p>The full template covers server identity, admin/RCON, network, player stats, survival, day/night, combat, death/loot, durability, XP, harvesting, crafting, stamina/movement, thralls, pets, building/decay, NPCs, Purge, avatars, chat, clans, UI/social, regional restrictions, PvP schedules, mods, and advanced runtime options.</p>
+<p>For current/legacy key caveats, see <a href="../compatibility/">Enhanced Compatibility</a>.</p>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Generated from <code>docs/guides/configuration.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/configuration.md">Edit this guide</a></footer>
+</body>
+</html>

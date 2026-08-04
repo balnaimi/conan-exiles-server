@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Operations and Troubleshooting guide for the Conan Exiles Enhanced Docker server.">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <title>Operations and Troubleshooting — Conan Exiles Enhanced Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../../">Quick Start</a><a href="../../config/">Config Generator</a><a href="../../migrate/">Migrate</a><a aria-current="page" href="../">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Documentation sections">
+      <strong><a href="../">Documentation</a></strong>
+      <a href="../configuration/">Configuration</a>
+      <a href="../mods/">Steam Workshop Mods</a>
+      <a href="../native-linux/">Native Linux Experimental</a>
+      <a aria-current="page" href="../operations/">Operations and Troubleshooting</a>
+      <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
+      <a href="../development/">Development</a>
+    </aside>
+    <article class="docs-content">
+<h1 id="operations-and-troubleshooting">Operations and Troubleshooting</h1>
+<p><a href="../">← Documentation index</a></p>
+<p>Commands below use Wine Stable Compose. Add <code>-f docker-compose.native.yml</code> and the Native service name where applicable.</p>
+<h2 id="daily-commands">Daily commands</h2>
+<pre><code class="language-bash">docker compose up -d
+docker compose down
+docker compose restart
+docker compose logs -f
+docker compose logs --tail 50
+</code></pre>
+<p>Update the image safely:</p>
+<pre><code class="language-bash">docker compose pull
+docker compose down
+docker compose up -d
+</code></pre>
+<p>Docker volumes preserve game data during image updates. SteamCMD checks game files at startup.</p>
+<h2 id="readiness">Readiness</h2>
+<p>Do not judge readiness from container uptime or the last log line. A healthy startup normally progresses to markers such as:</p>
+<pre><code class="language-text">Success! App '443030' fully installed.
+Match State Changed from WaitingToStart to InProgress
+Engine is initialized. Leaving FEngineLoop::Init()
+Started SourceServerQueries on port 27015
+</code></pre>
+<p>A final <code>pakchunk0</code> mount line means the package mounted successfully; it is not evidence that the server is still downloading or that it hung. Verify A2S on UDP 27015 and inspect the real Shipping process.</p>
+<h2 id="diagnostics">Diagnostics</h2>
+<pre><code class="language-bash">docker compose ps
+docker stats --no-stream
+docker inspect conan-exiles-enhanced \
+  --format 'status={{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
+docker events --since 30m --filter container=conan-exiles-enhanced
+</code></pre>
+<p>Before printing complete process arguments, remember that third-party images or older scripts may expose passwords. The maintained images avoid putting RCON passwords in argv.</p>
+<p>Wine wrapper processes waiting in <code>pipe_read</code> or <code>anon_pipe_read</code> are not proof of a hang. Check the real <code>ConanSandboxServer-Win64-Shipping.exe</code>, game thread, A2S response, memory, and Docker events.</p>
+<h2 id="exit-code-137-and-memory">Exit code 137 and memory</h2>
+<p>Exit 137 means SIGKILL; it does not prove an OOM. Confirm with <code>OOMKilled=true</code> or a Docker <code>oom</code> event.</p>
+<pre><code class="language-bash">docker inspect conan-exiles-enhanced \
+  --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
+docker events --since 30m --filter container=conan-exiles-enhanced
+</code></pre>
+<p>Host checks:</p>
+<pre><code class="language-bash">free -h
+grep -E 'CommitLimit|Committed_AS' /proc/meminfo
+sysctl vm.overcommit_memory
+</code></pre>
+<p>If VM memory changed while Docker was running, restart Docker and confirm its detected memory before retesting:</p>
+<pre><code class="language-bash">sudo systemctl restart docker
+docker info --format '{{.MemTotal}}'
+free -b
+</code></pre>
+<h2 id="headless-wine-messages">Headless Wine messages</h2>
+<p>The current Wine image includes Vulkan/EGL/OpenGL/Mesa runtime libraries. If old images log missing <code>libvulkan.so.1</code> or <code>libEGL.so.1</code>, update first:</p>
+<pre><code class="language-bash">docker compose pull
+docker compose down
+docker compose up -d
+</code></pre>
+<h2 id="sizing-guidance">Sizing guidance</h2>
+<p>These are project planning recommendations, not official hard limits:</p>
+<table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>CPU</th>
+<th>RAM</th>
+<th>Disk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test / very small</td>
+<td>4 fast x86-64 cores</td>
+<td>12 GB practical start</td>
+<td>20 GB practical start</td>
+</tr>
+<tr>
+<td>Small private server</td>
+<td>4+ fast x86-64 cores</td>
+<td>16 GB recommended</td>
+<td>25–35 GB recommended</td>
+</tr>
+<tr>
+<td>Growing or modded</td>
+<td>6+ fast x86-64 cores</td>
+<td>24 GB or more</td>
+<td>70 GB comfortable; 100 GB heavy</td>
+</tr>
+</tbody>
+</table>
+<p>RAM sizing uses total host/VPS allocation. 12 GB is a practical starting allocation for a small vanilla server. In measured no-player tests under a hard 10 GiB container cap with no extra swap budget, Wine peaked at 9.19 GiB and Native peaked at 8.69 GiB; both remained A2S-ready through 20-minute observation windows without cgroup pressure or OOM events, and Native completed multiple save cycles. 16 GB is recommended for typical use, not a hard minimum. The test host remained at 16 GiB, so the 10 GiB cap tested the game budget under pressure but did not reproduce whole-system pressure on a 12 GB VPS. The measured worlds were small and unmodded; players, larger worlds, and mods can require more memory.</p>
+<p>Native preflight prefers a finite cgroup memory limit when one is exposed; otherwise it falls back to /proc/meminfo. This prevents a constrained Docker container from reporting the physical host's larger RAM total as its own usable budget.</p>
+<p>Storage sizing assumes one runtime—Wine or Native, not both. 20 GB is a practical starting allocation for one runtime. 25–35 GB is recommended for updates, world growth, and a simple backup. 35–40 GB is a comfortable allocation, not a minimum. The measured clean Wine-to-Native coexistence used about 14 GB on the host; 25 GB is a practical migration floor for that scenario, while 35 GB is recommended for safer migration headroom. 70 GB is comfortable, not required, for mods, multiple backups, long-term growth, or repeated maintenance. 100 GB is a safer recommendation for heavily modded servers or long backup retention. These are project planning recommendations, not official Funcom requirements or hard limits.</p>
+<p>The table describes total host allocation in decimal GB. Native preflight reports the currently free space in binary GiB after the OS, Docker images, and existing data have already consumed disk space.</p>
+<h2 id="cpu-compatibility-check">CPU compatibility check</h2>
+<p><a href="https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5.2-release-notes?application_version=5.2">Epic's UE 5.2 release notes</a> document SSE4.2 as the general UE5 x64 minimum CPU specification. An individual game build may choose a higher minimum. AVX and AVX2 are therefore important Conan Exiles Enhanced compatibility diagnostics, but Funcom has not officially confirmed AVX2 as a hard requirement.</p>
+<p>Check the flags visible to Linux:</p>
+<pre><code class="language-bash">for flag in sse4_2 avx avx2; do
+  grep -qw &quot;$flag&quot; /proc/cpuinfo \
+    &amp;&amp; echo &quot;$flag=yes&quot; \
+    || echo &quot;$flag=no&quot;
+done
+</code></pre>
+<p>Also inspect the guest-visible model:</p>
+<pre><code class="language-bash">lscpu
+</code></pre>
+<p>On VPS/QEMU and other virtual machines, the guest-visible flags matter—not only the physical host CPU. Select a current CPU model or <code>host-passthrough</code> when the platform supports it. A host change that exposes several previously missing flags can prove a CPU compatibility problem, but it does not isolate AVX2 alone.</p>
+<p>A clean Enhanced/Wine test on Steam build <code>24383534</code> repeatedly OOM-restarted on 8 GB and stabilized near 9.1 GB idle after increasing the host to 16 GB. A later constrained test established the 12 GB practical-start guidance above. Actual use varies with players, buildings, world size, and mods. Keep free space for Docker layers, SteamCMD staging, game files, databases, backups, and updates.</p>
+<p>Additional planning notes:</p>
+<ul>
+<li>A physical GPU is not required; the dedicated server is headless.</li>
+<li>Fast single-core performance matters for game logic.</li>
+<li>Wine adds CPU/RAM overhead, and mods can increase startup time, memory, and storage substantially.</li>
+<li>A stable connection with at least 10 Mbps upload is a practical starting recommendation; older observations estimated roughly 30–60 KB/s per connected player, but real use varies.</li>
+</ul>
+<h2 id="ports-and-connection">Ports and connection</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Port</th>
+<th>Protocol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">7777</td>
+<td>UDP</td>
+<td>Game</td>
+</tr>
+<tr>
+<td style="text-align: right;">7778</td>
+<td>UDP</td>
+<td>Raw game port</td>
+</tr>
+<tr>
+<td style="text-align: right;">27015</td>
+<td>UDP</td>
+<td>Steam/A2S query</td>
+</tr>
+<tr>
+<td style="text-align: right;">25575</td>
+<td>TCP</td>
+<td>RCON, if explicitly published</td>
+</tr>
+</tbody>
+</table>
+<p>Conan Exiles Enhanced Direct Connect requires an IP address rather than a hostname.</p>
+<h2 id="wine-backup-and-restore">Wine backup and restore</h2>
+<p>Stop Wine before a simple volume archive:</p>
+<pre><code class="language-bash">docker compose down
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v &quot;$(pwd):/backup&quot; \
+  alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
+docker compose up -d
+</code></pre>
+<p>Volume names depend on the Compose project/folder name; check <code>docker volume ls</code>.</p>
+<p>Restoring replaces current data. Verify the archive and keep another copy before deleting anything:</p>
+<pre><code class="language-bash">docker compose down
+docker run --rm -v conan-server_config-data:/data \
+  alpine sh -c 'rm -rf /data/*'
+docker run --rm \
+  -v conan-server_config-data:/data \
+  -v &quot;$(pwd):/backup&quot; \
+  alpine tar xzf /backup/conan-saves-YYYY-MM-DD.tar.gz -C /
+docker compose up -d
+</code></pre>
+<p>Enhanced's default world is <code>ConanSandbox/Saved/game_0.db</code>; verify older scripts that still target <code>game.db</code>.</p>
+<p>For consistent live Native snapshots and safe restore validation, use <a href="../native-linux/#backup-and-restore">Native Linux backup and restore</a>.</p>
+<h2 id="full-reset">Full reset</h2>
+<blockquote>
+<p><strong>Danger:</strong> <code>down -v</code> permanently deletes the world, players, buildings, configuration, and all Compose volumes. Back up and verify first.</p>
+</blockquote>
+<pre><code class="language-bash">docker compose down -v
+docker compose up -d
+</code></pre>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Generated from <code>docs/guides/operations.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/operations.md">Edit this guide</a></footer>
+</body>
+</html>

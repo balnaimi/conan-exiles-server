@@ -3,7 +3,7 @@
 A community Docker Compose setup for hosting **Conan Exiles Enhanced** with automatic SteamCMD updates, `.env` configuration, Workshop mods, persistent data, and a web-based Config Generator.
 
 <p align="center">
-  <a href="https://balnaimi.github.io/conan-exiles-server/"><img src="https://img.shields.io/badge/⚙️_Config_Generator-Open-c8a84e?style=for-the-badge" alt="Config Generator"></a>
+  <a href="https://balnaimi.github.io/conan-exiles-server/config/"><img src="https://img.shields.io/badge/⚙️_Config_Generator-Open-c8a84e?style=for-the-badge" alt="Config Generator"></a>
   <a href="https://github.com/balnaimi/conan-exiles-server/pkgs/container/conan-exiles-server"><img src="https://img.shields.io/badge/📦_Docker_Images-GHCR-blue?style=for-the-badge" alt="Docker images"></a>
 </p>
 
@@ -54,7 +54,7 @@ Connect in-game with **Direct Connect** using the server IP and port `7777`. Con
 
 ## ⚙️ Configuration
 
-Use the [Config Generator](https://balnaimi.github.io/conan-exiles-server/) or edit:
+Use the [Config Generator](https://balnaimi.github.io/conan-exiles-server/config/) or edit:
 
 - [`.env.minimal`](.env.minimal) — basic setup.
 - [`.env.example`](.env.example) — all documented settings.

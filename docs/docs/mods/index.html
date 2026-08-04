@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Steam Workshop Mods guide for the Conan Exiles Enhanced Docker server.">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+  <link rel="stylesheet" href="../../assets/site.css">
+  <title>Steam Workshop Mods — Conan Exiles Enhanced Server</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="../../">⚔️ Conan Server</a>
+    <nav class="top-nav" aria-label="Primary navigation">
+      <a href="../../">Quick Start</a><a href="../../config/">Config Generator</a><a href="../../migrate/">Migrate</a><a aria-current="page" href="../">Documentation</a>
+    </nav>
+  </header>
+  <main id="main" class="docs-shell">
+    <aside class="docs-sidebar" aria-label="Documentation sections">
+      <strong><a href="../">Documentation</a></strong>
+      <a href="../configuration/">Configuration</a>
+      <a aria-current="page" href="../mods/">Steam Workshop Mods</a>
+      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../operations/">Operations and Troubleshooting</a>
+      <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
+      <a href="../development/">Development</a>
+    </aside>
+    <article class="docs-content">
+<h1 id="steam-workshop-mods">Steam Workshop Mods</h1>
+<p><a href="../">← Documentation index</a></p>
+<p>Add ordered Workshop IDs to <code>SERVER_MOD_LIST</code>:</p>
+<pre><code class="language-env">SERVER_MOD_LIST=3722881816,3720904511
+</code></pre>
+<p>Keep the IDs in the exact load order required by your collection. Leave the value empty for an unmodded server.</p>
+<h2 id="what-startup-does">What startup does</h2>
+<ol>
+<li>Validates the complete requested list.</li>
+<li>Downloads or updates each Workshop item.</li>
+<li>Finds and verifies the usable <code>.pak</code> package.</li>
+<li>Builds a temporary ordered <code>modlist.txt</code>.</li>
+<li>Atomically replaces the active list only after every item succeeds.</li>
+<li>Preserves the last-known-good list and world when a download or package check fails.</li>
+</ol>
+<h2 id="runtime-differences">Runtime differences</h2>
+<h3 id="native-linux-experimental">Native Linux Experimental</h3>
+<p>Native uses strict parsing and fails closed:</p>
+<ul>
+<li>IDs must be comma-separated digits with no whitespace or empty entries.</li>
+<li>Duplicate package names, zero-byte PAKs, ambiguous multi-PAK items, and malformed lists are rejected.</li>
+<li>Removed managed files can be pruned with <code>NATIVE_PRUNE_REMOVED_MODS=True</code>.</li>
+</ul>
+<p>Enhanced extracts embedded Linux payloads (<code>-LinuxServer.pak</code>, <code>.utoc</code>, and <code>.ucas</code>) automatically after the top-level Workshop PAK is activated.</p>
+<h3 id="wine-stable">Wine Stable</h3>
+<p>Wine preserves compatibility with older project behavior where possible. Legacy whitespace/comma gaps, multi-PAK selection, duplicate names, and zero-byte activation may produce warnings rather than strict Native-style rejection.</p>
+<h2 id="verified-enhanced-example">Verified Enhanced example</h2>
+<p>Runtime acceptance used:</p>
+<table>
+<thead>
+<tr>
+<th>Mod</th>
+<th style="text-align: right;">Workshop ID</th>
+<th style="text-align: right;">Verified order</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>StayBloody</td>
+<td style="text-align: right;"><code>3722881816</code></td>
+<td style="text-align: right;">1000</td>
+</tr>
+<tr>
+<td>Better Thralls</td>
+<td style="text-align: right;"><code>3720904511</code></td>
+<td style="text-align: right;">1001</td>
+</tr>
+</tbody>
+</table>
+<p>Both mounted in requested order on the tested Enhanced build. This is evidence for those versions, not a guarantee that future Workshop updates remain compatible.</p>
+<h2 id="updating-or-removing-mods">Updating or removing mods</h2>
+<p>Restart the container after changing <code>SERVER_MOD_LIST</code>. SteamCMD checks configured items during startup. Removing an ID removes it from the active list; Native can prune old managed files when pruning is enabled.</p>
+<p>Do not rename downloaded <code>.pak</code> files. Enhanced server documentation warns that renamed PAKs may fail to load.</p>
+<h2 id="failure-handling">Failure handling</h2>
+<p>If startup reports a Workshop failure:</p>
+<ol>
+<li>Check the Workshop ID still exists and is public.</li>
+<li>Confirm the mod supports Conan Exiles Enhanced.</li>
+<li>Check disk space and network access.</li>
+<li>Retry startup; SteamCMD can repair a corrupt cache item.</li>
+<li>Do not manually replace <code>modlist.txt</code> while the container is running.</li>
+</ol>
+<p>Native deliberately refuses to open the world when the restored backup requires a different Workshop set than the configured <code>SERVER_MOD_LIST</code>. See <a href="../native-linux/#backup-and-restore">Native Linux Experimental</a>.</p>
+    </article>
+  </main>
+  <footer class="site-footer"><span>Generated from <code>docs/guides/mods.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/mods.md">Edit this guide</a></footer>
+</body>
+</html>
