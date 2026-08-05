@@ -13,8 +13,8 @@ A community Docker Compose setup for hosting **Conan Exiles Enhanced** with auto
 
 | Runtime | Status | Rolling image | Versioned image | Compose file |
 |---|---|---|---|---|
-| **Native Linux** | **Recommended for new servers** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.8.1-native` | `docker-compose.native.yml` |
-| **Wine** | **Existing deployments / compatibility** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.8.1` | `docker-compose.yml` |
+| **Native Linux** | **Recommended for new servers** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.9.0-native` | `docker-compose.native.yml` |
+| **Wine** | **Existing deployments / compatibility** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.9.0` | `docker-compose.yml` |
 
 See [GitHub Releases](https://github.com/balnaimi/conan-exiles-server/releases) for changelogs.
 
