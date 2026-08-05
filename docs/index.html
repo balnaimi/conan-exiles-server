@@ -37,9 +37,9 @@
 
     <section class="route-grid" aria-label="Choose a setup path">
       <article class="route-card featured" id="native-quick-start" tabindex="-1">
-        <div class="status-row"><span class="status experimental">Experimental</span><span>New deployment</span></div>
+        <div class="status-row"><span class="status recommended">Recommended for new servers</span><span>New deployment</span></div>
         <h2>🐧 Native Linux</h2>
-        <p>Runs the upstream Linux server without Wine. Use fresh Native volumes only.</p>
+        <p><strong>Starting a new server? Use Native Linux.</strong> It runs the upstream Linux server without Wine and uses fresh Native volumes.</p>
         <div class="warning compact-warning"><strong>Do not attach Wine volumes.</strong> Existing servers must use the migration path.</div>
         <div class="code-block">
           <button class="copy-button" type="button" data-copy-target="native-command">Copy</button>
@@ -53,16 +53,14 @@ docker compose -f docker-compose.native.yml up -d</code></pre>
         <a class="text-link" href="docs/native-linux/">Native details →</a>
       </article>
 
-      <article class="route-card">
-        <div class="status-row"><span class="status stable">Stable default</span><span>Current Wine runtime</span></div>
+      <article class="route-card" id="wine-existing">
+        <div class="status-row"><span class="status compatibility">Existing deployments</span><span>Backward compatibility</span></div>
         <h2>🍷 Wine</h2>
-        <p>The current default and backward-compatible path while Native completes its transition gates.</p>
+        <p>For existing Wine servers and backward compatibility. The <code>latest</code> channel remains Wine so current deployments are never switched automatically.</p>
         <div class="code-block">
           <button class="copy-button" type="button" data-copy-target="wine-command">Copy</button>
-          <pre id="wine-command"><code>mkdir conan-server &amp;&amp; cd conan-server
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
-nano .env
+          <pre id="wine-command"><code>cd /path/to/existing-wine-server
+docker compose pull
 docker compose up -d</code></pre>
         </div>
         <p class="verify-line">Verify: <code>docker compose ps</code></p>
@@ -72,7 +70,7 @@ docker compose up -d</code></pre>
       <article class="route-card migration-card">
         <div class="status-row"><span class="status migrate">Safe migration</span><span>Keep rollback data</span></div>
         <h2>Already running Wine?</h2>
-        <p>Do not change the image tag or reuse the Wine volumes. Plan the migration, stop Wine, create a verified SQLite snapshot, and start Native with separate volumes.</p>
+        <p>Do not change the image tag or reuse the Wine volumes. Run the migration plan while Wine is still running. After review, run apply; apply owns the stop, creates a verified SQLite snapshot, and starts Native with separate volumes.</p>
         <a class="button primary full" href="migrate/">Open the migration guide</a>
       </article>
     </section>

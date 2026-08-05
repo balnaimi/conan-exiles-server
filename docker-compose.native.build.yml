@@ -1,4 +1,4 @@
-# Local build of Conan Exiles Enhanced — Native Linux Experimental
+# Local build of Conan Exiles Enhanced — Native Linux — Recommended for New Servers
 services:
   conan-native:
     build:
@@ -11,8 +11,10 @@ services:
     stop_grace_period: 2m
     env_file: .env
     labels:
-      org.opencontainers.image.title: "Conan Exiles Enhanced — Native Linux Experimental"
-      com.balnaimi.conan.runtime: "native-linux-experimental"
+      org.opencontainers.image.title: "Conan Exiles Enhanced — Native Linux — Recommended for New Servers"
+      com.balnaimi.conan.runtime: "native-linux"
+      com.balnaimi.conan.support-tier: "recommended"
+      com.balnaimi.conan.installation-track: "new-servers"
     ports:
       - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"
       - "7778:7778/udp"

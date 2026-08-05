@@ -6,7 +6,7 @@
   <meta name="description" content="Development guide for the Conan Exiles Enhanced Docker server.">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <link rel="stylesheet" href="../../assets/site.css">
-  <title>Development — Conan Exiles Enhanced Server</title>
+  <title>Development — Conan Server</title>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -21,7 +21,7 @@
       <strong><a href="../">Documentation</a></strong>
       <a href="../configuration/">Configuration</a>
       <a href="../mods/">Steam Workshop Mods</a>
-      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../native-linux/">Native Linux — Recommended for New Servers</a>
       <a href="../operations/">Operations and Troubleshooting</a>
       <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
       <a aria-current="page" href="../development/">Development</a>
@@ -30,7 +30,7 @@
 <h1 id="development">Development</h1>
 <p><a href="../">← Documentation index</a></p>
 <h2 id="build-locally">Build locally</h2>
-<p>Wine Stable:</p>
+<p>Wine compatibility image:</p>
 <pre><code class="language-bash">git clone https://github.com/balnaimi/conan-exiles-server.git
 cd conan-exiles-server
 cp .env.example .env
@@ -53,11 +53,11 @@ docker compose -f docker-compose.native.build.yml up -d
 <tbody>
 <tr>
 <td><code>Dockerfile</code></td>
-<td>Wine Stable image</td>
+<td>Wine compatibility image for existing deployments</td>
 </tr>
 <tr>
 <td><code>Dockerfile.native</code></td>
-<td>Non-root Native Linux Experimental image</td>
+<td>Non-root Native Linux image recommended for new servers</td>
 </tr>
 <tr>
 <td><code>entrypoint.sh</code></td>
@@ -108,8 +108,8 @@ docker compose -f docker-compose.native.build.yml up -d
 <h2 id="stack">Stack</h2>
 <ul>
 <li>Debian Bookworm slim bases pinned separately for Wine and Native.</li>
-<li>WineHQ Staging, VC++ 2022, Xvfb, Vulkan/EGL/Mesa for the stable Windows runtime.</li>
-<li>Upstream Linux Shipping binary under a non-root user for Native Experimental.</li>
+<li>WineHQ Staging, VC++ 2022, Xvfb, Vulkan/EGL/Mesa for existing Wine deployments.</li>
+<li>Upstream Linux Shipping binary under a non-root user for the recommended Native runtime.</li>
 <li>SteamCMD with persistent writable cache.</li>
 <li>Python standard-library A2S/RCON and SQLite-safe backup/restore tooling.</li>
 <li>Separate GHCR channels with OCI runtime/support labels.</li>
@@ -127,7 +127,7 @@ docker compose -f docker-compose.native.build.yml up -d
 </ul>
 <p>Changes to a runtime require real disposable-host acceptance in addition to mocks when they affect SteamCMD paths, CPU preflight, RCON framing, lifecycle, data, mods, backup, or restore.</p>
 <h2 id="contributing">Contributing</h2>
-<p>Open an issue with the environment, image tag/digest, game build, logs with secrets removed, and clear reproduction steps. Pull requests should keep Wine Stable backward-compatible and Native Experimental opt-in with separate volumes and tags.</p>
+<p>Open an issue with the environment, image tag/digest, game build, logs with secrets removed, and clear reproduction steps. Pull requests should keep Native recommended for new servers, Wine backward-compatible for existing deployments, and both runtimes on separate volumes and tags.</p>
     </article>
   </main>
   <footer class="site-footer"><span>Generated from <code>docs/guides/development.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/development.md">Edit this guide</a></footer>

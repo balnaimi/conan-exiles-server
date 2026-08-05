@@ -5,8 +5,9 @@ Thanks for helping improve the Conan Exiles Enhanced server project.
 ## Before opening a change
 
 - Search existing issues and releases.
-- Keep Wine Stable backward-compatible and attached to `latest`.
-- Keep Native Linux Experimental on separate images and volumes.
+- Keep Native Linux recommended for all new installations and new servers.
+- Keep Wine backward-compatible for existing deployments and attached to `latest`.
+- Keep Native and Wine on separate images, tags, and volumes.
 - Never add automatic Wine-to-Native migration or destructive volume cleanup.
 - Use synthetic worlds and isolated random Compose projects in tests.
 - Never commit `.env`, passwords, tokens, private keys, world databases, or backup archives.

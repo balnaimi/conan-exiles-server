@@ -4,8 +4,8 @@
 
 ## Scope
 
-- [ ] Wine Stable
-- [ ] Native Linux Experimental
+- [ ] Wine compatibility / existing deployments
+- [ ] Native Linux / recommended for new servers
 - [ ] Both runtimes
 - [ ] Host-side migration / backup / diagnostics
 - [ ] Pages / documentation only

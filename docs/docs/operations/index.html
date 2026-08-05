@@ -6,7 +6,7 @@
   <meta name="description" content="Operations and Troubleshooting guide for the Conan Exiles Enhanced Docker server.">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <link rel="stylesheet" href="../../assets/site.css">
-  <title>Operations and Troubleshooting — Conan Exiles Enhanced Server</title>
+  <title>Operations and Troubleshooting — Conan Server</title>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -21,7 +21,7 @@
       <strong><a href="../">Documentation</a></strong>
       <a href="../configuration/">Configuration</a>
       <a href="../mods/">Steam Workshop Mods</a>
-      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../native-linux/">Native Linux — Recommended for New Servers</a>
       <a aria-current="page" href="../operations/">Operations and Troubleshooting</a>
       <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
       <a href="../development/">Development</a>
@@ -29,18 +29,18 @@
     <article class="docs-content">
 <h1 id="operations-and-troubleshooting">Operations and Troubleshooting</h1>
 <p><a href="../">← Documentation index</a></p>
-<p>Commands below use Wine Stable Compose. Add <code>-f docker-compose.native.yml</code> and the Native service name where applicable.</p>
+<p>Commands in the general sections below explicitly use the recommended Native Compose path for new servers. Existing Wine commands appear only in sections labelled <strong>Existing Wine deployment only</strong> and omit <code>-f docker-compose.native.yml</code>.</p>
 <h2 id="daily-commands">Daily commands</h2>
-<pre><code class="language-bash">docker compose up -d
-docker compose down
-docker compose restart
-docker compose logs -f
-docker compose logs --tail 50
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml up -d
+docker compose -f docker-compose.native.yml down
+docker compose -f docker-compose.native.yml restart
+docker compose -f docker-compose.native.yml logs -f
+docker compose -f docker-compose.native.yml logs --tail 50
 </code></pre>
 <p>Update the image safely:</p>
-<pre><code class="language-bash">docker compose pull
-docker compose down
-docker compose up -d
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml pull
+docker compose -f docker-compose.native.yml down
+docker compose -f docker-compose.native.yml up -d
 </code></pre>
 <p>Docker volumes preserve game data during image updates. SteamCMD checks game files at startup.</p>
 <h2 id="readiness">Readiness</h2>
@@ -52,19 +52,18 @@ Started SourceServerQueries on port 27015
 </code></pre>
 <p>A final <code>pakchunk0</code> mount line means the package mounted successfully; it is not evidence that the server is still downloading or that it hung. Verify A2S on UDP 27015 and inspect the real Shipping process.</p>
 <h2 id="diagnostics">Diagnostics</h2>
-<pre><code class="language-bash">docker compose ps
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml ps
 docker stats --no-stream
-docker inspect conan-exiles-enhanced \
+docker inspect conan-exiles-enhanced-native \
   --format 'status={{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
-docker events --since 30m --filter container=conan-exiles-enhanced
+docker events --since 30m --filter container=conan-exiles-enhanced-native
 </code></pre>
 <p>Before printing complete process arguments, remember that third-party images or older scripts may expose passwords. The maintained images avoid putting RCON passwords in argv.</p>
-<p>Wine wrapper processes waiting in <code>pipe_read</code> or <code>anon_pipe_read</code> are not proof of a hang. Check the real <code>ConanSandboxServer-Win64-Shipping.exe</code>, game thread, A2S response, memory, and Docker events.</p>
 <h2 id="exit-code-137-and-memory">Exit code 137 and memory</h2>
 <p>Exit 137 means SIGKILL; it does not prove an OOM. Confirm with <code>OOMKilled=true</code> or a Docker <code>oom</code> event.</p>
-<pre><code class="language-bash">docker inspect conan-exiles-enhanced \
+<pre><code class="language-bash">docker inspect conan-exiles-enhanced-native \
   --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
-docker events --since 30m --filter container=conan-exiles-enhanced
+docker events --since 30m --filter container=conan-exiles-enhanced-native
 </code></pre>
 <p>Host checks:</p>
 <pre><code class="language-bash">free -h
@@ -77,6 +76,8 @@ docker info --format '{{.MemTotal}}'
 free -b
 </code></pre>
 <h2 id="headless-wine-messages">Headless Wine messages</h2>
+<p><strong>Existing Wine deployment only.</strong> The commands in this section intentionally use the compatibility <code>docker-compose.yml</code> path.</p>
+<p>Wine wrapper processes waiting in <code>pipe_read</code> or <code>anon_pipe_read</code> are not proof of a hang. Check the real <code>ConanSandboxServer-Win64-Shipping.exe</code>, game thread, A2S response, memory, and Docker events.</p>
 <p>The current Wine image includes Vulkan/EGL/OpenGL/Mesa runtime libraries. If old images log missing <code>libvulkan.so.1</code> or <code>libEGL.so.1</code>, update first:</p>
 <pre><code class="language-bash">docker compose pull
 docker compose down
@@ -212,6 +213,15 @@ done
 <h2 id="full-reset">Full reset</h2>
 <blockquote>
 <p><strong>Danger:</strong> <code>down -v</code> permanently deletes the world, players, buildings, configuration, and all Compose volumes. Back up and verify first.</p>
+</blockquote>
+<h3 id="native-reset">Native reset</h3>
+<p>Run only from the intended Native project directory after verifying a Native backup:</p>
+<pre><code class="language-bash">docker compose -f docker-compose.native.yml down -v
+docker compose -f docker-compose.native.yml up -d
+</code></pre>
+<h3 id="existing-wine-reset">Existing Wine reset</h3>
+<blockquote>
+<p><strong>Existing Wine deployment only:</strong> run only from the intended Wine project directory after verifying a Wine backup. This permanently deletes the Wine project's volumes.</p>
 </blockquote>
 <pre><code class="language-bash">docker compose down -v
 docker compose up -d

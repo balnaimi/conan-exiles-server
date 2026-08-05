@@ -87,7 +87,7 @@ def test_wiki_pages_are_generated_from_the_canonical_markdown_guides() -> None:
     guide_titles = {
         "configuration": "Configuration",
         "mods": "Steam Workshop Mods",
-        "native-linux": "Native Linux Experimental",
+        "native-linux": "Native Linux — Recommended for New Servers",
         "operations": "Operations and Troubleshooting",
         "compatibility": "Conan Exiles Enhanced Compatibility",
         "development": "Development",
@@ -557,24 +557,27 @@ def test_dotenv_values_are_safely_quoted() -> None:
     )
 
 
-def test_runtime_choice_is_prominent_without_prematurely_switching_the_default() -> None:
+def test_native_is_recommended_for_every_new_server_without_breaking_existing_wine() -> None:
     readme_top = "\n".join(README.splitlines()[:80])
+    config_quick_start = HTML.split("TAB 1: QUICK START", 1)[1].split("TAB 2:", 1)[0]
+    wine_landing_card = QUICK_HTML.split('id="wine-existing"', 1)[1]
     for marker in (
-        "Native Linux Experimental Available",
-        "Wine Stable",
+        "Native Linux — Recommended for New Servers",
+        "Starting a new server? Use Native Linux",
+        "Wine — Existing Deployments",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
-        "ghcr.io/balnaimi/conan-exiles-server:2.8.0-native",
-        "Updating the default Compose deployment never switches it to Native",
-        "Fresh Native deployment only",
+        "ghcr.io/balnaimi/conan-exiles-server:2.8.1-native",
+        "Updating the default Wine Compose deployment never switches it to Native",
+        "Fresh Native deployment",
     ):
         assert marker in readme_top, f"README top does not prominently expose Native runtime: {marker}"
 
     for marker in (
         "Native Linux",
-        "Experimental",
+        "Recommended for new servers",
         "Wine",
-        "Stable default",
+        "Existing deployments",
         "docker-compose.native.yml",
         'id="native-quick-start"',
         "Do not attach Wine volumes",
@@ -582,8 +585,25 @@ def test_runtime_choice_is_prominent_without_prematurely_switching_the_default()
         'href="migrate/"',
     ):
         assert marker in QUICK_HTML, f"Quick Start does not clearly expose the runtime choice: {marker}"
-    assert "Native Linux Stable" not in QUICK_HTML
-    assert "Native is the default" not in QUICK_HTML
+    assert QUICK_HTML.index('id="native-quick-start"') < QUICK_HTML.index('id="wine-existing"')
+    for current_surface in (readme_top, QUICK_HTML, NATIVE_GUIDE, config_quick_start):
+        assert "experimental" not in current_surface.lower()
+    assert "Starting a new server? Use Native Linux" in QUICK_HTML
+    assert "latest" in QUICK_HTML and "backward compatibility" in QUICK_HTML
+    assert "mkdir conan-server" not in wine_landing_card
+    assert "cd /path/to/existing-wine-server" in wine_landing_card
+    assert "Starting a new server? Use Native Linux" in config_quick_start
+    assert config_quick_start.index('id="native-quick-start"') < config_quick_start.index("Update an Existing Wine Deployment")
+    assert "mkdir conan-server" not in config_quick_start
+    assert "Use Config Generator for a New Native Server" in config_quick_start
+    assert "docker compose -f docker-compose.native.yml up -d" in config_quick_start
+    for current_surface in (QUICK_HTML, config_quick_start):
+        assert "must stop Wine" not in current_surface
+        assert "Plan the migration, stop Wine" not in current_surface
+    assert "Run the migration plan while Wine is still running" in QUICK_HTML
+    assert "apply owns the stop" in QUICK_HTML
+    assert "run the migration plan while Wine is still running" in config_quick_start
+    assert "apply owns the stop" in config_quick_start
 
     for marker in (
         "INI password values are replaced",
@@ -596,6 +616,54 @@ def test_runtime_choice_is_prominent_without_prematurely_switching_the_default()
         "host-passthrough",
     ):
         assert marker in DETAIL_HTML, f"Detailed Pages documentation is missing: {marker}"
+
+
+def test_operations_commands_match_the_runtime_they_claim_to_manage() -> None:
+    daily = OPERATIONS.split("## Daily commands", 1)[1].split("## Readiness", 1)[0]
+    diagnostics = OPERATIONS.split("## Diagnostics", 1)[1].split("## Exit code 137", 1)[0]
+    wine = OPERATIONS.split("## Headless Wine messages", 1)[1].split("## Sizing guidance", 1)[0]
+    reset = OPERATIONS.split("## Full reset", 1)[1]
+
+    for section in (daily, diagnostics):
+        compose_commands = [line for line in section.splitlines() if line.startswith("docker compose")]
+        assert compose_commands
+        assert all("-f docker-compose.native.yml" in line for line in compose_commands)
+
+    assert "Existing Wine deployment only" in wine
+    assert "docker compose pull" in wine
+    assert "-f docker-compose.native.yml" not in wine
+
+    assert "### Native reset" in reset
+    assert "docker compose -f docker-compose.native.yml down -v" in reset
+    assert "### Existing Wine reset" in reset
+    assert "docker compose down -v" in reset
+    assert reset.index("### Native reset") < reset.index("### Existing Wine reset")
+    assert 'id="diagnostics"' in DETAIL_HTML
+    assert 'id="exit-code-137-and-memory"' in DETAIL_HTML
+
+
+def test_config_management_defaults_to_native_and_scopes_wine_commands() -> None:
+    management = HTML.split("TAB 4: SERVER MANAGEMENT", 1)[1].split("Enhanced Settings Status", 1)[0]
+    native_general = management.split("🐧 Native Basic Commands", 1)[1].split("🍷 Existing Wine Startup Troubleshooting", 1)[0]
+    native_diagnostics = management.split("🐧 Native Runtime Diagnostics", 1)[1].split("🐧 Native Backup and Restore", 1)[0]
+
+    for section in (native_general, native_diagnostics):
+        compose_commands = re.findall(r"docker compose[^<\n]+", section)
+        assert compose_commands
+        assert all("-f docker-compose.native.yml" in line for line in compose_commands)
+
+    assert "conan-exiles-enhanced-native" in native_diagnostics
+    assert "🍷 Existing Wine Backup" in management
+    assert "🍷 Existing Wine Restore" in management
+    assert "migrate-compose-wine-to-native.sh plan" in management
+    assert "migrate-compose-wine-to-native.sh apply" in management
+    assert "migrate-compose-wine-to-native.sh --apply" not in management
+    assert "🐧 Native Full Reset" in management
+    assert "docker compose -f docker-compose.native.yml down -v" in management
+    assert "🍷 Existing Wine Full Reset" in management
+    assert "docker compose down -v" in management
+    assert management.index("🐧 Native Full Reset") < management.index("🍷 Existing Wine Full Reset")
+    assert "Wine Stable" not in management
 
 
 def test_all_internal_page_links_assets_and_fragments_resolve() -> None:
@@ -643,6 +711,7 @@ def test_polish_features_exist() -> None:
         "@media (max-width: 480px)",
         "Finding Workshop IDs",
         "View all releases on GitHub",
+        "v2.8.1 — Native Recommended for New Servers",
         "v2.8.0 — Safe Operations &amp; Supply-Chain Hardening",
         "v2.7.2 — CPU Compatibility Guidance",
         "v2.7.1 — Native Health Documentation Hotfix",

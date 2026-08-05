@@ -1,6 +1,6 @@
-# STABLE WINE RUNTIME — recommended/default
-# :latest and unqualified version tags always remain the Wine runtime.
-# For Experimental Native Linux, use docker-compose.native.yml instead.
+# EXISTING WINE DEPLOYMENTS / BACKWARD COMPATIBILITY.
+# :latest and unqualified version tags remain Wine to avoid automatic cutovers.
+# For every new installation or new server, use docker-compose.native.yml.
 # Never attach Native containers to these Wine data volumes.
 services:
   conan:
@@ -10,7 +10,8 @@ services:
     env_file: .env
     labels:
       com.balnaimi.conan.runtime: "wine"
-      com.balnaimi.conan.support-tier: "stable"
+      com.balnaimi.conan.support-tier: "existing-deployments"
+      com.balnaimi.conan.installation-track: "compatibility"
       com.balnaimi.conan.default: "true"
     ports:
       - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"

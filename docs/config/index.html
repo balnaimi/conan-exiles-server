@@ -133,7 +133,7 @@ body {
   background: var(--card);
 }
 .runtime-card strong { color: var(--accent); }
-.runtime-card.experimental { border-color: var(--accent); }
+.runtime-card.recommended { border-color: var(--accent); }
 
 /* ============================================
    TAB BAR
@@ -882,58 +882,54 @@ body {
       <h2 class="qs-title">Quick Start</h2>
 
       <div class="runtime-grid" role="group" aria-label="Choose a server runtime">
+        <div class="runtime-card recommended">
+          <strong>🐧 Native Linux — Recommended for New Servers</strong>
+          <p class="qs-option-desc">Starting a new server? Use Native Linux. It runs upstream Linux without Wine using isolated Native volumes.</p>
+        </div>
         <div class="runtime-card">
-          <strong>🍷 Wine Stable</strong>
-          <p class="qs-option-desc">Default and backward-compatible. Uses <code>ghcr.io/balnaimi/conan-exiles-server:latest</code> with <code>docker-compose.yml</code>.</p>
-        </div>
-        <div class="runtime-card experimental">
-          <strong>🐧 Native Linux Experimental</strong>
-          <p class="qs-option-desc">Runs the upstream Linux server without Wine. Uses <code>ghcr.io/balnaimi/conan-exiles-server:native</code> with isolated Native volumes.</p>
+          <strong>🍷 Wine — Existing Deployments</strong>
+          <p class="qs-option-desc">Backward-compatible path for existing Wine servers. The <code>:latest</code> channel remains Wine to prevent automatic cutovers.</p>
         </div>
       </div>
-      <div class="info-note"><strong>Stable</strong> describes this project's recommended support tier; the image currently installs the upstream WineHQ Staging package. Updating <code>docker-compose.yml</code> never switches it to Native.</div>
-
-      <div class="qs-option">
-        <div class="qs-option-title">🍷 Wine Stable — Fast Start</div>
-        <div class="qs-option-desc">Use a small .env file with only the basic settings. Good for testing or getting a simple server online quickly.</div>
-        <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
-nano .env
-docker compose up -d</pre>
-        <div class="info-note">First-run and update duration depends on storage, memory, CPU, network speed, and cache state. The minimal .env uses mostly default server settings.</div>
-      </div>
-
-      <div class="qs-option">
-        <div class="qs-option-title">🍷 Wine Stable — Full Configuration</div>
-        <div class="qs-option-desc">Use the full .env.example template if you want every documented setting available for editing.</div>
-        <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.example
-cp .env.example .env
-nano .env
-docker compose up -d</pre>
-      </div>
+      <div class="info-note">Updating an existing <code>docker-compose.yml</code> deployment never switches it to Native. New installations should use <code>docker-compose.native.yml</code>.</div>
 
       <div class="qs-option" id="native-quick-start" tabindex="-1">
-        <div class="qs-option-title">🐧 Native Linux Experimental — Opt-in Quick Start</div>
-        <div class="qs-option-desc"><strong>Fresh Native deployment only.</strong> Do not point Native at Wine volumes. Existing servers must stop Wine, verify a backup, run the runtime migration dry-run, and use new Native volumes while keeping the original Wine volumes unchanged.</div>
+        <div class="qs-option-title">🐧 Native Linux — Recommended New-Server Quick Start</div>
+        <div class="qs-option-desc"><strong>Fresh Native deployment.</strong> Do not point Native at Wine volumes. Existing servers must verify a backup and run the migration plan while Wine is still running; apply owns the stop and creates new Native volumes while keeping the original Wine volumes unchanged.</div>
         <pre class="code-block">mkdir conan-native &amp;&amp; cd conan-native
 curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
 nano .env
 docker compose -f docker-compose.native.yml up -d</pre>
-        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.8.0-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.8.1-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
         <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
       </div>
 
       <div class="qs-option">
-        <div class="qs-option-title">Use Config Generator</div>
-        <div class="qs-option-desc">Use the visual config generator (⚙️ Config Generator tab), save the generated output as .env in the same folder as docker-compose.yml, then start the server.</div>
-        <pre class="code-block">mkdir conan-server &amp;&amp; cd conan-server
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-<span class="comment"># Save the generated config as .env in this folder</span>
+        <div class="qs-option-title">🍷 Update an Existing Wine Deployment</div>
+        <div class="qs-option-desc">Run from an existing Wine project directory. This preserves the Wine runtime and its current volumes.</div>
+        <pre class="code-block">cd /path/to/existing-wine-server
+docker compose pull
 docker compose up -d</pre>
+        <div class="info-note"><code>:latest</code> stays Wine for backward compatibility. These commands do not migrate the deployment to Native.</div>
+      </div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">🍷 Edit an Existing Wine Deployment</div>
+        <div class="qs-option-desc">Back up and edit the current Wine deployment's configuration without replacing its Compose file or volumes.</div>
+        <pre class="code-block">cd /path/to/existing-wine-server
+cp .env .env.backup
+nano .env
+docker compose up -d</pre>
+      </div>
+
+      <div class="qs-option">
+        <div class="qs-option-title">Use Config Generator for a New Native Server</div>
+        <div class="qs-option-desc">Use the visual config generator (⚙️ Config Generator tab), save the generated output as <code>.env</code> beside <code>docker-compose.native.yml</code>, then start Native.</div>
+        <pre class="code-block">mkdir conan-native &amp;&amp; cd conan-native
+curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.native.yml
+<span class="comment"># Save the generated config as .env in this folder</span>
+docker compose -f docker-compose.native.yml up -d</pre>
       </div>
     </div>
   </section>
@@ -1058,7 +1054,7 @@ lscpu</pre>
         A clean, unmodded server using Steam build <code>24383534</code> and Wine Staging <code>11.10</code> repeatedly entered an OOM restart loop on an <strong>8 GB</strong> host. With <strong>16 GB</strong>, the same server reached <code>InProgress</code>, responded to Source/A2S queries on UDP <code>27015</code>, and stabilized at approximately <strong>9.1 GB</strong> idle memory.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
-        <strong>🐧 Native Linux Experimental observation:</strong> On the same 16 GiB test CT and Steam build <code>24383534</code>, the native Shipping binary reached A2S/RCON readiness and stabilized near <strong>8.70 GiB</strong> unmodded. Enhanced-tagged <strong>StayBloody</strong> and <strong>Better Thralls</strong> mounted in order at roughly 8.42–8.57 GiB. The guest exposed <strong>SSE4.2</strong>, AVX, and AVX2. UE5's general x64 baseline is SSE4.2; these tests do not prove AVX2 alone is a Conan requirement.
+        <strong>🐧 Native Linux observation:</strong> On the same 16 GiB test CT and Steam build <code>24383534</code>, the native Shipping binary reached A2S/RCON readiness and stabilized near <strong>8.70 GiB</strong> unmodded. Enhanced-tagged <strong>StayBloody</strong> and <strong>Better Thralls</strong> mounted in order at roughly 8.42–8.57 GiB. The guest exposed <strong>SSE4.2</strong>, AVX, and AVX2. UE5's general x64 baseline is SSE4.2; these tests do not prove AVX2 alone is a Conan requirement.
       </div>
       <div class="info-warning" style="margin-top:0.75rem;">
         <strong>8 GB RAM should be considered insufficient for the current Enhanced server.</strong> The measured 12 GB practical-start profile is intended for small vanilla workloads with limited headroom; choose 16 GB or more as the workload grows.
@@ -1120,7 +1116,7 @@ lscpu</pre>
       </div>
       <div class="info-note" style="margin-top:1rem;">
         <strong>What the container does automatically:</strong><br>
-        On startup, it validates and stages the complete ordered set, downloads each Workshop item, and atomically replaces <strong>ConanSandbox/Mods/modlist.txt</strong> only after every item succeeds. <strong>Native Experimental</strong> strictly requires one non-empty usable top-level <strong>.pak</strong> per item and rejects malformed lists, duplicate package names, and ambiguous multi-PAK items. <strong>Wine Stable</strong> preserves v2.6 legacy behavior for comma gaps, deterministic multi-PAK selection, duplicate names, and zero-byte PAKs with warnings. A bad ID or failed download preserves the last-known-good list and world.
+        On startup, it validates and stages the complete ordered set, downloads each Workshop item, and atomically replaces <strong>ConanSandbox/Mods/modlist.txt</strong> only after every item succeeds. <strong>Native</strong> strictly requires one non-empty usable top-level <strong>.pak</strong> per item and rejects malformed lists, duplicate package names, and ambiguous multi-PAK items. The <strong>Wine compatibility path for existing deployments</strong> preserves v2.6 legacy behavior for comma gaps, deterministic multi-PAK selection, duplicate names, and zero-byte PAKs with warnings. A bad ID or failed download preserves the last-known-good list and world.
       </div>
 
       <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;">Apply, Update, or Remove Mods</h3>
@@ -1205,55 +1201,42 @@ docker compose logs -f</pre>
   <section class="info-section">
     <div class="info-container">
       <h2 class="info-title">Server Management</h2>
+      <div class="info-note"><strong>New server:</strong> the general commands in this tab use Native Linux through <code>docker-compose.native.yml</code>. Plain <code>docker compose</code> commands appear only in sections explicitly labelled for an existing Wine deployment.</div>
 
-      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.2rem;">Basic Commands</h3>
-      <pre class="code-block">docker compose up -d      <span class="comment"># Start server</span>
-docker compose down       <span class="comment"># Stop server</span>
-docker compose restart    <span class="comment"># Restart server</span>
-docker compose logs -f    <span class="comment"># View logs (live)</span>
-docker compose logs --tail 50  <span class="comment"># Last 50 log lines</span></pre>
+      <h3 style="color:var(--accent);margin:1.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Basic Commands</h3>
+      <pre class="code-block">docker compose -f docker-compose.native.yml up -d      <span class="comment"># Start Native</span>
+docker compose -f docker-compose.native.yml down       <span class="comment"># Stop Native</span>
+docker compose -f docker-compose.native.yml restart    <span class="comment"># Restart Native</span>
+docker compose -f docker-compose.native.yml logs -f    <span class="comment"># View Native logs</span>
+docker compose -f docker-compose.native.yml logs --tail 50</pre>
 
-      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Updating</h3>
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Updating Native</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">SteamCMD checks Native game files at startup. Update the recommended Native container image with:</p>
+      <pre class="code-block">docker compose -f docker-compose.native.yml pull
+docker compose -f docker-compose.native.yml down
+docker compose -f docker-compose.native.yml up -d</pre>
+      <div class="info-note" style="margin-top:0.75rem;">Native game data and saves use separate Native Docker volumes and remain preserved during normal image updates.</div>
 
-      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Game Auto-Update</h4>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">The game files (Conan Exiles Enhanced server) are automatically updated via SteamCMD on every server restart. No manual action needed!</p>
-
-      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Docker Image Update</h4>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">When a new version of the Docker image is released (new Wine, scripts, or settings), update with:</p>
-      <pre class="code-block">docker compose pull          <span class="comment"># Download latest image</span>
-docker compose down          <span class="comment"># Stop current server</span>
-docker compose up -d         <span class="comment"># Start with new image</span></pre>
-      <div class="info-note" style="margin-top:0.75rem;">Your game data and saves are stored in Docker volumes — they are preserved during image updates.</div>
-
-      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">Startup Troubleshooting</h3>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">On some VPS or headless hosts, Wine/Conan may log Vulkan or EGL runtime messages during startup.</p>
-      <pre class="code-block">Failed to load libvulkan.so.1
-Failed to load libEGL.so.1</pre>
-      <div class="info-note" style="margin-top:0.75rem;">Use the latest image first. It includes Vulkan, EGL, OpenGL, and Mesa runtime libraries needed by Wine and Conan Exiles Enhanced on headless hosts.</div>
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🍷 Existing Wine Startup Troubleshooting</h3>
+      <div class="info-note"><strong>Existing Wine deployment only.</strong> These plain Compose commands intentionally use the compatibility <code>docker-compose.yml</code> path.</div>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin:0.75rem 0;">Older Wine images may log missing Vulkan or EGL libraries. Update the existing Wine image first:</p>
       <pre class="code-block">docker compose pull
 docker compose down
 docker compose up -d</pre>
+      <pre class="code-block">Failed to load libvulkan.so.1
+Failed to load libEGL.so.1</pre>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin:0.75rem 0;">A final WindowsServer <code>pakchunk0</code> mount line means the package mounted successfully; it is not proof of a hang. Wine wrapper processes may normally wait in <code>pipe_read</code> or <code>anon_pipe_read</code>.</p>
 
-      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">The Log Stops at pakchunk0</h4>
-      <pre class="code-block">Mounted Pak file '../../../ConanSandbox/Content/Paks/pakchunk0-WindowsServer.pak'</pre>
-      <div class="info-note">This line means <code>pakchunk0</code> mounted successfully. It does <strong>not</strong> mean the server is still downloading or unpacking that file. A healthy test system progressed from this mount to <code>InProgress</code> within a few seconds.</div>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin:0.75rem 0;">Normal readiness evidence includes:</p>
-      <pre class="code-block">Success! App '443030' fully installed.
-Match State Changed from WaitingToStart to InProgress
-Engine is initialized. Leaving FEngineLoop::Init()
-Started SourceServerQueries on port 27015</pre>
-      <div class="info-warning" style="margin-top:0.75rem;">Do not rely on container uptime or the final stdout line alone. Query UDP port <code>27015</code>, inspect the actual process tree, and check memory limits, Docker OOM events, CPU virtualization, and the host kernel.</div>
-
-      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Runtime Diagnostics</h4>
-      <pre class="code-block">docker compose ps
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Runtime Diagnostics</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Do not rely on container uptime or the final stdout line alone. Verify A2S readiness on UDP <code>27015</code> and inspect the Native container:</p>
+      <pre class="code-block">docker compose -f docker-compose.native.yml ps
 docker stats --no-stream
-docker inspect conan-exiles-enhanced \
+docker inspect conan-exiles-enhanced-native \
   --format 'status={{.State.Status}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
 docker events --since 30m \
-  --filter container=conan-exiles-enhanced
-docker top conan-exiles-enhanced \
-  -eo pid,ppid,stat,pcpu,pmem,wchan:32,comm,args</pre>
-      <div class="info-note" style="margin-top:0.75rem;">Wine wrapper processes may normally wait in <code>pipe_read</code> or <code>anon_pipe_read</code>. Verify the actual <code>ConanSandboxServer-Win64-Shipping.exe</code> process and its <code>GameThread</code> before concluding that Wine is hung.</div>
+  --filter container=conan-exiles-enhanced-native
+docker top conan-exiles-enhanced-native \
+  -eo pid,ppid,stat,pcpu,pmem,wchan:32,comm</pre>
       <pre class="code-block">free -h
 grep -E 'CommitLimit|Committed_AS' /proc/meminfo
 sysctl vm.overcommit_memory</pre>
@@ -1264,77 +1247,49 @@ sysctl vm.overcommit_memory</pre>
 docker info --format '{{.MemTotal}}'
 free -b</pre>
 
-      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Exit Code 137</h4>
-      <div class="info-note">Exit code <code>137</code> means the process received <code>SIGKILL</code>, but it does not prove OOM. <code>OOMKilled=true</code> or an explicit Docker <code>oom</code> event confirms memory exhaustion; <code>OOMKilled=false</code> may mean Docker killed Wine after the stop timeout.</div>
-      <pre class="code-block">docker inspect conan-exiles-enhanced \
+      <h4 style="color:var(--text);margin:1.5rem 0 0.5rem;font-size:1rem;">Native Exit Code 137</h4>
+      <div class="info-note">Exit code <code>137</code> means SIGKILL; it does not prove OOM. Confirm memory exhaustion with <code>OOMKilled=true</code> or a Docker <code>oom</code> event.</div>
+      <pre class="code-block">docker inspect conan-exiles-enhanced-native \
   --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
 docker events --since 30m \
-  --filter container=conan-exiles-enhanced</pre>
-      <div class="info-warning" style="margin-top:0.75rem;">If clients cannot connect after a UE4 → UE5 migration, inspect <code>Engine.ini</code> and remove stale <code>bUseBuildIdOverride</code> / <code>BuildIdOverride</code> lines.</div>
+  --filter container=conan-exiles-enhanced-native</pre>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Backup and Restore</h3>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Native backups use SQLite's snapshot API, verify <code>game_0.db</code>, write SHA-256 checksums, and never mix a snapshot with separately copied live WAL/SHM files. Password values in backed-up INIs are replaced with <code>[REDACTED]</code>; startup renders current values again from the environment or <code>_FILE</code> sources. Archives use owner-only permissions.</p>
-      <pre class="code-block"># Light backup (world, LinuxServer INIs, mod IDs/list)
-docker compose -f docker-compose.native.yml exec conan-native \
-  /scripts/native/backup.sh --reason manual
+      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Native backups use SQLite snapshots and never mix a snapshot with separately copied live WAL/SHM files. Password values in archived INIs are replaced with <code>[REDACTED]</code>.</p>
+      <pre class="code-block"># Create and verify a portable Native world backup
+./scripts/conan-backup.sh --runtime native create
+./scripts/conan-backup.sh list --verify
 
-# Verify a backup using a one-off container
-docker compose -f docker-compose.native.yml run --rm --no-deps \
-  --entrypoint /scripts/native/restore.sh conan-native \
-  /data/backups/ARCHIVE.tar.gz --verify-only
-
-# Apply only while Native is stopped
-docker compose -f docker-compose.native.yml stop conan-native
-docker compose -f docker-compose.native.yml run --rm --no-deps \
-  --entrypoint /scripts/native/restore.sh conan-native \
-  /data/backups/ARCHIVE.tar.gz --target /data/server --apply
-docker compose -f docker-compose.native.yml up -d conan-native</pre>
-      <div class="info-note">Set <code>NATIVE_BACKUP_MODE=full</code> to include active managed PAKs. Light and full restores record the exact required Workshop IDs; the next startup re-downloads and verifies those dependencies before opening the world, and conflicting <code>SERVER_MOD_LIST</code> values fail closed. Scheduled backups and retention are optional and disabled by default.</div>
+# Restore is a non-mutating dry-run unless --apply is added
+./scripts/conan-backup.sh --runtime native restore .conan-backups/ARCHIVE.tar.gz
+./scripts/conan-backup.sh --runtime native restore .conan-backups/ARCHIVE.tar.gz --apply</pre>
+      <div class="info-note">The unified tool discovers the labelled Native service and exact named volume, creates a pre-restore backup before replacement, and preserves prior running state. See the Operations guide for recovery after interruption.</div>
 
       <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🔄 Wine-to-Native Runtime Migration</h3>
-      <div class="info-warning"><strong>Do not point Native at Wine volumes.</strong> Stop Wine, verify a backup, run the helper without <code>--apply</code> first, and use a new destination. The helper snapshots <code>game_0.db</code> with SQLite and does not activate WindowsServer INIs as LinuxServer configuration; Native renders the reviewed <code>.env</code> on first start.</div>
-      <pre class="code-block">./scripts/migrate-wine-to-native.sh \
-  --source /path/to/wine-data \
-  --destination /path/to/new-native-data
-<span class="comment"># Review the dry-run, stop Wine, then repeat with --source-stopped --apply</span></pre>
-      <div class="info-note">The source is never deleted. The protected rollback archive intentionally contains the original Wine INIs and may therefore contain credentials; it is created mode 0600. Keep Wine data unchanged until Native passes database, A2S, RCON, mod, and player-connect checks.</div>
+      <div class="info-warning"><strong>Do not point Native at Wine volumes, and do not stop Wine manually first.</strong> Run <code>plan</code> while Wine is running. The <code>apply</code> command owns the stop, proves the source unused, creates new Native volumes, and keeps the original Wine data unchanged for rollback.</div>
+      <pre class="code-block">./scripts/migrate-compose-wine-to-native.sh plan
+<span class="comment"># Review the dry-run, then let the wrapper own the cutover</span>
+./scripts/migrate-compose-wine-to-native.sh apply</pre>
 
-      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">💾 Wine Stable Backup</h3>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Before any major changes, back up your server data. This command creates a timestamped backup of your game saves:</p>
-      <pre class="code-block">docker compose down
-docker run --rm \
-  -v conan-server_config-data:/data \
-  -v $(pwd):/backup \
-  alpine tar czf /backup/conan-saves-$(date +%F).tar.gz /data
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🍷 Existing Wine Backup</h3>
+      <div class="info-note"><strong>Existing Wine deployment only.</strong> Use the unified verified backup path instead of guessing Docker volume names.</div>
+      <pre class="code-block">./scripts/conan-backup.sh --runtime wine create
+./scripts/conan-backup.sh list --verify</pre>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🍷 Existing Wine Restore</h3>
+      <div class="info-warning"><strong>Existing Wine deployment only.</strong> Restore is a dry-run by default. Review the plan and verified pre-restore backup before adding <code>--apply</code>.</div>
+      <pre class="code-block">./scripts/conan-backup.sh --runtime wine restore .conan-backups/ARCHIVE.tar.gz
+./scripts/conan-backup.sh --runtime wine restore .conan-backups/ARCHIVE.tar.gz --apply</pre>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🐧 Native Full Reset</h3>
+      <div class="info-warning" style="border-color:var(--danger);color:var(--danger);"><strong>DANGER:</strong> Run only from the intended Native project after verifying a Native backup. <code>-v</code> permanently deletes all Native volumes.</div>
+      <pre class="code-block">docker compose -f docker-compose.native.yml down -v
+docker compose -f docker-compose.native.yml up -d</pre>
+
+      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🍷 Existing Wine Full Reset</h3>
+      <div class="info-warning" style="border-color:var(--danger);color:var(--danger);"><strong>Existing Wine deployment only — DANGER:</strong> Run only from the intended Wine project after verifying a Wine backup. <code>-v</code> permanently deletes all Wine volumes.</div>
+      <pre class="code-block">docker compose down -v
 docker compose up -d</pre>
-      <div class="info-note" style="margin-top:0.75rem;">
-        <strong>⚠️ Volume Name:</strong> The volume name depends on your folder name. If your folder is named <code>my-server</code>, the volume will be <code>my-server_config-data</code>.<br>
-        Use <code>docker volume ls</code> to see your actual volume names.<br>
-        Conan Exiles Enhanced uses <code>ConanSandbox/Saved/game_0.db</code> as the default world database; older UE4 scripts that target <code>game.db</code> should be updated or verified.
-      </div>
-
-      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">♻️ Restore From Backup</h3>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">To restore from a previous backup (replace <code>YYYY-MM-DD</code> with your backup date):</p>
-      <pre class="code-block">docker compose down
-docker run --rm \
-  -v conan-server_config-data:/data \
-  alpine sh -c "rm -rf /data/*"
-docker run --rm \
-  -v conan-server_config-data:/data \
-  -v $(pwd):/backup \
-  alpine tar xzf /backup/conan-saves-YYYY-MM-DD.tar.gz -C /
-docker compose up -d</pre>
-      <div class="info-warning" style="margin-top:0.75rem;">
-        <strong>⚠️ Warning:</strong> This <strong>deletes all current data</strong> in the volume before restoring. Make sure you have the correct backup file!
-      </div>
-
-      <h3 style="color:var(--accent);margin:2.5rem 0 0.5rem;font-size:1.2rem;">🗑️ Full Reset (Start Fresh)</h3>
-      <p style="color:var(--text-dim);font-size:0.9rem;margin-bottom:0.75rem;">Want to wipe everything and start from scratch? This removes all game files, databases, and player data:</p>
-      <pre class="code-block">docker compose down -v       <span class="comment"># Stop + delete ALL volumes</span>
-docker compose up -d         <span class="comment"># Fresh start (re-downloads the full server)</span></pre>
-      <div class="info-warning" style="margin-top:0.75rem;border-color:var(--danger);color:var(--danger);">
-        <strong>⚠️ DANGER:</strong> The <code>-v</code> flag permanently deletes <strong>all game data, player saves, and buildings</strong>. There is no undo. Back up your data first if needed!
-      </div>
     </div>
         <!-- Enhanced Settings Status -->
       <h2 class="info-title" style="margin-top:2.5rem;">⚠️ Enhanced Setting Status / Legacy Compatibility Notes</h2>
@@ -1553,10 +1508,13 @@ docker compose up -d         <span class="comment"># Fresh start (re-downloads t
     <div class="info-container">
       <h2 class="info-title">Recent Releases</h2>
       <div class="info-note">
-        <strong>v2.8.0 — Safe Operations &amp; Supply-Chain Hardening:</strong> Adds portable verified Wine/Native world backup and guarded restore, privacy-safe <code>conan-doctor</code> diagnostics, selective image builds, pinned GitHub Actions, Dependabot, Trivy scanning, security policy, and contributor templates. Wine remains <code>latest</code>/<code>2.8.0</code>; Native remains experimental at <code>native</code>/<code>2.8.0-native</code>.
+        <strong>v2.8.1 — Native Recommended for New Servers:</strong> Makes Native Linux the recommended path for every new installation and new server. Wine remains available at <code>latest</code>/<code>2.8.1</code> for existing deployments and backward compatibility; no existing server is switched automatically.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
-        <strong>v2.7.2 — CPU Compatibility Guidance:</strong> Replaces the vague “modern CPU” wording with explicit SSE4.2, AVX, and AVX2 checks; adds copyable Linux diagnostics and VPS/QEMU guest CPU guidance. Wine remains <code>latest</code>/<code>2.7.2</code>; Native remains experimental at <code>native</code>/<code>2.7.2-native</code>.
+        <strong>v2.8.0 — Safe Operations &amp; Supply-Chain Hardening:</strong> Adds portable verified Wine/Native world backup and guarded restore, privacy-safe <code>conan-doctor</code> diagnostics, selective image builds, pinned GitHub Actions, Dependabot, Trivy scanning, security policy, and contributor templates. At that release, Wine used <code>latest</code>/<code>2.8.0</code> and Native used <code>native</code>/<code>2.8.0-native</code>.
+      </div>
+      <div class="info-note" style="margin-top:0.75rem;">
+        <strong>v2.7.2 — CPU Compatibility Guidance:</strong> Replaces the vague “modern CPU” wording with explicit SSE4.2, AVX, and AVX2 checks; adds copyable Linux diagnostics and VPS/QEMU guest CPU guidance. At that release, Wine used <code>latest</code>/<code>2.7.2</code> and Native used <code>native</code>/<code>2.7.2-native</code>.
       </div>
       <div class="info-note" style="margin-top:0.75rem;">
         <strong>v2.7.1 — Native Health Documentation Hotfix:</strong> Clarifies that Docker health uses A2S readiness by default and that RCON is an internal, explicit diagnostic—not a required liveness signal.
@@ -2150,7 +2108,7 @@ const CONFIG = [
     ]
   },
   {
-    id: 'nativeops', icon: '🐧', title: 'Native Linux Experimental Operations',
+    id: 'nativeops', icon: '🐧', title: 'Native Linux Operations',
     fields: [
       { key: 'NATIVE_VALIDATE_SERVER', label: 'Validate Native Server Files', desc: 'Native only. Ask SteamCMD to validate every server file on startup (slower).', type: 'bool', default: false },
       { key: 'NATIVE_PRUNE_REMOVED_MODS', label: 'Prune Removed Managed Mods', desc: 'Native only. Delete only previously managed PAKs removed from the active list.', type: 'bool', default: false },

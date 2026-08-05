@@ -1,5 +1,5 @@
-# Conan Exiles Enhanced — Native Linux Experimental
-# EXPERIMENTAL NATIVE LINUX RUNTIME — opt-in; Wine remains the stable default.
+# Conan Exiles Enhanced — Native Linux — Recommended for New Servers
+# RECOMMENDED NATIVE LINUX RUNTIME for every new installation and new server.
 # This file uses :native and separate Native-only volumes.
 # Never replace these volumes with existing Wine volumes. Back up and use the
 # documented dry-run migration helper for an existing server.
@@ -16,9 +16,10 @@ services:
     stop_grace_period: 2m
     env_file: .env
     labels:
-      org.opencontainers.image.title: "Conan Exiles Enhanced — Native Linux Experimental"
+      org.opencontainers.image.title: "Conan Exiles Enhanced — Native Linux — Recommended for New Servers"
       com.balnaimi.conan.runtime: "native-linux"
-      com.balnaimi.conan.support-tier: "experimental"
+      com.balnaimi.conan.support-tier: "recommended"
+      com.balnaimi.conan.installation-track: "new-servers"
       com.balnaimi.conan.default: "false"
     ports:
       - "${SERVER_PORT:-7777}:${SERVER_PORT:-7777}/udp"

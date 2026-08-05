@@ -2,24 +2,24 @@
 
 [← Documentation index](../README.md)
 
-Commands below use Wine Stable Compose. Add `-f docker-compose.native.yml` and the Native service name where applicable.
+Commands in the general sections below explicitly use the recommended Native Compose path for new servers. Existing Wine commands appear only in sections labelled **Existing Wine deployment only** and omit `-f docker-compose.native.yml`.
 
 ## Daily commands
 
 ```bash
-docker compose up -d
-docker compose down
-docker compose restart
-docker compose logs -f
-docker compose logs --tail 50
+docker compose -f docker-compose.native.yml up -d
+docker compose -f docker-compose.native.yml down
+docker compose -f docker-compose.native.yml restart
+docker compose -f docker-compose.native.yml logs -f
+docker compose -f docker-compose.native.yml logs --tail 50
 ```
 
 Update the image safely:
 
 ```bash
-docker compose pull
-docker compose down
-docker compose up -d
+docker compose -f docker-compose.native.yml pull
+docker compose -f docker-compose.native.yml down
+docker compose -f docker-compose.native.yml up -d
 ```
 
 Docker volumes preserve game data during image updates. SteamCMD checks game files at startup.
@@ -40,25 +40,23 @@ A final `pakchunk0` mount line means the package mounted successfully; it is not
 ## Diagnostics
 
 ```bash
-docker compose ps
+docker compose -f docker-compose.native.yml ps
 docker stats --no-stream
-docker inspect conan-exiles-enhanced \
+docker inspect conan-exiles-enhanced-native \
   --format 'status={{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} restart={{.RestartCount}}'
-docker events --since 30m --filter container=conan-exiles-enhanced
+docker events --since 30m --filter container=conan-exiles-enhanced-native
 ```
 
 Before printing complete process arguments, remember that third-party images or older scripts may expose passwords. The maintained images avoid putting RCON passwords in argv.
-
-Wine wrapper processes waiting in `pipe_read` or `anon_pipe_read` are not proof of a hang. Check the real `ConanSandboxServer-Win64-Shipping.exe`, game thread, A2S response, memory, and Docker events.
 
 ## Exit code 137 and memory
 
 Exit 137 means SIGKILL; it does not prove an OOM. Confirm with `OOMKilled=true` or a Docker `oom` event.
 
 ```bash
-docker inspect conan-exiles-enhanced \
+docker inspect conan-exiles-enhanced-native \
   --format 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
-docker events --since 30m --filter container=conan-exiles-enhanced
+docker events --since 30m --filter container=conan-exiles-enhanced-native
 ```
 
 Host checks:
@@ -78,6 +76,10 @@ free -b
 ```
 
 ## Headless Wine messages
+
+**Existing Wine deployment only.** The commands in this section intentionally use the compatibility `docker-compose.yml` path.
+
+Wine wrapper processes waiting in `pipe_read` or `anon_pipe_read` are not proof of a hang. Check the real `ConanSandboxServer-Win64-Shipping.exe`, game thread, A2S response, memory, and Docker events.
 
 The current Wine image includes Vulkan/EGL/OpenGL/Mesa runtime libraries. If old images log missing `libvulkan.so.1` or `libEGL.so.1`, update first:
 
@@ -220,6 +222,19 @@ Use offline mode when Docker is unavailable or should not be contacted:
 ## Full reset
 
 > **Danger:** `down -v` permanently deletes the world, players, buildings, configuration, and all Compose volumes. Back up and verify first.
+
+### Native reset
+
+Run only from the intended Native project directory after verifying a Native backup:
+
+```bash
+docker compose -f docker-compose.native.yml down -v
+docker compose -f docker-compose.native.yml up -d
+```
+
+### Existing Wine reset
+
+> **Existing Wine deployment only:** run only from the intended Wine project directory after verifying a Wine backup. This permanently deletes the Wine project's volumes.
 
 ```bash
 docker compose down -v

@@ -42,7 +42,10 @@ class NativeImageContractTests(unittest.TestCase):
         self.assertIn("org.opencontainers.image.title", text)
         self.assertIn('org.opencontainers.image.licenses="GPL-3.0-only"', text)
         self.assertIn("Native Linux", text)
-        self.assertIn("experimental", text.lower())
+        self.assertIn("recommended for new servers", text.lower())
+        self.assertIn('com.balnaimi.conan.support-tier="recommended"', text)
+        self.assertIn('com.balnaimi.conan.installation-track="new-servers"', text)
+        self.assertNotIn("experimental", text.lower())
 
 
 if __name__ == "__main__":

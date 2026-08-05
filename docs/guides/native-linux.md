@@ -1,15 +1,15 @@
-# Native Linux Experimental
+# Native Linux — Recommended for New Servers
 
 [← Documentation index](../README.md)
 
-Native Linux runs the upstream Linux Shipping server without Wine. It is **experimental and opt-in**; Wine remains the stable/default runtime.
+Native Linux runs the upstream Linux Shipping server without Wine and is the **recommended path for every new installation and new server**. Wine remains supported for existing Wine deployments and backward compatibility; existing servers are never switched automatically.
 
 ## Images and Compose
 
 | Channel | Image | Compose |
 |---|---|---|
 | Rolling | `ghcr.io/balnaimi/conan-exiles-server:native` | `docker-compose.native.yml` |
-| Versioned | `ghcr.io/balnaimi/conan-exiles-server:2.8.0-native` | `docker-compose.native.yml` |
+| Versioned | `ghcr.io/balnaimi/conan-exiles-server:2.8.1-native` | `docker-compose.native.yml` |
 
 The image runs as non-root UID/GID `1000:1000`.
 

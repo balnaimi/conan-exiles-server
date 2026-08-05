@@ -4,7 +4,7 @@
 
 ## Build locally
 
-Wine Stable:
+Wine compatibility image:
 
 ```bash
 git clone https://github.com/balnaimi/conan-exiles-server.git
@@ -26,8 +26,8 @@ docker compose -f docker-compose.native.build.yml up -d
 
 | Path | Purpose |
 |---|---|
-| `Dockerfile` | Wine Stable image |
-| `Dockerfile.native` | Non-root Native Linux Experimental image |
+| `Dockerfile` | Wine compatibility image for existing deployments |
+| `Dockerfile.native` | Non-root Native Linux image recommended for new servers |
 | `entrypoint.sh` | Wine startup |
 | `scripts/runtime/` | Shared config, secret, and atomic Workshop helpers |
 | `scripts/native/` | Native install, preflight, lifecycle, health, backup, and restore |
@@ -43,8 +43,8 @@ docker compose -f docker-compose.native.build.yml up -d
 ## Stack
 
 - Debian Bookworm slim bases pinned separately for Wine and Native.
-- WineHQ Staging, VC++ 2022, Xvfb, Vulkan/EGL/Mesa for the stable Windows runtime.
-- Upstream Linux Shipping binary under a non-root user for Native Experimental.
+- WineHQ Staging, VC++ 2022, Xvfb, Vulkan/EGL/Mesa for existing Wine deployments.
+- Upstream Linux Shipping binary under a non-root user for the recommended Native runtime.
 - SteamCMD with persistent writable cache.
 - Python standard-library A2S/RCON and SQLite-safe backup/restore tooling.
 - Separate GHCR channels with OCI runtime/support labels.
@@ -65,4 +65,4 @@ Changes to a runtime require real disposable-host acceptance in addition to mock
 
 ## Contributing
 
-Open an issue with the environment, image tag/digest, game build, logs with secrets removed, and clear reproduction steps. Pull requests should keep Wine Stable backward-compatible and Native Experimental opt-in with separate volumes and tags.
+Open an issue with the environment, image tag/digest, game build, logs with secrets removed, and clear reproduction steps. Pull requests should keep Native recommended for new servers, Wine backward-compatible for existing deployments, and both runtimes on separate volumes and tags.

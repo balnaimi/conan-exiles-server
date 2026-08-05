@@ -6,7 +6,7 @@
   <meta name="description" content="Steam Workshop Mods guide for the Conan Exiles Enhanced Docker server.">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <link rel="stylesheet" href="../../assets/site.css">
-  <title>Steam Workshop Mods — Conan Exiles Enhanced Server</title>
+  <title>Steam Workshop Mods — Conan Server</title>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -21,7 +21,7 @@
       <strong><a href="../">Documentation</a></strong>
       <a href="../configuration/">Configuration</a>
       <a aria-current="page" href="../mods/">Steam Workshop Mods</a>
-      <a href="../native-linux/">Native Linux Experimental</a>
+      <a href="../native-linux/">Native Linux — Recommended for New Servers</a>
       <a href="../operations/">Operations and Troubleshooting</a>
       <a href="../compatibility/">Conan Exiles Enhanced Compatibility</a>
       <a href="../development/">Development</a>
@@ -43,7 +43,7 @@
 <li>Preserves the last-known-good list and world when a download or package check fails.</li>
 </ol>
 <h2 id="runtime-differences">Runtime differences</h2>
-<h3 id="native-linux-experimental">Native Linux Experimental</h3>
+<h3 id="native-linux-recommended-for-new-servers">Native Linux — Recommended for New Servers</h3>
 <p>Native uses strict parsing and fails closed:</p>
 <ul>
 <li>IDs must be comma-separated digits with no whitespace or empty entries.</li>
@@ -51,7 +51,7 @@
 <li>Removed managed files can be pruned with <code>NATIVE_PRUNE_REMOVED_MODS=True</code>.</li>
 </ul>
 <p>Enhanced extracts embedded Linux payloads (<code>-LinuxServer.pak</code>, <code>.utoc</code>, and <code>.ucas</code>) automatically after the top-level Workshop PAK is activated.</p>
-<h3 id="wine-stable">Wine Stable</h3>
+<h3 id="wine-compatibility-existing-deployments">Wine compatibility / existing deployments</h3>
 <p>Wine preserves compatibility with older project behavior where possible. Legacy whitespace/comma gaps, multi-PAK selection, duplicate names, and zero-byte activation may produce warnings rather than strict Native-style rejection.</p>
 <h2 id="verified-enhanced-example">Verified Enhanced example</h2>
 <p>Runtime acceptance used:</p>
@@ -89,7 +89,7 @@
 <li>Retry startup; SteamCMD can repair a corrupt cache item.</li>
 <li>Do not manually replace <code>modlist.txt</code> while the container is running.</li>
 </ol>
-<p>Native deliberately refuses to open the world when the restored backup requires a different Workshop set than the configured <code>SERVER_MOD_LIST</code>. See <a href="../native-linux/#backup-and-restore">Native Linux Experimental</a>.</p>
+<p>Native deliberately refuses to open the world when the restored backup requires a different Workshop set than the configured <code>SERVER_MOD_LIST</code>. See <a href="../native-linux/#backup-and-restore">Native Linux</a>.</p>
     </article>
   </main>
   <footer class="site-footer"><span>Generated from <code>docs/guides/mods.md</code>.</span><a href="https://github.com/balnaimi/conan-exiles-server/blob/main/docs/guides/mods.md">Edit this guide</a></footer>

@@ -12,8 +12,8 @@ body:
     attributes:
       label: Runtime
       options:
-        - Wine Stable
-        - Native Linux Experimental
+        - Wine compatibility / existing deployments
+        - Native Linux / recommended for new servers
         - Migration / host-side tooling
         - GitHub Pages / Config Generator
     validations:

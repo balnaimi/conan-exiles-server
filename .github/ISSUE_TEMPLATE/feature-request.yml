@@ -15,8 +15,8 @@ body:
     attributes:
       label: Scope
       options:
-        - Wine Stable
-        - Native Linux Experimental
+        - Wine compatibility / existing deployments
+        - Native Linux / recommended for new servers
         - Both runtimes
         - Backup / migration / diagnostics
         - Documentation / Config Generator

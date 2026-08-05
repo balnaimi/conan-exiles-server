@@ -29,7 +29,7 @@ The full template and generator currently expose 250 settings: shared gameplay/s
 
 ## Generated files
 
-Wine Stable writes under:
+The Wine compatibility runtime for existing deployments writes under:
 
 ```text
 ConanSandbox/Saved/Config/WindowsServer/

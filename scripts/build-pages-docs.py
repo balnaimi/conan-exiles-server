@@ -17,7 +17,7 @@ OUTPUT = ROOT / "docs" / "docs"
 GUIDE_TITLES = {
     "configuration": "Configuration",
     "mods": "Steam Workshop Mods",
-    "native-linux": "Native Linux Experimental",
+    "native-linux": "Native Linux — Recommended for New Servers",
     "operations": "Operations and Troubleshooting",
     "compatibility": "Conan Exiles Enhanced Compatibility",
     "development": "Development",
@@ -75,7 +75,7 @@ def render(slug: str) -> str:
   <meta name="description" content="{html.escape(title)} guide for the Conan Exiles Enhanced Docker server.">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <link rel="stylesheet" href="../../assets/site.css">
-  <title>{html.escape(title)} — Conan Exiles Enhanced Server</title>
+  <title>{html.escape(title)} — Conan Server</title>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>

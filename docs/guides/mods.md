@@ -21,7 +21,7 @@ Keep the IDs in the exact load order required by your collection. Leave the valu
 
 ## Runtime differences
 
-### Native Linux Experimental
+### Native Linux — Recommended for New Servers
 
 Native uses strict parsing and fails closed:
 
@@ -31,7 +31,7 @@ Native uses strict parsing and fails closed:
 
 Enhanced extracts embedded Linux payloads (`-LinuxServer.pak`, `.utoc`, and `.ucas`) automatically after the top-level Workshop PAK is activated.
 
-### Wine Stable
+### Wine compatibility / existing deployments
 
 Wine preserves compatibility with older project behavior where possible. Legacy whitespace/comma gaps, multi-PAK selection, duplicate names, and zero-byte activation may produce warnings rather than strict Native-style rejection.
 
@@ -62,4 +62,4 @@ If startup reports a Workshop failure:
 4. Retry startup; SteamCMD can repair a corrupt cache item.
 5. Do not manually replace `modlist.txt` while the container is running.
 
-Native deliberately refuses to open the world when the restored backup requires a different Workshop set than the configured `SERVER_MOD_LIST`. See [Native Linux Experimental](native-linux.md#backup-and-restore).
+Native deliberately refuses to open the world when the restored backup requires a different Workshop set than the configured `SERVER_MOD_LIST`. See [Native Linux](native-linux.md#backup-and-restore).

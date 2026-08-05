@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Security fixes are provided for the current `2.8.x` release line. Critical fixes may also be backported to `2.7.x` while Wine remains the stable/default runtime.
+Security fixes are provided for the current `2.8.x` release line. Critical fixes may also be backported to `2.7.x`. Native is recommended for new servers; Wine remains supported for existing deployments and backward compatibility.
 
 ## Reporting a vulnerability
 

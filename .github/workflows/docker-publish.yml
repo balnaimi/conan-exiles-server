@@ -78,27 +78,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - variant: wine-stable
+          - variant: wine-compatible
             change_filter: wine
             dockerfile: Dockerfile
             channel: latest
             semver_suffix: ''
             sha_suffix: ''
-            title: Conan Exiles Enhanced Dedicated Server — Wine Stable
-            description: Project stable/default Wine runtime; Native Linux is a separate experimental image
+            title: Conan Exiles Enhanced Dedicated Server — Wine Compatibility
+            description: Wine runtime for existing deployments and backward compatibility; use Native Linux for new servers
             runtime: wine
-            support_tier: stable
+            support_tier: existing-deployments
+            installation_track: compatibility
             default_runtime: 'true'
-          - variant: native-experimental
+          - variant: native-recommended
             change_filter: native
             dockerfile: Dockerfile.native
             channel: native
             semver_suffix: -native
             sha_suffix: -native
-            title: Conan Exiles Enhanced Dedicated Server — Native Linux Experimental
-            description: Experimental opt-in Native Linux runtime; Wine remains the stable/default image
+            title: Conan Exiles Enhanced Dedicated Server — Native Linux Recommended
+            description: Native Linux recommended for new servers and every new installation
             runtime: native-linux
-            support_tier: experimental
+            support_tier: recommended
+            installation_track: new-servers
             default_runtime: 'false'
 
     name: Build ${{ matrix.variant }} image
@@ -137,6 +139,7 @@ jobs:
             org.opencontainers.image.description=${{ matrix.description }}
             com.balnaimi.conan.runtime=${{ matrix.runtime }}
             com.balnaimi.conan.support-tier=${{ matrix.support_tier }}
+            com.balnaimi.conan.installation-track=${{ matrix.installation_track }}
             com.balnaimi.conan.default=${{ matrix.default_runtime }}
 
       - name: Build one immutable ${{ matrix.variant }} artifact

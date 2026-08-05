@@ -24,20 +24,37 @@ COMPOSE_MIGRATE_LAUNCHER = ROOT / "scripts" / "migrate-compose-wine-to-native.sh
 
 
 class NativeComposeTests(unittest.TestCase):
+    def test_current_setup_and_contribution_surfaces_use_recommended_native_wording(self) -> None:
+        paths = [
+            ROOT / ".env.minimal",
+            ROOT / ".env.example",
+            ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md",
+            ROOT / ".github" / "ISSUE_TEMPLATE" / "bug-report.yml",
+            ROOT / ".github" / "ISSUE_TEMPLATE" / "feature-request.yml",
+        ]
+        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+        self.assertNotIn("Native Linux Experimental", text)
+        self.assertNotIn("NATIVE LINUX EXPERIMENTAL", text)
+        self.assertNotIn("# Experimental (docker-compose.native.yml / :native)", text)
+        self.assertIn("Recommended for new servers: Native Linux", text)
+        self.assertIn("Native Linux / recommended for new servers", text)
+
     def test_native_compose_is_obvious_isolated_and_hardened(self) -> None:
         self.assertTrue(NATIVE_COMPOSE.is_file())
         text = NATIVE_COMPOSE.read_text(encoding="utf-8")
         self.assertIn("ghcr.io/balnaimi/conan-exiles-server:native", text)
-        self.assertIn("Native Linux Experimental", text)
+        self.assertIn("Native Linux — Recommended for New Servers", text)
         self.assertIn("native-game-data", text)
         self.assertIn("native-save-data", text)
         self.assertIn("native-steam-data", text)
         self.assertIn("native-backups", text)
         self.assertIn("platform: linux/amd64", text)
-        self.assertIn('com.balnaimi.conan.support-tier: "experimental"', text)
+        self.assertIn('com.balnaimi.conan.support-tier: "recommended"', text)
+        self.assertIn('com.balnaimi.conan.installation-track: "new-servers"', text)
+        self.assertNotIn("experimental", text.lower())
         stable = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
         self.assertIn("ghcr.io/balnaimi/conan-exiles-server:latest", stable)
-        self.assertIn('com.balnaimi.conan.support-tier: "stable"', stable)
+        self.assertIn('com.balnaimi.conan.support-tier: "existing-deployments"', stable)
         self.assertNotIn("native-game-data", stable)
         self.assertNotIn(":latest", text)
         self.assertIn("stop_grace_period: 2m", text)
@@ -51,7 +68,8 @@ class NativeComposeTests(unittest.TestCase):
         self.assertTrue(NATIVE_BUILD_COMPOSE.is_file())
         text = NATIVE_BUILD_COMPOSE.read_text(encoding="utf-8")
         self.assertIn("dockerfile: Dockerfile.native", text)
-        self.assertIn("Native Linux Experimental", text)
+        self.assertIn("Native Linux — Recommended for New Servers", text)
+        self.assertNotIn("experimental", text.lower())
 
 
 class CiWorkflowTests(unittest.TestCase):
@@ -73,8 +91,8 @@ class CiWorkflowTests(unittest.TestCase):
 
     def test_publish_matrix_keeps_latest_wine_and_native_separate(self) -> None:
         text = self.PUBLISH.read_text(encoding="utf-8")
-        self.assertIn("variant: wine-stable", text)
-        self.assertIn("variant: native-experimental", text)
+        self.assertIn("variant: wine-compatible", text)
+        self.assertIn("variant: native-recommended", text)
         self.assertIn("flavor: |\n            latest=false", text)
         self.assertIn("type=semver,pattern={{version}}${{ matrix.semver_suffix }}", text)
         self.assertIn("platforms: linux/amd64", text)
@@ -86,18 +104,21 @@ class CiWorkflowTests(unittest.TestCase):
                 re.MULTILINE,
             )
         }
-        self.assertEqual(set(blocks), {"wine-stable", "native-experimental"})
-        self.assertIn("channel: latest", blocks["wine-stable"])
-        self.assertIn("semver_suffix: ''", blocks["wine-stable"])
-        self.assertNotIn("channel: latest", blocks["native-experimental"])
-        self.assertIn("channel: native", blocks["native-experimental"])
-        self.assertIn("semver_suffix: -native", blocks["native-experimental"])
-        self.assertIn("title: Conan Exiles Enhanced Dedicated Server — Wine Stable", blocks["wine-stable"])
-        self.assertIn("title: Conan Exiles Enhanced Dedicated Server — Native Linux Experimental", blocks["native-experimental"])
-        self.assertIn("support_tier: stable", blocks["wine-stable"])
-        self.assertIn("support_tier: experimental", blocks["native-experimental"])
+        self.assertEqual(set(blocks), {"wine-compatible", "native-recommended"})
+        self.assertIn("channel: latest", blocks["wine-compatible"])
+        self.assertIn("semver_suffix: ''", blocks["wine-compatible"])
+        self.assertNotIn("channel: latest", blocks["native-recommended"])
+        self.assertIn("channel: native", blocks["native-recommended"])
+        self.assertIn("semver_suffix: -native", blocks["native-recommended"])
+        self.assertIn("title: Conan Exiles Enhanced Dedicated Server — Wine Compatibility", blocks["wine-compatible"])
+        self.assertIn("title: Conan Exiles Enhanced Dedicated Server — Native Linux Recommended", blocks["native-recommended"])
+        self.assertIn("support_tier: existing-deployments", blocks["wine-compatible"])
+        self.assertIn("support_tier: recommended", blocks["native-recommended"])
+        self.assertIn("installation_track: new-servers", blocks["native-recommended"])
+        self.assertNotIn("experimental", text.lower())
         self.assertIn("org.opencontainers.image.title=${{ matrix.title }}", text)
         self.assertIn("com.balnaimi.conan.support-tier=${{ matrix.support_tier }}", text)
+        self.assertIn("com.balnaimi.conan.installation-track=${{ matrix.installation_track }}", text)
         self.assertIn("file: ${{ matrix.dockerfile }}", text)
 
     def test_publish_filters_runtime_changes_but_tags_build_both(self) -> None:

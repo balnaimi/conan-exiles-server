@@ -8,32 +8,22 @@ A community Docker Compose setup for hosting **Conan Exiles Enhanced** with auto
 </p>
 
 > [!IMPORTANT]
-> ## 🐧 Native Linux Experimental Available
-> **Wine Stable** remains the default and recommended runtime. **Native Linux Experimental** is opt-in, runs without Wine, and uses separate volumes. Updating the default Compose deployment never switches it to Native.
+> ## 🐧 Native Linux — Recommended for New Servers
+> **Starting a new server? Use Native Linux.** Wine remains available for existing deployments and backward compatibility. Updating the default Wine Compose deployment never switches it to Native.
 
 | Runtime | Status | Rolling image | Versioned image | Compose file |
 |---|---|---|---|---|
-| **Wine** | **Stable / default** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.8.0` | `docker-compose.yml` |
-| **Native Linux** | **Experimental / opt-in** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.8.0-native` | `docker-compose.native.yml` |
+| **Native Linux** | **Recommended for new servers** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.8.1-native` | `docker-compose.native.yml` |
+| **Wine** | **Existing deployments / compatibility** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.8.1` | `docker-compose.yml` |
 
 See [GitHub Releases](https://github.com/balnaimi/conan-exiles-server/releases) for changelogs.
 
 ## 🚀 Quick Start
 
-### Wine Stable
-
-```bash
-mkdir conan-server && cd conan-server
-curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
-nano .env
-docker compose up -d
-```
-
-### Native Linux Experimental
+### Native Linux — Recommended for New Servers
 
 > [!WARNING]
-> **Fresh Native deployment only:** never attach Native to Wine's live volumes. Existing servers must use the documented migration into new Native volumes and keep the Wine data unchanged for rollback.
+> **Fresh Native deployment:** never attach Native to Wine's live volumes. Existing Wine servers must use the documented migration into new Native volumes and keep the Wine data unchanged for rollback.
 
 ```bash
 mkdir conan-native && cd conan-native
@@ -43,12 +33,11 @@ nano .env
 docker compose -f docker-compose.native.yml up -d
 ```
 
-Watch startup:
+### Wine — Existing Deployments
 
-```bash
-docker compose logs -f                                  # Wine
-docker compose -f docker-compose.native.yml logs -f     # Native
-```
+Keep your current `docker-compose.yml` and Wine volumes. `latest` stays on Wine to prevent automatic switching. To move, use the [guarded migration](docs/guides/native-linux.md#wine-to-native-migration).
+
+Watch Native startup with `docker compose -f docker-compose.native.yml logs -f`.
 
 Connect in-game with **Direct Connect** using the server IP and port `7777`. Conan Exiles Enhanced requires an IP address rather than a hostname.
 
@@ -101,14 +90,12 @@ Native does not publish RCON by default.
 
 ## 🛠️ Basic Management
 
-Wine commands are shown below. For Native, add `-f docker-compose.native.yml`.
+Native commands are shown below for new servers. Existing Wine deployments omit `-f docker-compose.native.yml`.
 
 ```bash
-docker compose up -d
-docker compose down
-docker compose restart
-docker compose pull
-docker compose logs -f
+docker compose -f docker-compose.native.yml up -d
+docker compose -f docker-compose.native.yml pull
+docker compose -f docker-compose.native.yml logs -f
 ```
 
 Docker volumes preserve game data during normal image updates. Back up and verify your world before migrations, major game updates, restores, or destructive commands.

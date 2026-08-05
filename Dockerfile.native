@@ -1,11 +1,12 @@
 FROM debian:bookworm-slim@sha256:63a496b5d3b99214b39f5ed70eb71a61e590a77979c79cbee4faf991f8c0783e
 
-LABEL org.opencontainers.image.title="Conan Exiles Enhanced Dedicated Server — Native Linux Experimental"
-LABEL org.opencontainers.image.description="Experimental opt-in Native Linux runtime; Wine remains the stable/default image"
+LABEL org.opencontainers.image.title="Conan Exiles Enhanced Dedicated Server — Native Linux Recommended"
+LABEL org.opencontainers.image.description="Native Linux recommended for new servers and every new installation"
 LABEL org.opencontainers.image.source="https://github.com/balnaimi/conan-exiles-server"
 LABEL org.opencontainers.image.licenses="GPL-3.0-only"
 LABEL com.balnaimi.conan.runtime="native-linux"
-LABEL com.balnaimi.conan.support-tier="experimental"
+LABEL com.balnaimi.conan.support-tier="recommended"
+LABEL com.balnaimi.conan.installation-track="new-servers"
 LABEL com.balnaimi.conan.default="false"
 LABEL com.balnaimi.conan.architecture="linux/amd64"
 
