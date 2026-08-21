@@ -567,7 +567,7 @@ def test_native_is_recommended_for_every_new_server_without_breaking_existing_wi
         "Wine — Existing Deployments",
         "docker-compose.native.yml",
         "ghcr.io/balnaimi/conan-exiles-server:native",
-        "ghcr.io/balnaimi/conan-exiles-server:2.9.0-native",
+        "ghcr.io/balnaimi/conan-exiles-server:2.9.1-native",
         "Updating the default Wine Compose deployment never switches it to Native",
         "Fresh Native deployment",
     ):

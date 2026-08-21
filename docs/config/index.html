@@ -987,7 +987,7 @@ curl -O https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/dock
 curl -o .env https://raw.githubusercontent.com/balnaimi/conan-exiles-server/main/.env.minimal
 nano .env
 docker compose -f docker-compose.native.yml up -d</pre>
-        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.9.0-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
+        <div class="info-note">Native images: rolling <code>:native</code> or versioned <code>:2.9.1-native</code>. RCON is internal-only by default. Fresh named volumes are initialized for the non-root UID/GID <code>1000:1000</code>; custom bind mounts must be writable by that identity. Check <code>docker compose -f docker-compose.native.yml ps</code> for A2S health; use the bundled <code>rcon.py listplayers</code> client explicitly when you need an RCON diagnostic.</div>
         <div class="info-warning">Native SteamCMD updates game binaries in place. A failed update stops startup but is not transactionally rolled back; retry after correcting disk/network issues, optionally with <code>NATIVE_VALIDATE_SERVER=true</code>.</div>
       </div>
 

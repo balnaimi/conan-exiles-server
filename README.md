@@ -1,5 +1,11 @@
 # ⚔️ Conan Exiles Enhanced Dedicated Server (Docker)
 
+> [!IMPORTANT]
+> ## Project Archived — No Longer Maintained
+> This project is no longer maintained and remains available as a reference. For continued development or newer Conan Exiles compatibility, please fork it and maintain your own version. Releases, images, and documentation are provided as-is.
+>
+> Thank you to everyone who used, tested, contributed to, or learned from this project. Your support helped.
+
 A community Docker Compose setup for hosting **Conan Exiles Enhanced** with automatic SteamCMD updates, `.env` configuration, Workshop mods, persistent data, and a web-based Config Generator.
 
 <p align="center">
@@ -13,8 +19,8 @@ A community Docker Compose setup for hosting **Conan Exiles Enhanced** with auto
 
 | Runtime | Status | Rolling image | Versioned image | Compose file |
 |---|---|---|---|---|
-| **Native Linux** | **Recommended for new servers** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.9.0-native` | `docker-compose.native.yml` |
-| **Wine** | **Existing deployments / compatibility** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.9.0` | `docker-compose.yml` |
+| **Native Linux** | **Recommended for new servers** | `ghcr.io/balnaimi/conan-exiles-server:native` | `ghcr.io/balnaimi/conan-exiles-server:2.9.1-native` | `docker-compose.native.yml` |
+| **Wine** | **Existing deployments / compatibility** | `ghcr.io/balnaimi/conan-exiles-server:latest` | `ghcr.io/balnaimi/conan-exiles-server:2.9.1` | `docker-compose.yml` |
 
 See [GitHub Releases](https://github.com/balnaimi/conan-exiles-server/releases) for changelogs.
 
@@ -100,29 +106,15 @@ docker compose -f docker-compose.native.yml logs -f
 
 Docker volumes preserve game data during normal image updates. Back up and verify your world before migrations, major game updates, restores, or destructive commands.
 
-### Portable backup and diagnostics
+For portable backup, restore, diagnostics, and recovery commands, see [Operations and Troubleshooting](docs/guides/operations.md#portable-backup-verification-and-restore). Back up and verify the world before applying a restore.
 
-From a complete repository checkout:
+## 🙌 Project Status and Community Use
 
-```bash
-./scripts/conan-backup.sh create
-./scripts/conan-backup.sh list --verify
-./scripts/conan-backup.sh restore BACKUP.tar.gz              # dry-run
-./scripts/conan-backup.sh restore BACKUP.tar.gz --apply      # guarded apply
-./scripts/conan-backup.sh recover                            # interrupted operation only
-./scripts/conan-doctor.sh --format json
-```
+This repository is archived and no longer accepts support requests, issues, or pull requests. No further maintenance, compatibility updates, or technical support are planned.
 
-Backup/restore supports Wine and Native, serializes mutations with a host lock, uses a digest-pinned networkless helper, preserves volume ownership and safety, and provides verified pre-restore rollback plus explicit crash recovery. Doctor omits secrets, logs, process arguments, and world data. See [Operations and Troubleshooting](docs/guides/operations.md#portable-backup-verification-and-restore).
+You are welcome to fork the repository and continue development independently under the terms of the [GPL-3.0 license](LICENSE). Before running a fork against a newer Conan Exiles release, review and test its runtime, configuration, backup, and migration behavior for compatibility.
 
-## 🙌 Contributing and Support
-
-Issues and pull requests are welcome:
-
-- [Report a problem or request a feature](https://github.com/balnaimi/conan-exiles-server/issues)
-- Include the image tag/digest, game build, runtime, system resources, and logs with secrets removed.
-
-Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community pull request and the community members whose testing improved Enhanced compatibility.
+Special thanks to [@Sniijz](https://github.com/Sniijz) for the first community pull request and to everyone whose use, testing, feedback, and contributions improved the project.
 
 ## ⚖️ Legal
 
