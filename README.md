@@ -1,3 +1,5 @@
+
+
 # ⚔️ Conan Exiles Enhanced Dedicated Server (Docker)
 
 > [!IMPORTANT]
@@ -43,7 +45,7 @@ docker compose -f docker-compose.native.yml up -d
 
 Keep your current `docker-compose.yml` and Wine volumes. `latest` stays on Wine to prevent automatic switching. To move, use the [guarded migration](docs/guides/native-linux.md#wine-to-native-migration).
 
-Watch Native startup with `docker compose -f docker-compose.native.yml logs -f`.
+Watch Wine startup with `docker compose logs -f`.
 
 Connect in-game with **Direct Connect** using the server IP and port `7777`. Conan Exiles Enhanced requires an IP address rather than a hostname.
 
